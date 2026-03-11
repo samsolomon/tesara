@@ -25,6 +25,7 @@ final class TerminalSession: ObservableObject {
 
     @Published private(set) var status: Status = .idle
     @Published private(set) var lines: [Line] = []
+    @Published private(set) var transcript = ""
     @Published private(set) var launchError: String?
 
     private let launcher: TerminalLaunching
@@ -41,6 +42,7 @@ final class TerminalSession: ObservableObject {
 
         status = .starting
         lines.removeAll()
+        transcript = ""
         launchError = nil
         append(.info, "Launching \(shellPath) in \(workingDirectory.path)")
 
@@ -69,8 +71,16 @@ final class TerminalSession: ObservableObject {
             return
         }
 
+        send(text: trimmed + "\n")
+    }
+
+    func send(text: String) {
+        guard !text.isEmpty else {
+            return
+        }
+
         do {
-            try processHandle?.send(trimmed + "\n")
+            try processHandle?.send(text)
         } catch {
             append(.error, error.localizedDescription)
         }
@@ -82,6 +92,14 @@ final class TerminalSession: ObservableObject {
         if status != .failed {
             status = .stopped
         }
+    }
+
+    func resize(cols: Int, rows: Int) {
+        guard cols > 0, rows > 0 else {
+            return
+        }
+
+        processHandle?.resize(cols: UInt16(cols), rows: UInt16(rows))
     }
 
     private func handle(_ event: TerminalEvent) {
@@ -99,6 +117,7 @@ final class TerminalSession: ObservableObject {
 
     private func append(_ kind: Line.Kind, _ text: String) {
         let normalized = text.replacingOccurrences(of: "\r\n", with: "\n")
+        transcript.append(normalized)
         let splitLines = normalized.split(separator: "\n", omittingEmptySubsequences: false)
 
         for item in splitLines {

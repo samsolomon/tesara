@@ -9,7 +9,14 @@ struct TerminalWorkspaceView: View {
         VStack(spacing: 0) {
             header
             Divider()
-            TerminalWebView(theme: settingsStore.activeTheme, lines: session.lines)
+            TerminalWebView(
+                theme: settingsStore.activeTheme,
+                fontFamily: settingsStore.settings.fontFamily,
+                fontSize: settingsStore.settings.fontSize,
+                transcript: session.transcript,
+                onInput: session.send(text:),
+                onResize: session.resize(cols:rows:)
+            )
             Divider()
             commandBar
         }
@@ -80,7 +87,7 @@ struct TerminalWorkspaceView: View {
         case .starting:
             "Starting shell"
         case .running:
-            "PTY-backed shell live; xterm.js renderer still to come"
+            "PTY-backed shell with bundled xterm.js renderer"
         case .failed:
             "Launch failed"
         case .stopped:

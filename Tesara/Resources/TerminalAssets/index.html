@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="./xterm/xterm.css">
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #0b1020;
+    }
+
+    body {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    #terminal {
+      width: 100%;
+      height: 100%;
+      padding: 14px 16px 18px;
+      box-sizing: border-box;
+    }
+
+    .xterm-viewport::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    .xterm-viewport::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.28);
+      border-radius: 999px;
+    }
+  </style>
+</head>
+<body>
+  <div id="terminal"></div>
+  <script src="./xterm/xterm.js"></script>
+  <script src="./xterm/addon-fit.js"></script>
+  <script src="./tesara-terminal.js"></script>
+</body>
+</html>

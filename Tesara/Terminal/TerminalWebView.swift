@@ -3,60 +3,119 @@ import WebKit
 
 struct TerminalWebView: NSViewRepresentable {
     let theme: TerminalTheme
-    let lines: [TerminalSession.Line]
+    let fontFamily: String
+    let fontSize: Double
+    let transcript: String
+    let onInput: (String) -> Void
+    let onResize: (Int, Int) -> Void
 
     func makeCoordinator() -> Coordinator {
-        Coordinator()
+        Coordinator(onInput: onInput, onResize: onResize)
     }
 
     func makeNSView(context: Context) -> WKWebView {
         let configuration = WKWebViewConfiguration()
         configuration.defaultWebpagePreferences.allowsContentJavaScript = true
+        configuration.userContentController.add(context.coordinator, name: Coordinator.inputHandlerName)
+        configuration.userContentController.add(context.coordinator, name: Coordinator.resizeHandlerName)
 
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = context.coordinator
         context.coordinator.webView = webView
         webView.setValue(false, forKey: "drawsBackground")
-        webView.loadHTMLString(Self.bootstrapHTML, baseURL: nil)
+
+        if let pageURL = Bundle.main.url(forResource: "index", withExtension: "html", subdirectory: "TerminalAssets") {
+            webView.loadFileURL(pageURL, allowingReadAccessTo: pageURL.deletingLastPathComponent())
+        }
+
         return webView
     }
 
-    func updateNSView(_ webView: WKWebView, context: Context) {
-        let payload = Payload(theme: theme, lines: lines)
-        guard
-            let data = try? JSONEncoder().encode(payload),
-            let json = String(data: data, encoding: .utf8)
-        else {
-            return
-        }
+    static func dismantleNSView(_ webView: WKWebView, coordinator: Coordinator) {
+        webView.configuration.userContentController.removeScriptMessageHandler(forName: Coordinator.inputHandlerName)
+        webView.configuration.userContentController.removeScriptMessageHandler(forName: Coordinator.resizeHandlerName)
+    }
 
-        context.coordinator.renderScript = "window.tesaraRender(\(json));"
+    func updateNSView(_ webView: WKWebView, context: Context) {
+        context.coordinator.renderScript = context.coordinator.makeRenderScript(
+            theme: theme,
+            fontFamily: fontFamily,
+            fontSize: fontSize,
+            transcript: transcript
+        )
         context.coordinator.flushIfPossible()
     }
 
     private struct Payload: Encodable {
         let theme: TerminalTheme
-        let lines: [RenderableLine]
-
-        init(theme: TerminalTheme, lines: [TerminalSession.Line]) {
-            self.theme = theme
-            self.lines = lines.map { RenderableLine(kind: $0.kind.rawValue, text: $0.text) }
-        }
+        let fontFamily: String
+        let fontSize: Double
+        let replace: Bool
+        let content: String
     }
 
-    private struct RenderableLine: Encodable {
-        let kind: String
-        let text: String
-    }
+    final class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
+        static let inputHandlerName = "terminalInput"
+        static let resizeHandlerName = "terminalResize"
 
-    final class Coordinator: NSObject, WKNavigationDelegate {
         weak var webView: WKWebView?
         var isReady = false
         var renderScript: String?
+        private let onInput: (String) -> Void
+        private let onResize: (Int, Int) -> Void
+        private var lastRenderedTranscript = ""
+        private var lastReportedSize: (cols: Int, rows: Int)?
+        private var pendingRenderState: RenderState?
+
+        init(onInput: @escaping (String) -> Void, onResize: @escaping (Int, Int) -> Void) {
+            self.onInput = onInput
+            self.onResize = onResize
+        }
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             isReady = true
+            lastRenderedTranscript = ""
+            if let pendingRenderState {
+                renderScript = makeRenderScript(
+                    theme: pendingRenderState.theme,
+                    fontFamily: pendingRenderState.fontFamily,
+                    fontSize: pendingRenderState.fontSize,
+                    transcript: pendingRenderState.transcript
+                )
+            }
             flushIfPossible()
+        }
+
+        func makeRenderScript(theme: TerminalTheme, fontFamily: String, fontSize: Double, transcript: String) -> String? {
+            pendingRenderState = RenderState(
+                theme: theme,
+                fontFamily: fontFamily,
+                fontSize: fontSize,
+                transcript: transcript
+            )
+
+            let payload: Payload
+
+            if transcript.isEmpty {
+                payload = Payload(theme: theme, fontFamily: fontFamily, fontSize: fontSize, replace: true, content: "")
+                lastRenderedTranscript = ""
+            } else if transcript.hasPrefix(lastRenderedTranscript) {
+                let chunk = String(transcript.dropFirst(lastRenderedTranscript.count))
+                payload = Payload(theme: theme, fontFamily: fontFamily, fontSize: fontSize, replace: false, content: chunk)
+                lastRenderedTranscript = transcript
+            } else {
+                payload = Payload(theme: theme, fontFamily: fontFamily, fontSize: fontSize, replace: true, content: transcript)
+                lastRenderedTranscript = transcript
+            }
+
+            guard
+                let data = try? JSONEncoder().encode(payload),
+                let json = String(data: data, encoding: .utf8)
+            else {
+                return nil
+            }
+
+            return "window.tesaraRender(\(json));"
         }
 
         func flushIfPossible() {
@@ -66,62 +125,42 @@ struct TerminalWebView: NSViewRepresentable {
 
             webView.evaluateJavaScript(renderScript)
         }
-    }
 
-    private static let bootstrapHTML = """
-    <!doctype html>
-    <html>
-    <head>
-      <meta charset=\"utf-8\">
-      <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">
-      <style>
-        :root {
-          color-scheme: dark;
+        func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+            switch message.name {
+            case Self.inputHandlerName:
+                guard let data = message.body as? String else {
+                    return
+                }
+                onInput(data)
+            case Self.resizeHandlerName:
+                guard
+                    let body = message.body as? [String: Any],
+                    let cols = body["cols"] as? Int,
+                    let rows = body["rows"] as? Int,
+                    cols > 0,
+                    rows > 0
+                else {
+                    return
+                }
+
+                let nextSize = (cols: cols, rows: rows)
+                guard lastReportedSize?.cols != cols || lastReportedSize?.rows != rows else {
+                    return
+                }
+
+                lastReportedSize = nextSize
+                onResize(cols, rows)
+            default:
+                return
+            }
         }
-        html, body {
-          margin: 0;
-          height: 100%;
-          overflow: hidden;
-          background: #0b1020;
-          font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+        private struct RenderState {
+            let theme: TerminalTheme
+            let fontFamily: String
+            let fontSize: Double
+            let transcript: String
         }
-        #terminal {
-          box-sizing: border-box;
-          height: 100%;
-          overflow: auto;
-          padding: 18px 20px 24px;
-          white-space: pre-wrap;
-          word-break: break-word;
-          line-height: 1.45;
-          font-size: 13px;
-        }
-        .line { margin: 0 0 4px; }
-        .info { opacity: 0.72; }
-        .input { font-weight: 600; }
-        .error { color: #f87171; }
-      </style>
-    </head>
-    <body>
-      <div id=\"terminal\"></div>
-      <script>
-        const root = document.getElementById('terminal');
-        window.tesaraRender = function(payload) {
-          document.body.style.background = payload.theme.background;
-          root.style.color = payload.theme.foreground;
-          root.innerHTML = '';
-          for (const line of payload.lines) {
-            const element = document.createElement('div');
-            element.className = 'line ' + line.kind;
-            element.textContent = line.text;
-            if (line.kind === 'input') element.style.color = payload.theme.yellow;
-            if (line.kind === 'info') element.style.color = payload.theme.cyan;
-            if (line.kind === 'error') element.style.color = payload.theme.red;
-            root.appendChild(element);
-          }
-          root.scrollTop = root.scrollHeight;
-        };
-      </script>
-    </body>
-    </html>
-    """
+    }
 }

@@ -23,6 +23,10 @@ targets:
     platform: macOS
     sources:
       - path: Tesara
+        excludes:
+          - Resources
+    resources:
+      - path: Tesara/Resources
     info:
       path: Tesara/Info.plist
     settings:

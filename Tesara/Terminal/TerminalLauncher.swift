@@ -10,6 +10,7 @@ enum TerminalEvent {
 
 protocol TerminalProcessHandle {
     func send(_ input: String) throws
+    func resize(cols: UInt16, rows: UInt16)
     func stop()
 }
 
@@ -106,6 +107,8 @@ private struct LocalShellProcessHandle: TerminalProcessHandle {
         }
         try? stdinHandle.close()
     }
+
+    func resize(cols: UInt16, rows: UInt16) {}
 }
 
 final class PTYShellLauncher: TerminalLaunching {
@@ -214,6 +217,20 @@ private final class PTYShellProcessHandle: TerminalProcessHandle {
             if waitpid(pid, &status, 0) == pid {
                 finishExit(status: status, shouldNotify: false)
             }
+        }
+    }
+
+    func resize(cols: UInt16, rows: UInt16) {
+        queue.async {
+            guard !self.isStopped, !self.didHandleExit else {
+                return
+            }
+
+            var size = winsize(ws_row: rows, ws_col: cols, ws_xpixel: 0, ws_ypixel: 0)
+            _ = withUnsafeMutablePointer(to: &size) {
+                ioctl(self.masterFileDescriptor, TIOCSWINSZ, $0)
+            }
+            kill(self.pid, SIGWINCH)
         }
     }
 
