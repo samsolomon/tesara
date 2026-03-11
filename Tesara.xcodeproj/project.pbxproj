@@ -1,0 +1,536 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0C5ADD3FC3569EE95E75361B /* TerminalLauncher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02E268CDB3B981F061FA12B4 /* TerminalLauncher.swift */; };
+		0FAC866DE2F0E11344222CC0 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 4914B0341A868631C86F9855 /* Sparkle */; };
+		1851A4083C58F1F7361DB04C /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17E46BFDCDCA182651723141 /* SettingsView.swift */; };
+		1CED6DD8299D1750E4C66631 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BA08886415B515EB410905D /* SettingsStore.swift */; };
+		28AA7C7CF64F0DE82AA98573 /* BuiltInTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8C0E5566A3C23FA6CFC0EB2 /* BuiltInTheme.swift */; };
+		3D72C5CAEC99162968379EB2 /* TesaraAppCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8393A786736D6332BB25DC07 /* TesaraAppCommands.swift */; };
+		57DB5F9B4BEF7FD97B9BF8FF /* TerminalWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CC37374EE18F616BCE45DD3 /* TerminalWebView.swift */; };
+		68D5579883F02571544A846D /* TerminalWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDDA22FF0E3CCF02CE8BCD05 /* TerminalWorkspaceView.swift */; };
+		6AB4D491DF5F118108162EEA /* MainWindowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8CF6564CD0AF8278F222619 /* MainWindowView.swift */; };
+		6AF0589C77DB137229E55557 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = DF6EF21EAA4938CD8F036D14 /* GRDB */; };
+		861065493F8E969DF9419959 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57A5490A849F9317664968E7 /* AppSettings.swift */; };
+		98FA319CCB290CC39E9EEF73 /* TerminalTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BB4D282162AFDF0A2DB5D51 /* TerminalTheme.swift */; };
+		BF3F8B3950CB544D24CA8525 /* TesaraTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3E6DBF6FBE09F48C83448BD /* TesaraTests.swift */; };
+		C9FA15C125CD87815FF03CEC /* TesaraApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED0F772A0E12C469683DBCB8 /* TesaraApp.swift */; };
+		DC4B28FCBE3C849D3766A101 /* TerminalSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9ACBFEB7F97B6D7DB444D4F /* TerminalSession.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		CE2E67B78F1FAB00B2796E0C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 40DFEFB8F3E0E8AB2BCBBE4C /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F5D4C707C0FA0C0F03A19903;
+			remoteInfo = Tesara;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		02E268CDB3B981F061FA12B4 /* TerminalLauncher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalLauncher.swift; sourceTree = "<group>"; };
+		17E46BFDCDCA182651723141 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		230B62F5C9074F2BEC567B40 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		4BA08886415B515EB410905D /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
+		57A5490A849F9317664968E7 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
+		8393A786736D6332BB25DC07 /* TesaraAppCommands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TesaraAppCommands.swift; sourceTree = "<group>"; };
+		9BB4D282162AFDF0A2DB5D51 /* TerminalTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalTheme.swift; sourceTree = "<group>"; };
+		9CC37374EE18F616BCE45DD3 /* TerminalWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalWebView.swift; sourceTree = "<group>"; };
+		B8C0E5566A3C23FA6CFC0EB2 /* BuiltInTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuiltInTheme.swift; sourceTree = "<group>"; };
+		B8CF6564CD0AF8278F222619 /* MainWindowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindowView.swift; sourceTree = "<group>"; };
+		C6C01AC8A2526A1108FCC5E8 /* Tesara.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tesara.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D9ACBFEB7F97B6D7DB444D4F /* TerminalSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalSession.swift; sourceTree = "<group>"; };
+		ED0F772A0E12C469683DBCB8 /* TesaraApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TesaraApp.swift; sourceTree = "<group>"; };
+		EDDA22FF0E3CCF02CE8BCD05 /* TerminalWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalWorkspaceView.swift; sourceTree = "<group>"; };
+		F3E6DBF6FBE09F48C83448BD /* TesaraTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TesaraTests.swift; sourceTree = "<group>"; };
+		F7D656612F1AA5C6D7C0A0F2 /* TesaraTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TesaraTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		B0AE7EA6A42600C37E7ACDBB /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6AF0589C77DB137229E55557 /* GRDB in Frameworks */,
+				0FAC866DE2F0E11344222CC0 /* Sparkle in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		30D8D5849454AFEF1900DF9A /* Theme */ = {
+			isa = PBXGroup;
+			children = (
+				B8C0E5566A3C23FA6CFC0EB2 /* BuiltInTheme.swift */,
+				9BB4D282162AFDF0A2DB5D51 /* TerminalTheme.swift */,
+			);
+			path = Theme;
+			sourceTree = "<group>";
+		};
+		34B833143B10337A33E2F84D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				C6C01AC8A2526A1108FCC5E8 /* Tesara.app */,
+				F7D656612F1AA5C6D7C0A0F2 /* TesaraTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		6B95A204B4BC8E7AADC76CD0 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				8393A786736D6332BB25DC07 /* TesaraAppCommands.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		B8310EA6C3B0E6E650C8A075 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				57A5490A849F9317664968E7 /* AppSettings.swift */,
+				4BA08886415B515EB410905D /* SettingsStore.swift */,
+				17E46BFDCDCA182651723141 /* SettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		C2D544A7AD3135CE00E10F2F /* Tesara */ = {
+			isa = PBXGroup;
+			children = (
+				230B62F5C9074F2BEC567B40 /* Info.plist */,
+				B8CF6564CD0AF8278F222619 /* MainWindowView.swift */,
+				ED0F772A0E12C469683DBCB8 /* TesaraApp.swift */,
+				6B95A204B4BC8E7AADC76CD0 /* App */,
+				B8310EA6C3B0E6E650C8A075 /* Settings */,
+				DAF7F752BD488515A0DA51E4 /* Terminal */,
+				30D8D5849454AFEF1900DF9A /* Theme */,
+			);
+			path = Tesara;
+			sourceTree = "<group>";
+		};
+		D2FD19F036CF21642B166830 = {
+			isa = PBXGroup;
+			children = (
+				C2D544A7AD3135CE00E10F2F /* Tesara */,
+				DD4AAB2F3096D1C59637D82F /* TesaraTests */,
+				34B833143B10337A33E2F84D /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		DAF7F752BD488515A0DA51E4 /* Terminal */ = {
+			isa = PBXGroup;
+			children = (
+				02E268CDB3B981F061FA12B4 /* TerminalLauncher.swift */,
+				D9ACBFEB7F97B6D7DB444D4F /* TerminalSession.swift */,
+				9CC37374EE18F616BCE45DD3 /* TerminalWebView.swift */,
+				EDDA22FF0E3CCF02CE8BCD05 /* TerminalWorkspaceView.swift */,
+			);
+			path = Terminal;
+			sourceTree = "<group>";
+		};
+		DD4AAB2F3096D1C59637D82F /* TesaraTests */ = {
+			isa = PBXGroup;
+			children = (
+				F3E6DBF6FBE09F48C83448BD /* TesaraTests.swift */,
+			);
+			path = TesaraTests;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		5C14A70B34F853FC4C34AC20 /* TesaraTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 134222DDD2C39C20419F3B06 /* Build configuration list for PBXNativeTarget "TesaraTests" */;
+			buildPhases = (
+				FDA3BEFE064F3683B6884233 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E6ED6625163B7059381435DC /* PBXTargetDependency */,
+			);
+			name = TesaraTests;
+			packageProductDependencies = (
+			);
+			productName = TesaraTests;
+			productReference = F7D656612F1AA5C6D7C0A0F2 /* TesaraTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		F5D4C707C0FA0C0F03A19903 /* Tesara */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B7993B1D1E2EB56146B2D3AB /* Build configuration list for PBXNativeTarget "Tesara" */;
+			buildPhases = (
+				745D21EE4A597C4AC195D588 /* Sources */,
+				B0AE7EA6A42600C37E7ACDBB /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Tesara;
+			packageProductDependencies = (
+				DF6EF21EAA4938CD8F036D14 /* GRDB */,
+				4914B0341A868631C86F9855 /* Sparkle */,
+			);
+			productName = Tesara;
+			productReference = C6C01AC8A2526A1108FCC5E8 /* Tesara.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		40DFEFB8F3E0E8AB2BCBBE4C /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					F5D4C707C0FA0C0F03A19903 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 73887118A57C3463CDB07105 /* Build configuration list for PBXProject "Tesara" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = D2FD19F036CF21642B166830;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				26DC779BA1E4C2E6C4A2D4AC /* XCRemoteSwiftPackageReference "GRDB.swift" */,
+				EC0C3F65CF77043DFD36796D /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 34B833143B10337A33E2F84D /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				F5D4C707C0FA0C0F03A19903 /* Tesara */,
+				5C14A70B34F853FC4C34AC20 /* TesaraTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		745D21EE4A597C4AC195D588 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				861065493F8E969DF9419959 /* AppSettings.swift in Sources */,
+				28AA7C7CF64F0DE82AA98573 /* BuiltInTheme.swift in Sources */,
+				6AB4D491DF5F118108162EEA /* MainWindowView.swift in Sources */,
+				1CED6DD8299D1750E4C66631 /* SettingsStore.swift in Sources */,
+				1851A4083C58F1F7361DB04C /* SettingsView.swift in Sources */,
+				0C5ADD3FC3569EE95E75361B /* TerminalLauncher.swift in Sources */,
+				DC4B28FCBE3C849D3766A101 /* TerminalSession.swift in Sources */,
+				98FA319CCB290CC39E9EEF73 /* TerminalTheme.swift in Sources */,
+				57DB5F9B4BEF7FD97B9BF8FF /* TerminalWebView.swift in Sources */,
+				68D5579883F02571544A846D /* TerminalWorkspaceView.swift in Sources */,
+				C9FA15C125CD87815FF03CEC /* TesaraApp.swift in Sources */,
+				3D72C5CAEC99162968379EB2 /* TesaraAppCommands.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FDA3BEFE064F3683B6884233 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BF3F8B3950CB544D24CA8525 /* TesaraTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		E6ED6625163B7059381435DC /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F5D4C707C0FA0C0F03A19903 /* Tesara */;
+			targetProxy = CE2E67B78F1FAB00B2796E0C /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		30A3745AC39F33CBB3D50351 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Tesara/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Tesara;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright 2026 Sam Solomon";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.samsolomon.tesara;
+				PRODUCT_NAME = Tesara;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.1;
+			};
+			name = Release;
+		};
+		702BF5542A29716154572C2B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Tesara/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Tesara;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright 2026 Sam Solomon";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.samsolomon.tesara;
+				PRODUCT_NAME = Tesara;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.1;
+			};
+			name = Debug;
+		};
+		7AA69F729E40957983FC3DEC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.samsolomon.tesaraTests;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Tesara.app/Contents/MacOS/Tesara";
+			};
+			name = Debug;
+		};
+		8A0C9513543C0FE65BFF92B4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.samsolomon.tesaraTests;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Tesara.app/Contents/MacOS/Tesara";
+			};
+			name = Release;
+		};
+		B81A3040AF4C2D126AEDB7B0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		BB840BDAD3A7859E408B3C03 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		134222DDD2C39C20419F3B06 /* Build configuration list for PBXNativeTarget "TesaraTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7AA69F729E40957983FC3DEC /* Debug */,
+				8A0C9513543C0FE65BFF92B4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		73887118A57C3463CDB07105 /* Build configuration list for PBXProject "Tesara" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B81A3040AF4C2D126AEDB7B0 /* Debug */,
+				BB840BDAD3A7859E408B3C03 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		B7993B1D1E2EB56146B2D3AB /* Build configuration list for PBXNativeTarget "Tesara" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				702BF5542A29716154572C2B /* Debug */,
+				30A3745AC39F33CBB3D50351 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		26DC779BA1E4C2E6C4A2D4AC /* XCRemoteSwiftPackageReference "GRDB.swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/groue/GRDB.swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 7.0.0;
+			};
+		};
+		EC0C3F65CF77043DFD36796D /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.6.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		4914B0341A868631C86F9855 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EC0C3F65CF77043DFD36796D /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+		DF6EF21EAA4938CD8F036D14 /* GRDB */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 26DC779BA1E4C2E6C4A2D4AC /* XCRemoteSwiftPackageReference "GRDB.swift" */;
+			productName = GRDB;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 40DFEFB8F3E0E8AB2BCBBE4C /* Project object */;
+}

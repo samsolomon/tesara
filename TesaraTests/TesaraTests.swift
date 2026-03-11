@@ -1,0 +1,15 @@
+import XCTest
+@testable import Tesara
+
+final class TesaraTests: XCTestCase {
+    func testDefaultSettingsUseOxideTheme() {
+        let settings = AppSettings.default
+
+        XCTAssertEqual(settings.themeID, BuiltInTheme.oxide.id)
+        XCTAssertEqual(settings.defaultWorkingDirectory.path, FileManager.default.homeDirectoryForCurrentUser.path)
+    }
+
+    func testBuiltInThemesCount() {
+        XCTAssertEqual(BuiltInTheme.allCases.count, 10)
+    }
+}

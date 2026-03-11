@@ -1,0 +1,58 @@
+name: Tesara
+options:
+  minimumXcodeGenVersion: 2.38.0
+  deploymentTarget:
+    macOS: "14.0"
+configs:
+  Debug: debug
+  Release: release
+settings:
+  base:
+    MARKETING_VERSION: 0.1.0
+    CURRENT_PROJECT_VERSION: 1
+packages:
+  GRDB:
+    url: https://github.com/groue/GRDB.swift.git
+    from: 7.0.0
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle.git
+    from: 2.6.0
+targets:
+  Tesara:
+    type: application
+    platform: macOS
+    sources:
+      - path: Tesara
+    info:
+      path: Tesara/Info.plist
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.samsolomon.tesara
+        PRODUCT_NAME: Tesara
+        GENERATE_INFOPLIST_FILE: NO
+        SWIFT_VERSION: 5.10
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: ""
+        INFOPLIST_KEY_CFBundleDisplayName: Tesara
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.developer-tools
+        INFOPLIST_KEY_NSHumanReadableCopyright: Copyright 2026 Sam Solomon
+    dependencies:
+      - package: GRDB
+        product: GRDB
+      - package: Sparkle
+        product: Sparkle
+    scheme:
+      testTargets:
+        - TesaraTests
+  TesaraTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: TesaraTests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.samsolomon.tesaraTests
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_VERSION: 5.10
+    dependencies:
+      - target: Tesara
