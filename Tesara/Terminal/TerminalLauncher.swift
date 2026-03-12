@@ -126,6 +126,8 @@ final class PTYShellLauncher: TerminalLaunching {
             throw TerminalLaunchError.invalidWorkingDirectory
         }
 
+        let launchConfiguration = try shellLaunchConfiguration(for: shellPath)
+
         var masterFileDescriptor: Int32 = -1
         var windowSize = winsize(ws_row: 40, ws_col: 120, ws_xpixel: 0, ws_ypixel: 0)
         let pid = forkpty(&masterFileDescriptor, nil, nil, &windowSize)
@@ -133,8 +135,6 @@ final class PTYShellLauncher: TerminalLaunching {
         guard pid >= 0 else {
             throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO)
         }
-
-        let launchConfiguration = try shellLaunchConfiguration(for: shellPath)
 
         if pid == 0 {
             launchChildProcess(
