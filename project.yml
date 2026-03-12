@@ -36,7 +36,9 @@ targets:
         GENERATE_INFOPLIST_FILE: NO
         SWIFT_VERSION: 5.10
         CODE_SIGN_STYLE: Automatic
-        DEVELOPMENT_TEAM: ""
+        DEVELOPMENT_TEAM: 9ZLX6W79P6
+        CODE_SIGN_ENTITLEMENTS: Tesara/Tesara.entitlements
+        ENABLE_HARDENED_RUNTIME: YES
         INFOPLIST_KEY_CFBundleDisplayName: Tesara
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.developer-tools
         INFOPLIST_KEY_NSHumanReadableCopyright: Copyright 2026 Sam Solomon
@@ -58,5 +60,6 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.samsolomon.tesaraTests
         GENERATE_INFOPLIST_FILE: YES
         SWIFT_VERSION: 5.10
+        DEVELOPMENT_TEAM: 9ZLX6W79P6
     dependencies:
       - target: Tesara

@@ -1,8 +1,10 @@
+import Sparkle
 import SwiftUI
 import UniformTypeIdentifiers
 
 struct SettingsView: View {
     @EnvironmentObject private var settingsStore: SettingsStore
+    let updater: SPUUpdater
 
     @State private var importedThemeDocument: ThemeDocument?
     @State private var isImporterPresented = false
@@ -36,7 +38,7 @@ struct SettingsView: View {
                     Label("Keyboard", systemImage: "keyboard")
                 }
 
-            UpdatesPrivacySettingsPane(settings: $settingsStore.settings)
+            UpdatesPrivacySettingsPane(settings: $settingsStore.settings, updater: updater)
                 .tabItem {
                     Label("Updates", systemImage: "arrow.triangle.2.circlepath")
                 }
@@ -209,10 +211,14 @@ private struct KeyboardSettingsPane: View {
 
 private struct UpdatesPrivacySettingsPane: View {
     @Binding var settings: AppSettings
+    let updater: SPUUpdater
 
     var body: some View {
         Form {
             Toggle("Check for updates automatically", isOn: $settings.updateChecksEnabled)
+
+            CheckForUpdatesView(updater: updater)
+
             Toggle("Enable local logging", isOn: $settings.localLoggingEnabled)
 
             Section {

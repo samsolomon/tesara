@@ -216,6 +216,65 @@ final class TerminalSessionTests: XCTestCase {
         XCTAssertTrue(fullText.contains("world"))
     }
 
+    // MARK: OSC 7 CWD Tracking
+
+    func testOSC7UpdatesCurrentWorkingDirectory() async {
+        session.start(shellPath: "/bin/zsh", workingDirectory: URL(fileURLWithPath: "/tmp"))
+
+        launcher.simulateStdout("\u{1B}]7;file://localhost/Users/sam/projects\u{07}")
+        await yieldToMainActor()
+
+        XCTAssertEqual(session.currentWorkingDirectory, "/Users/sam/projects")
+    }
+
+    func testOSC7WithSTTerminator() async {
+        session.start(shellPath: "/bin/zsh", workingDirectory: URL(fileURLWithPath: "/tmp"))
+
+        launcher.simulateStdout("\u{1B}]7;file://localhost/tmp\u{1B}\\")
+        await yieldToMainActor()
+
+        XCTAssertEqual(session.currentWorkingDirectory, "/tmp")
+    }
+
+    func testOSC7IgnoresNonFileSchemes() async {
+        session.start(shellPath: "/bin/zsh", workingDirectory: URL(fileURLWithPath: "/tmp"))
+
+        launcher.simulateStdout("\u{1B}]7;http://example.com/path\u{07}")
+        await yieldToMainActor()
+
+        XCTAssertNil(session.currentWorkingDirectory)
+    }
+
+    func testOSC7WithPercentEncodedPath() async {
+        session.start(shellPath: "/bin/zsh", workingDirectory: URL(fileURLWithPath: "/tmp"))
+
+        launcher.simulateStdout("\u{1B}]7;file://localhost/Users/sam/my%20project\u{07}")
+        await yieldToMainActor()
+
+        XCTAssertEqual(session.currentWorkingDirectory, "/Users/sam/my project")
+    }
+
+    func testOSC7InitiallyNil() {
+        XCTAssertNil(session.currentWorkingDirectory)
+    }
+
+    // MARK: TUI Passthrough
+
+    func testTUIPassthroughSkipsParser() async {
+        session.start(shellPath: "/bin/zsh", workingDirectory: URL(fileURLWithPath: "/tmp"))
+        session.tuiPassthroughEnabled = true
+
+        // Send raw OSC 133 — should NOT trigger block capture
+        launcher.simulateStdout("\u{1B}]133;B\u{07}echo hi\u{1B}]133;C\u{07}hi\u{1B}]133;D;0\u{07}")
+        await yieldToMainActor()
+
+        XCTAssertEqual(session.capturedBlockCount, 0)
+
+        // But transcript should still contain the raw text
+        let content = session.transcriptLog.contentSince(offset: 0)
+        XCTAssertTrue(content.contains("echo hi"))
+    }
+
     // MARK: Guard against double start
 
     func testDoubleStartIsIgnored() {

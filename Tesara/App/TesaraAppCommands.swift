@@ -1,13 +1,17 @@
 import AppKit
+import Sparkle
 import SwiftUI
 
 struct TesaraAppCommands: Commands {
     @ObservedObject var manager: WorkspaceManager
     @ObservedObject var settingsStore: SettingsStore
     @ObservedObject var blockStore: BlockStore
+    let updater: SPUUpdater
 
     var body: some Commands {
         CommandGroup(after: .appInfo) {
+            CheckForUpdatesView(updater: updater)
+
             Button("Settings...") {
                 NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
             }

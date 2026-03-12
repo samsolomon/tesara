@@ -24,6 +24,7 @@
 		6AB4D491DF5F118108162EEA /* MainWindowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8CF6564CD0AF8278F222619 /* MainWindowView.swift */; };
 		6AF0589C77DB137229E55557 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = DF6EF21EAA4938CD8F036D14 /* GRDB */; };
 		757F00F9B3700BB46988C6CF /* TranscriptLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCE89E00B323BA621EC2A946 /* TranscriptLog.swift */; };
+		79F0B4BD6843110ADF62D883 /* CheckForUpdatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D87C2B989F7DF6FA07307499 /* CheckForUpdatesView.swift */; };
 		7C4EC6EB70E96401AD27AFB9 /* SettingsStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0913B2DEDB933D3E3356B83 /* SettingsStoreTests.swift */; };
 		81D353BEAF13304C4935B40F /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6D9B1F4149EB9724158875C /* HistoryView.swift */; };
 		81F684B3EE723B89F0976D5E /* TerminalThemeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 692291F83027B0F2F4CA76BF /* TerminalThemeTests.swift */; };
@@ -80,10 +81,12 @@
 		B8CF6564CD0AF8278F222619 /* MainWindowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindowView.swift; sourceTree = "<group>"; };
 		B9098467F6B5E13AF93A1ECD /* TerminalBlockCaptureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalBlockCaptureTests.swift; sourceTree = "<group>"; };
 		C0913B2DEDB933D3E3356B83 /* SettingsStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStoreTests.swift; sourceTree = "<group>"; };
+		C0A422BFC855684762B34843 /* Tesara.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Tesara.entitlements; sourceTree = "<group>"; };
 		C43028483E4CE7E65A49B780 /* TabBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBarView.swift; sourceTree = "<group>"; };
 		C6C01AC8A2526A1108FCC5E8 /* Tesara.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tesara.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CCE89E00B323BA621EC2A946 /* TranscriptLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptLog.swift; sourceTree = "<group>"; };
 		D1A8E49D78FD3DA47DB08402 /* TranscriptLogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptLogTests.swift; sourceTree = "<group>"; };
+		D87C2B989F7DF6FA07307499 /* CheckForUpdatesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckForUpdatesView.swift; sourceTree = "<group>"; };
 		D89D726E46FBCEF09C9F3737 /* BlockStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockStore.swift; sourceTree = "<group>"; };
 		D9ACBFEB7F97B6D7DB444D4F /* TerminalSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalSession.swift; sourceTree = "<group>"; };
 		E6D9B1F4149EB9724158875C /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
@@ -137,6 +140,7 @@
 		6B95A204B4BC8E7AADC76CD0 /* App */ = {
 			isa = PBXGroup;
 			children = (
+				D87C2B989F7DF6FA07307499 /* CheckForUpdatesView.swift */,
 				8393A786736D6332BB25DC07 /* TesaraAppCommands.swift */,
 			);
 			path = App;
@@ -157,6 +161,7 @@
 			children = (
 				230B62F5C9074F2BEC567B40 /* Info.plist */,
 				B8CF6564CD0AF8278F222619 /* MainWindowView.swift */,
+				C0A422BFC855684762B34843 /* Tesara.entitlements */,
 				ED0F772A0E12C469683DBCB8 /* TesaraApp.swift */,
 				6B95A204B4BC8E7AADC76CD0 /* App */,
 				5943DB594FC73579D8E90FD1 /* History */,
@@ -262,8 +267,11 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
+					5C14A70B34F853FC4C34AC20 = {
+						DevelopmentTeam = 9ZLX6W79P6;
+					};
 					F5D4C707C0FA0C0F03A19903 = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = 9ZLX6W79P6;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -300,6 +308,7 @@
 				861065493F8E969DF9419959 /* AppSettings.swift in Sources */,
 				1D208652A6CF443FFD84D919 /* BlockStore.swift in Sources */,
 				28AA7C7CF64F0DE82AA98573 /* BuiltInTheme.swift in Sources */,
+				79F0B4BD6843110ADF62D883 /* CheckForUpdatesView.swift in Sources */,
 				81D353BEAF13304C4935B40F /* HistoryView.swift in Sources */,
 				6AB4D491DF5F118108162EEA /* MainWindowView.swift in Sources */,
 				4AE351D65A72B81935CF5F47 /* OSC133Parser.swift in Sources */,
@@ -355,9 +364,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Tesara/Tesara.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 9ZLX6W79P6;
+				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Tesara/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Tesara;
@@ -378,9 +389,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Tesara/Tesara.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 9ZLX6W79P6;
+				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Tesara/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Tesara;
@@ -402,6 +415,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 9ZLX6W79P6;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -420,6 +434,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 9ZLX6W79P6;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

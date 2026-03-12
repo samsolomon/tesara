@@ -104,5 +104,4 @@ indirect enum PaneNode: Identifiable {
             )
         }
     }
-
 }
