@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MainWindowView: View {
     @EnvironmentObject private var settingsStore: SettingsStore
+    @EnvironmentObject private var blockStore: BlockStore
     @State private var selection: NavigationItem? = .session
 
     private enum NavigationItem: Hashable {
@@ -33,10 +34,7 @@ struct MainWindowView: View {
         case .session:
             TerminalWorkspaceView()
         case .history:
-            placeholderCard(
-                title: "Block History",
-                detail: "GRDB-backed block history lands in Session 2 after OSC 133 parsing is in place."
-            )
+            HistoryView()
         case .settings:
             placeholderCard(
                 title: "Settings Ready",

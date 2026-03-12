@@ -2,8 +2,8 @@ import SwiftUI
 
 struct TerminalWorkspaceView: View {
     @EnvironmentObject private var settingsStore: SettingsStore
+    @EnvironmentObject private var blockStore: BlockStore
     @StateObject private var session = TerminalSession()
-    @State private var commandText = "pwd"
 
     var body: some View {
         VStack(spacing: 0) {
@@ -18,10 +18,11 @@ struct TerminalWorkspaceView: View {
                 onResize: session.resize(cols:rows:)
             )
             Divider()
-            commandBar
+            footerBar
         }
         .background(settingsStore.activeTheme.swiftUIColor(from: settingsStore.activeTheme.background))
         .task {
+            session.configure(blockStore: blockStore)
             if session.status == .idle {
                 session.start(
                     shellPath: settingsStore.settings.shellPath,
@@ -60,14 +61,17 @@ struct TerminalWorkspaceView: View {
         .padding(.vertical, 12)
     }
 
-    private var commandBar: some View {
+    private var footerBar: some View {
         HStack(spacing: 12) {
-            TextField("Run a shell command", text: $commandText)
-                .textFieldStyle(.roundedBorder)
-                .onSubmit(sendCommand)
+            Label("Type directly in the terminal surface", systemImage: "keyboard")
+                .font(.caption)
+                .foregroundStyle(.secondary)
 
-            Button("Send", action: sendCommand)
-                .keyboardShortcut(.return, modifiers: [.command])
+            Spacer()
+
+            Label("\(session.capturedBlockCount) captured", systemImage: "square.stack.3d.up")
+                .font(.caption)
+                .foregroundStyle(.secondary)
 
             Button("Restart") {
                 session.stop()
@@ -87,7 +91,7 @@ struct TerminalWorkspaceView: View {
         case .starting:
             "Starting shell"
         case .running:
-            "PTY-backed shell with bundled xterm.js renderer"
+            "PTY-backed shell with xterm.js, OSC 133 parsing, and block capture"
         case .failed:
             "Launch failed"
         case .stopped:
@@ -108,11 +112,6 @@ struct TerminalWorkspaceView: View {
         }
     }
 
-    private func sendCommand() {
-        let command = commandText
-        session.send(command: command)
-        commandText = ""
-    }
 }
 
 #Preview {

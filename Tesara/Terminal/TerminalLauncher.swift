@@ -134,8 +134,14 @@ final class PTYShellLauncher: TerminalLaunching {
             throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO)
         }
 
+        let launchConfiguration = try shellLaunchConfiguration(for: shellPath)
+
         if pid == 0 {
-            launchChildProcess(shellPath: shellPath, workingDirectory: workingDirectory)
+            launchChildProcess(
+                shellPath: shellPath,
+                workingDirectory: workingDirectory,
+                launchConfiguration: launchConfiguration
+            )
         }
 
         return PTYShellProcessHandle(
@@ -145,27 +151,84 @@ final class PTYShellLauncher: TerminalLaunching {
         )
     }
 
-    private func launchChildProcess(shellPath: String, workingDirectory: URL) -> Never {
+    private func shellLaunchConfiguration(for shellPath: String) throws -> ShellLaunchConfiguration {
+        let shellName = URL(fileURLWithPath: shellPath).lastPathComponent
+
+        if shellName == "zsh", let integrationURL = Bundle.main.url(forResource: "tesara-zsh-integration", withExtension: "zsh", subdirectory: "TerminalIntegration") {
+            let dotDirectory = FileManager.default.temporaryDirectory
+                .appendingPathComponent("tesara-zsh-\(UUID().uuidString)", isDirectory: true)
+
+            try FileManager.default.createDirectory(at: dotDirectory, withIntermediateDirectories: true)
+
+            try writeFile(named: ".zshenv", in: dotDirectory, contents: """
+            if [ -f \"$HOME/.zshenv\" ]; then
+              source \"$HOME/.zshenv\"
+            fi
+            """)
+            try writeFile(named: ".zprofile", in: dotDirectory, contents: """
+            if [ -f \"$HOME/.zprofile\" ]; then
+              source \"$HOME/.zprofile\"
+            fi
+            """)
+            try writeFile(named: ".zshrc", in: dotDirectory, contents: """
+            if [ -f \"$HOME/.zshrc\" ]; then
+              source \"$HOME/.zshrc\"
+            fi
+            if [ -f \"\(integrationURL.path)\" ]; then
+              source \"\(integrationURL.path)\"
+            fi
+            """)
+            try writeFile(named: ".zlogin", in: dotDirectory, contents: """
+            if [ -f \"$HOME/.zlogin\" ]; then
+              source \"$HOME/.zlogin\"
+            fi
+            """)
+
+            return ShellLaunchConfiguration(
+                arguments: ["-zsh"],
+                environment: ["ZDOTDIR": dotDirectory.path]
+            )
+        }
+
+        return ShellLaunchConfiguration(arguments: ["-" + shellName], environment: [:])
+    }
+
+    private func writeFile(named name: String, in directory: URL, contents: String) throws {
+        try contents.write(to: directory.appendingPathComponent(name), atomically: true, encoding: .utf8)
+    }
+
+    private func launchChildProcess(shellPath: String, workingDirectory: URL, launchConfiguration: ShellLaunchConfiguration) -> Never {
         _ = chdir(workingDirectory.path)
         setenv("TERM", "xterm-256color", 1)
         setenv("TERM_PROGRAM", "Tesara", 1)
         setenv("COLORTERM", "truecolor", 1)
 
-        let loginShellName = "-" + URL(fileURLWithPath: shellPath).lastPathComponent
+        for (key, value) in launchConfiguration.environment {
+            setenv(key, value, 1)
+        }
 
         shellPath.withCString { shellPathCString in
-            loginShellName.withCString { loginShellCString in
-                let arg0 = strdup(loginShellCString)
-                defer { free(arg0) }
+            var pointers = launchConfiguration.arguments.map { strdup($0) }
+            defer {
+                for pointer in pointers {
+                    free(pointer)
+                }
+            }
 
-                var args: [UnsafeMutablePointer<CChar>?] = [arg0, nil]
-                execv(shellPathCString, &args)
+            var args = pointers + [nil]
+            args.withUnsafeMutableBufferPointer { buffer in
+                execv(shellPathCString, buffer.baseAddress)
             }
         }
 
         perror("execv")
         _exit(127)
     }
+}
+
+private struct ShellLaunchConfiguration {
+    let arguments: [String]
+    let environment: [String: String]
 }
 
 private final class PTYShellProcessHandle: TerminalProcessHandle {
