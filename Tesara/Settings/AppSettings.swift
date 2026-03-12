@@ -16,7 +16,7 @@ struct AppSettings: Codable, Equatable {
 
     init(
         schemaVersion: Int = currentSchemaVersion,
-        fontFamily: String = "SF Mono",
+        fontFamily: String = "IBM Plex Mono",
         fontSize: Double = 13,
         themeID: String = BuiltInTheme.oxide.id,
         importedThemes: [ImportedTheme] = [],

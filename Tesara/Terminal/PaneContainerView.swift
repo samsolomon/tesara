@@ -8,6 +8,7 @@ struct PaneContainerView: View {
     let activePaneID: UUID?
     let onSelectPane: (UUID) -> Void
     let onUpdateRatio: (UUID, CGFloat) -> Void
+    var isSplit: Bool = false
 
     var body: some View {
         switch node {
@@ -19,6 +20,7 @@ struct PaneContainerView: View {
                 fontFamily: fontFamily,
                 fontSize: fontSize,
                 isActive: id == activePaneID,
+                showBorder: isSplit,
                 onSelectPane: onSelectPane
             )
 
@@ -41,12 +43,14 @@ struct PaneContainerView: View {
         let firstChild = PaneContainerView(
             node: first, theme: theme, fontFamily: fontFamily,
             fontSize: fontSize, activePaneID: activePaneID,
-            onSelectPane: onSelectPane, onUpdateRatio: onUpdateRatio
+            onSelectPane: onSelectPane, onUpdateRatio: onUpdateRatio,
+            isSplit: true
         )
         let secondChild = PaneContainerView(
             node: second, theme: theme, fontFamily: fontFamily,
             fontSize: fontSize, activePaneID: activePaneID,
-            onSelectPane: onSelectPane, onUpdateRatio: onUpdateRatio
+            onSelectPane: onSelectPane, onUpdateRatio: onUpdateRatio,
+            isSplit: true
         )
         let divider = PaneDividerView(
             direction: direction,
@@ -78,6 +82,7 @@ private struct TerminalPaneLeafView: View {
     let fontFamily: String
     let fontSize: Double
     let isActive: Bool
+    let showBorder: Bool
     let onSelectPane: (UUID) -> Void
 
     var body: some View {
@@ -89,7 +94,7 @@ private struct TerminalPaneLeafView: View {
             onInput: session.send(text:),
             onResize: session.resize(cols:rows:)
         )
-        .border(isActive ? Color.accentColor : Color.clear, width: 2)
+        .border(showBorder && isActive ? Color.accentColor : Color.clear, width: showBorder ? 2 : 0)
         .contentShape(Rectangle())
         .onTapGesture {
             onSelectPane(id)
