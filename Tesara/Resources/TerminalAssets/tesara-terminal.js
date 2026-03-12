@@ -3,7 +3,7 @@
     allowProposedApi: false,
     convertEol: false,
     cursorBlink: true,
-    fontFamily: 'IBM Plex Mono, SF Mono, Menlo, ui-monospace, monospace',
+    fontFamily: 'SF Mono, Menlo, ui-monospace, monospace',
     fontSize: 13,
     scrollback: 5000,
     theme: {
