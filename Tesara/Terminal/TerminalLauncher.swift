@@ -190,11 +190,57 @@ final class PTYShellLauncher: TerminalLaunching {
             )
         }
 
+        if shellName == "bash", let integrationURL = Bundle.main.url(forResource: "tesara-bash-integration", withExtension: "sh", subdirectory: "TerminalIntegration") {
+            let rcFileURL = FileManager.default.temporaryDirectory
+                .appendingPathComponent("tesara-bash-\(UUID().uuidString).sh")
+
+            try writeFile(named: rcFileURL.lastPathComponent, at: rcFileURL, contents: """
+            if [ -f /etc/profile ]; then
+              source /etc/profile
+            fi
+            if [ -f "$HOME/.bash_profile" ]; then
+              source "$HOME/.bash_profile"
+            elif [ -f "$HOME/.bash_login" ]; then
+              source "$HOME/.bash_login"
+            elif [ -f "$HOME/.profile" ]; then
+              source "$HOME/.profile"
+            fi
+            if [ -f "$HOME/.bashrc" ]; then
+              source "$HOME/.bashrc"
+            fi
+            if [ -f "\(integrationURL.path)" ]; then
+              source "\(integrationURL.path)"
+            fi
+            __tesara_existing_exit_trap=$(trap -p EXIT)
+            __tesara_run_logout() {
+              if [ -f "$HOME/.bash_logout" ]; then
+                source "$HOME/.bash_logout"
+              fi
+            }
+            if [ -n "$__tesara_existing_exit_trap" ]; then
+              __tesara_existing_exit_handler=${__tesara_existing_exit_trap#trap -- \' }
+              __tesara_existing_exit_handler=${__tesara_existing_exit_handler%\' EXIT}
+              trap "__tesara_run_logout; ${__tesara_existing_exit_handler}" EXIT
+            else
+              trap '__tesara_run_logout' EXIT
+            fi
+            """)
+
+            return ShellLaunchConfiguration(
+                arguments: ["-bash", "--rcfile", rcFileURL.path, "-i"],
+                environment: [:]
+            )
+        }
+
         return ShellLaunchConfiguration(arguments: ["-" + shellName], environment: [:])
     }
 
     private func writeFile(named name: String, in directory: URL, contents: String) throws {
         try contents.write(to: directory.appendingPathComponent(name), atomically: true, encoding: .utf8)
+    }
+
+    private func writeFile(named _: String, at url: URL, contents: String) throws {
+        try contents.write(to: url, atomically: true, encoding: .utf8)
     }
 
     private func launchChildProcess(shellPath: String, workingDirectory: URL, launchConfiguration: ShellLaunchConfiguration) -> Never {
@@ -208,7 +254,7 @@ final class PTYShellLauncher: TerminalLaunching {
         }
 
         shellPath.withCString { shellPathCString in
-            var pointers = launchConfiguration.arguments.map { strdup($0) }
+            let pointers = launchConfiguration.arguments.map { strdup($0) }
             defer {
                 for pointer in pointers {
                     free(pointer)

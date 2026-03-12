@@ -25,7 +25,7 @@ final class BlockStore: ObservableObject {
         migrator = BlockStore.makeMigrator()
 
         do {
-            let dbQueue = try DatabaseQueue(path: BlockStore.databasePath)
+            let dbQueue = try DatabaseQueue(path: try BlockStore.databasePath())
             try migrator.migrate(dbQueue)
             self.dbQueue = dbQueue
             reloadRecentBlocks()
@@ -124,16 +124,16 @@ final class BlockStore: ObservableObject {
         }) ?? []
     }
 
-    private static var databasePath: String {
+    private static func databasePath() throws -> String {
         let fileManager = FileManager.default
-        let appSupportDirectory = try! fileManager.url(
+        let appSupportDirectory = try fileManager.url(
             for: .applicationSupportDirectory,
             in: .userDomainMask,
             appropriateFor: nil,
             create: true
         )
         let directory = appSupportDirectory.appendingPathComponent("Tesara", isDirectory: true)
-        try? fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
+        try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
         return directory.appendingPathComponent("tesara.sqlite").path
     }
 

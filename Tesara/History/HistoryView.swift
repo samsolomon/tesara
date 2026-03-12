@@ -4,7 +4,13 @@ struct HistoryView: View {
     @EnvironmentObject private var blockStore: BlockStore
 
     var body: some View {
-        if blockStore.recentBlocks.isEmpty {
+        if let startupErrorMessage = blockStore.startupErrorMessage {
+            ContentUnavailableView(
+                "History Unavailable",
+                systemImage: "externaldrive.badge.exclamationmark",
+                description: Text(startupErrorMessage)
+            )
+        } else if blockStore.recentBlocks.isEmpty {
             ContentUnavailableView(
                 "No Blocks Yet",
                 systemImage: "clock.arrow.circlepath",
