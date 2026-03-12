@@ -25,20 +25,23 @@ final class TerminalSession: ObservableObject {
 
     @Published private(set) var status: Status = .idle
     @Published private(set) var lines: [Line] = []
-    @Published private(set) var transcript = ""
+    @Published private(set) var transcriptLog = TranscriptLog()
     @Published private(set) var launchError: String?
     @Published private(set) var capturedBlockCount = 0
+    @Published var tuiPassthroughEnabled = false
+    @Published private(set) var currentWorkingDirectory: String?
 
     private let launcher: TerminalLaunching
-    private let parser = OSC133Parser()
+    private let parser: OSC133Parsing
     private var processHandle: TerminalProcessHandle?
     private var blockStore: BlockStore?
     private var activeSessionID: UUID?
     private var activeCapture: TerminalBlockCapture?
     private var blockOrderIndex = 0
 
-    init(launcher: TerminalLaunching = PTYShellLauncher()) {
+    init(launcher: TerminalLaunching = PTYShellLauncher(), parser: OSC133Parsing = OSC133Parser()) {
         self.launcher = launcher
+        self.parser = parser
     }
 
     func configure(blockStore: BlockStore) {
@@ -54,7 +57,7 @@ final class TerminalSession: ObservableObject {
 
         status = .starting
         lines.removeAll()
-        transcript = ""
+        transcriptLog.reset()
         launchError = nil
         capturedBlockCount = 0
         blockOrderIndex = 0
@@ -135,6 +138,13 @@ final class TerminalSession: ObservableObject {
     }
 
     private func handleStandardOutput(_ text: String) {
+        extractOSC7(from: text)
+
+        if tuiPassthroughEnabled {
+            append(.output, text)
+            return
+        }
+
         for token in parser.feed(text) {
             switch token {
             case .text(let visibleText):
@@ -143,6 +153,18 @@ final class TerminalSession: ObservableObject {
             case .event(let event):
                 handleControlEvent(event)
             }
+        }
+    }
+
+    private func extractOSC7(from text: String) {
+        // OSC 7 format: ESC ] 7 ; file://hostname/path BEL (or ST)
+        guard let range = text.range(of: "\u{1B}]7;") else { return }
+        let afterPrefix = text[range.upperBound...]
+        let terminator = afterPrefix.firstIndex(of: "\u{07}") ?? afterPrefix.range(of: "\u{1B}\\")?.lowerBound
+        guard let terminator else { return }
+        let uri = String(afterPrefix[..<terminator])
+        if let url = URL(string: uri), url.scheme == "file" {
+            currentWorkingDirectory = url.path
         }
     }
 
@@ -213,13 +235,14 @@ final class TerminalSession: ObservableObject {
 
     private func sanitizeCommand(_ command: String) -> String {
         command
-            .replacingOccurrences(of: "\r", with: "")
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .replacingOccurrences(of: "\r", with: "\n")
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private func append(_ kind: Line.Kind, _ text: String) {
         let normalized = text.replacingOccurrences(of: "\r\n", with: "\n")
-        transcript.append(normalized)
+        transcriptLog.append(normalized)
         let splitLines = normalized.split(separator: "\n", omittingEmptySubsequences: false)
 
         for item in splitLines {

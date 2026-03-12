@@ -3,6 +3,7 @@ import SwiftUI
 struct MainWindowView: View {
     @EnvironmentObject private var settingsStore: SettingsStore
     @EnvironmentObject private var blockStore: BlockStore
+    @EnvironmentObject private var workspaceManager: WorkspaceManager
     @State private var selection: NavigationItem? = .session
 
     private enum NavigationItem: Hashable {
@@ -32,7 +33,7 @@ struct MainWindowView: View {
     private var detailView: some View {
         switch selection ?? .session {
         case .session:
-            TerminalWorkspaceView()
+            TerminalWorkspaceView(manager: workspaceManager)
         case .history:
             HistoryView()
         case .settings:
@@ -84,4 +85,5 @@ struct MainWindowView: View {
 #Preview {
     MainWindowView()
         .environmentObject(SettingsStore())
+        .environmentObject(WorkspaceManager())
 }

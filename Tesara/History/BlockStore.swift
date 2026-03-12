@@ -36,6 +36,12 @@ final class BlockStore: ObservableObject {
         }
     }
 
+    init(dbQueue: DatabaseQueue) throws {
+        migrator = BlockStore.makeMigrator()
+        try migrator.migrate(dbQueue)
+        self.dbQueue = dbQueue
+    }
+
     func startSession(shellPath: String, workingDirectory: URL) -> UUID {
         let sessionID = UUID()
         guard let dbQueue else {

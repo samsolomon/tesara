@@ -12,7 +12,12 @@ enum OSC133Token: Equatable {
     case event(OSC133Event)
 }
 
-final class OSC133Parser {
+protocol OSC133Parsing {
+    func feed(_ chunk: String) -> [OSC133Token]
+    func reset()
+}
+
+final class OSC133Parser: OSC133Parsing {
     private var pending = ""
 
     func reset() {

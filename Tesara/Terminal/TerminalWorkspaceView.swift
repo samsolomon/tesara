@@ -3,36 +3,60 @@ import SwiftUI
 struct TerminalWorkspaceView: View {
     @EnvironmentObject private var settingsStore: SettingsStore
     @EnvironmentObject private var blockStore: BlockStore
-    @StateObject private var session = TerminalSession()
+    @ObservedObject var manager: WorkspaceManager
 
     var body: some View {
         VStack(spacing: 0) {
+            TabBarView(manager: manager) {
+                manager.newTab(
+                    shellPath: settingsStore.settings.shellPath,
+                    workingDirectory: settingsStore.settings.defaultWorkingDirectory,
+                    blockStore: blockStore
+                )
+            }
+            Divider()
             header
             Divider()
-            TerminalWebView(
-                theme: settingsStore.activeTheme,
-                fontFamily: settingsStore.settings.fontFamily,
-                fontSize: settingsStore.settings.fontSize,
-                transcript: session.transcript,
-                onInput: session.send(text:),
-                onResize: session.resize(cols:rows:)
-            )
+            terminalContent
             Divider()
             footerBar
         }
         .background(settingsStore.activeTheme.swiftUIColor(from: settingsStore.activeTheme.background))
         .task {
-            session.configure(blockStore: blockStore)
-            if session.status == .idle {
-                session.start(
+            if manager.tabs.isEmpty {
+                manager.newTab(
                     shellPath: settingsStore.settings.shellPath,
-                    workingDirectory: settingsStore.settings.defaultWorkingDirectory
+                    workingDirectory: settingsStore.settings.defaultWorkingDirectory,
+                    blockStore: blockStore
                 )
             }
         }
-        .onDisappear {
-            session.stop()
+    }
+
+    private var terminalContent: some View {
+        ZStack {
+            ForEach(manager.tabs) { tab in
+                PaneContainerView(
+                    node: tab.rootPane,
+                    theme: settingsStore.activeTheme,
+                    fontFamily: settingsStore.settings.fontFamily,
+                    fontSize: settingsStore.settings.fontSize,
+                    activePaneID: manager.activePaneID,
+                    onSelectPane: { paneID in
+                        manager.selectPane(id: paneID)
+                    },
+                    onUpdateRatio: { splitID, ratio in
+                        manager.updatePaneRatio(splitID: splitID, ratio: ratio)
+                    }
+                )
+                .opacity(tab.id == manager.activeTabID ? 1 : 0)
+                .allowsHitTesting(tab.id == manager.activeTabID)
+            }
         }
+    }
+
+    private var activeSession: TerminalSession? {
+        manager.activeSession
     }
 
     private var header: some View {
@@ -42,7 +66,7 @@ struct TerminalWorkspaceView: View {
                 .frame(width: 10, height: 10)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("Local Shell")
+                Text(activeSession?.currentWorkingDirectory.map { URL(fileURLWithPath: $0).lastPathComponent } ?? "Local Shell")
                     .font(.headline)
                 Text(sessionSubtitle)
                     .font(.caption)
@@ -51,7 +75,7 @@ struct TerminalWorkspaceView: View {
 
             Spacer()
 
-            if let launchError = session.launchError {
+            if let launchError = activeSession?.launchError {
                 Text(launchError)
                     .font(.caption)
                     .foregroundStyle(.red)
@@ -69,11 +93,12 @@ struct TerminalWorkspaceView: View {
 
             Spacer()
 
-            Label("\(session.capturedBlockCount) captured", systemImage: "square.stack.3d.up")
+            Label("\(activeSession?.capturedBlockCount ?? 0) captured", systemImage: "square.stack.3d.up")
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
             Button("Restart") {
+                guard let session = activeSession else { return }
                 session.stop()
                 session.start(
                     shellPath: settingsStore.settings.shellPath,
@@ -85,36 +110,32 @@ struct TerminalWorkspaceView: View {
     }
 
     private var sessionSubtitle: String {
-        switch session.status {
+        guard let status = activeSession?.status else { return "No active session" }
+        switch status {
         case .idle:
-            "Ready to launch"
+            return "Ready to launch"
         case .starting:
-            "Starting shell"
+            return "Starting shell"
         case .running:
-            "PTY-backed shell with xterm.js, OSC 133 parsing, and block capture"
+            return "PTY-backed shell with xterm.js, OSC 133 parsing, and block capture"
         case .failed:
-            "Launch failed"
+            return "Launch failed"
         case .stopped:
-            "Stopped"
+            return "Stopped"
         }
     }
 
     private var statusColor: Color {
-        switch session.status {
+        guard let status = activeSession?.status else { return .gray }
+        switch status {
         case .idle, .stopped:
-            .gray
+            return .gray
         case .starting:
-            .orange
+            return .orange
         case .running:
-            .green
+            return .green
         case .failed:
-            .red
+            return .red
         }
     }
-
-}
-
-#Preview {
-    TerminalWorkspaceView()
-        .environmentObject(SettingsStore())
 }

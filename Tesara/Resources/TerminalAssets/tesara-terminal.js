@@ -11,6 +11,7 @@
       foreground: '#e5e7eb'
     }
   });
+  term.options.bracketedPaste = true;
   const fitAddon = new FitAddon.FitAddon();
 
   const root = document.getElementById('terminal');
@@ -44,6 +45,14 @@
   resizeObserver.observe(root);
 
   window.addEventListener('resize', fitTerminal);
+
+  window.tesaraGetSelection = function () {
+    return term.getSelection();
+  };
+
+  window.tesaraClearSelection = function () {
+    term.clearSelection();
+  };
 
   window.tesaraRender = function (payload) {
     document.body.style.background = payload.theme.background;

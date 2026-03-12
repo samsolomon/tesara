@@ -1,0 +1,76 @@
+import SwiftUI
+
+struct PaneContainerView: View {
+    let node: PaneNode
+    let theme: TerminalTheme
+    let fontFamily: String
+    let fontSize: Double
+    let activePaneID: UUID?
+    let onSelectPane: (UUID) -> Void
+    let onUpdateRatio: (UUID, CGFloat) -> Void
+
+    var body: some View {
+        switch node {
+        case .leaf(let id, let session):
+            TerminalWebView(
+                theme: theme,
+                fontFamily: fontFamily,
+                fontSize: fontSize,
+                transcriptLog: session.transcriptLog,
+                onInput: session.send(text:),
+                onResize: session.resize(cols:rows:)
+            )
+            .border(id == activePaneID ? Color.accentColor : Color.clear, width: 2)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                onSelectPane(id)
+            }
+
+        case .split(let splitID, let direction, let first, let second, let ratio):
+            GeometryReader { geometry in
+                splitContent(
+                    splitID: splitID,
+                    direction: direction,
+                    first: first,
+                    second: second,
+                    ratio: ratio,
+                    totalSize: direction == .horizontal ? geometry.size.width : geometry.size.height
+                )
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func splitContent(splitID: UUID, direction: PaneNode.SplitDirection, first: PaneNode, second: PaneNode, ratio: CGFloat, totalSize: CGFloat) -> some View {
+        let firstChild = PaneContainerView(
+            node: first, theme: theme, fontFamily: fontFamily,
+            fontSize: fontSize, activePaneID: activePaneID,
+            onSelectPane: onSelectPane, onUpdateRatio: onUpdateRatio
+        )
+        let secondChild = PaneContainerView(
+            node: second, theme: theme, fontFamily: fontFamily,
+            fontSize: fontSize, activePaneID: activePaneID,
+            onSelectPane: onSelectPane, onUpdateRatio: onUpdateRatio
+        )
+        let divider = PaneDividerView(
+            direction: direction,
+            initialRatio: ratio,
+            totalSize: totalSize,
+            onUpdateRatio: { newRatio in onUpdateRatio(splitID, newRatio) }
+        )
+
+        if direction == .horizontal {
+            HStack(spacing: 0) {
+                firstChild.frame(width: totalSize * ratio)
+                divider
+                secondChild
+            }
+        } else {
+            VStack(spacing: 0) {
+                firstChild.frame(height: totalSize * ratio)
+                divider
+                secondChild
+            }
+        }
+    }
+}

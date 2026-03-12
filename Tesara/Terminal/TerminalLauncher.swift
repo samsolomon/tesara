@@ -147,7 +147,8 @@ final class PTYShellLauncher: TerminalLaunching {
         return PTYShellProcessHandle(
             pid: pid,
             masterFileDescriptor: masterFileDescriptor,
-            onEvent: onEvent
+            onEvent: onEvent,
+            temporaryURLs: launchConfiguration.temporaryURLs
         )
     }
 
@@ -186,7 +187,8 @@ final class PTYShellLauncher: TerminalLaunching {
 
             return ShellLaunchConfiguration(
                 arguments: ["-zsh"],
-                environment: ["ZDOTDIR": dotDirectory.path]
+                environment: ["ZDOTDIR": dotDirectory.path],
+                temporaryURLs: [dotDirectory]
             )
         }
 
@@ -194,7 +196,7 @@ final class PTYShellLauncher: TerminalLaunching {
             let rcFileURL = FileManager.default.temporaryDirectory
                 .appendingPathComponent("tesara-bash-\(UUID().uuidString).sh")
 
-            try writeFile(named: rcFileURL.lastPathComponent, at: rcFileURL, contents: """
+            try writeFile(at: rcFileURL, contents: """
             if [ -f /etc/profile ]; then
               source /etc/profile
             fi
@@ -228,7 +230,30 @@ final class PTYShellLauncher: TerminalLaunching {
 
             return ShellLaunchConfiguration(
                 arguments: ["-bash", "--rcfile", rcFileURL.path, "-i"],
-                environment: [:]
+                environment: [:],
+                temporaryURLs: [rcFileURL]
+            )
+        }
+
+        if shellName == "fish", let integrationURL = Bundle.main.url(forResource: "tesara-fish-integration", withExtension: "fish", subdirectory: "TerminalIntegration") {
+            let confDir = FileManager.default.temporaryDirectory
+                .appendingPathComponent("tesara-fish-\(UUID().uuidString)", isDirectory: true)
+            let confDDir = confDir.appendingPathComponent("fish").appendingPathComponent("conf.d", isDirectory: true)
+
+            try FileManager.default.createDirectory(at: confDDir, withIntermediateDirectories: true)
+            try FileManager.default.copyItem(at: integrationURL, to: confDDir.appendingPathComponent("tesara-fish-integration.fish"))
+
+            var env: [String: String] = [:]
+            if let existingConfigDirs = ProcessInfo.processInfo.environment["XDG_CONFIG_DIRS"] {
+                env["XDG_CONFIG_DIRS"] = confDir.path + ":" + existingConfigDirs
+            } else {
+                env["XDG_CONFIG_DIRS"] = confDir.path
+            }
+
+            return ShellLaunchConfiguration(
+                arguments: ["-fish"],
+                environment: env,
+                temporaryURLs: [confDir]
             )
         }
 
@@ -239,7 +264,7 @@ final class PTYShellLauncher: TerminalLaunching {
         try contents.write(to: directory.appendingPathComponent(name), atomically: true, encoding: .utf8)
     }
 
-    private func writeFile(named _: String, at url: URL, contents: String) throws {
+    private func writeFile(at url: URL, contents: String) throws {
         try contents.write(to: url, atomically: true, encoding: .utf8)
     }
 
@@ -275,6 +300,7 @@ final class PTYShellLauncher: TerminalLaunching {
 private struct ShellLaunchConfiguration {
     let arguments: [String]
     let environment: [String: String]
+    var temporaryURLs: [URL] = []
 }
 
 private final class PTYShellProcessHandle: TerminalProcessHandle {
@@ -282,21 +308,24 @@ private final class PTYShellProcessHandle: TerminalProcessHandle {
     private let masterFileDescriptor: Int32
     private let onEvent: @Sendable (TerminalEvent) -> Void
     private let queue = DispatchQueue(label: "com.samsolomon.tesara.pty")
+    private let temporaryURLs: [URL]
     private var readSource: DispatchSourceRead?
     private var processSource: DispatchSourceProcess?
     private var isStopped = false
     private var didHandleExit = false
 
-    init(pid: pid_t, masterFileDescriptor: Int32, onEvent: @escaping @Sendable (TerminalEvent) -> Void) {
+    init(pid: pid_t, masterFileDescriptor: Int32, onEvent: @escaping @Sendable (TerminalEvent) -> Void, temporaryURLs: [URL] = []) {
         self.pid = pid
         self.masterFileDescriptor = masterFileDescriptor
         self.onEvent = onEvent
+        self.temporaryURLs = temporaryURLs
         configureReadSource()
         configureProcessSource()
     }
 
     deinit {
         cleanup()
+        cleanupTemporaryFiles()
     }
 
     func send(_ input: String) throws {
@@ -414,6 +443,12 @@ private final class PTYShellProcessHandle: TerminalProcessHandle {
         cleanupReadSource()
         processSource?.cancel()
         processSource = nil
+    }
+
+    private func cleanupTemporaryFiles() {
+        for url in temporaryURLs {
+            try? FileManager.default.removeItem(at: url)
+        }
     }
 
     private static func exitCode(from status: Int32) -> Int32 {

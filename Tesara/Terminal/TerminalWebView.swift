@@ -5,7 +5,7 @@ struct TerminalWebView: NSViewRepresentable {
     let theme: TerminalTheme
     let fontFamily: String
     let fontSize: Double
-    let transcript: String
+    let transcriptLog: TranscriptLog
     let onInput: (String) -> Void
     let onResize: (Int, Int) -> Void
 
@@ -19,7 +19,8 @@ struct TerminalWebView: NSViewRepresentable {
         configuration.userContentController.add(context.coordinator, name: Coordinator.inputHandlerName)
         configuration.userContentController.add(context.coordinator, name: Coordinator.resizeHandlerName)
 
-        let webView = WKWebView(frame: .zero, configuration: configuration)
+        let webView = TerminalWKWebView(frame: .zero, configuration: configuration)
+        webView.onPasteText = { [onInput] text in onInput(text) }
         webView.navigationDelegate = context.coordinator
         context.coordinator.webView = webView
         webView.setValue(false, forKey: "drawsBackground")
@@ -41,7 +42,7 @@ struct TerminalWebView: NSViewRepresentable {
             theme: theme,
             fontFamily: fontFamily,
             fontSize: fontSize,
-            transcript: transcript
+            transcriptLog: transcriptLog
         )
         context.coordinator.flushIfPossible()
     }
@@ -63,7 +64,7 @@ struct TerminalWebView: NSViewRepresentable {
         var renderScript: String?
         private let onInput: (String) -> Void
         private let onResize: (Int, Int) -> Void
-        private var lastRenderedTranscript = ""
+        private var lastRenderedOffset: Int = 0
         private var lastReportedSize: (cols: Int, rows: Int)?
         private var pendingRenderState: RenderState?
 
@@ -74,38 +75,40 @@ struct TerminalWebView: NSViewRepresentable {
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             isReady = true
-            lastRenderedTranscript = ""
+            lastRenderedOffset = 0
             if let pendingRenderState {
                 renderScript = makeRenderScript(
                     theme: pendingRenderState.theme,
                     fontFamily: pendingRenderState.fontFamily,
                     fontSize: pendingRenderState.fontSize,
-                    transcript: pendingRenderState.transcript
+                    transcriptLog: pendingRenderState.transcriptLog
                 )
             }
             flushIfPossible()
         }
 
-        func makeRenderScript(theme: TerminalTheme, fontFamily: String, fontSize: Double, transcript: String) -> String? {
+        func makeRenderScript(theme: TerminalTheme, fontFamily: String, fontSize: Double, transcriptLog: TranscriptLog) -> String? {
             pendingRenderState = RenderState(
                 theme: theme,
                 fontFamily: fontFamily,
                 fontSize: fontSize,
-                transcript: transcript
+                transcriptLog: transcriptLog
             )
 
             let payload: Payload
 
-            if transcript.isEmpty {
+            if transcriptLog.totalLength == 0 {
                 payload = Payload(theme: theme, fontFamily: fontFamily, fontSize: fontSize, replace: true, content: "")
-                lastRenderedTranscript = ""
-            } else if transcript.hasPrefix(lastRenderedTranscript) {
-                let chunk = String(transcript.dropFirst(lastRenderedTranscript.count))
+                lastRenderedOffset = 0
+            } else if transcriptLog.totalLength >= lastRenderedOffset {
+                let chunk = transcriptLog.contentSince(offset: lastRenderedOffset)
                 payload = Payload(theme: theme, fontFamily: fontFamily, fontSize: fontSize, replace: false, content: chunk)
-                lastRenderedTranscript = transcript
+                lastRenderedOffset = transcriptLog.totalLength
             } else {
-                payload = Payload(theme: theme, fontFamily: fontFamily, fontSize: fontSize, replace: true, content: transcript)
-                lastRenderedTranscript = transcript
+                // Log was reset — full replace
+                let all = transcriptLog.contentSince(offset: 0)
+                payload = Payload(theme: theme, fontFamily: fontFamily, fontSize: fontSize, replace: true, content: all)
+                lastRenderedOffset = transcriptLog.totalLength
             }
 
             guard
@@ -123,6 +126,7 @@ struct TerminalWebView: NSViewRepresentable {
                 return
             }
 
+            self.renderScript = nil
             webView.evaluateJavaScript(renderScript)
         }
 
@@ -160,7 +164,7 @@ struct TerminalWebView: NSViewRepresentable {
             let theme: TerminalTheme
             let fontFamily: String
             let fontSize: Double
-            let transcript: String
+            let transcriptLog: TranscriptLog
         }
     }
 }
