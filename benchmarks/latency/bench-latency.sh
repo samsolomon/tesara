@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+# bench-latency.sh — keystroke-to-screen latency measurement
+#
+# Uses latency-probe (compiled Swift CLI) to post CGEvents and poll
+# AXUIElement for the character appearing on screen.
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/../config.sh"
+source "${SCRIPT_DIR}/../lib/terminals.sh"
+source "${SCRIPT_DIR}/../lib/helpers.sh"
+
+PROBE="${SCRIPT_DIR}/latency-probe"
+TARGETS=("${@:-$(detect_terminals)}")
+
+if [[ ! -x "$PROBE" ]]; then
+  echo "Error: latency-probe not compiled. Run setup.sh first." >&2
+  echo "  swiftc -O -o ${PROBE} ${SCRIPT_DIR}/latency-probe.swift -framework Cocoa -framework ApplicationServices" >&2
+  exit 1
+fi
+
+# Check Accessibility permissions
+if ! osascript -e 'tell application "System Events" to get name of first process' &>/dev/null; then
+  echo "Warning: Accessibility permission may be required." >&2
+  echo "  Grant access in System Settings > Privacy & Security > Accessibility" >&2
+fi
+
+run_latency_bench() {
+  local name="$1"
+  local bundle_id="${TERMINAL_BUNDLE_IDS[$name]}"
+
+  # Check if this terminal is manual-only
+  for manual in "${MANUAL_ONLY_LATENCY[@]}"; do
+    if [[ "$manual" == "$name" ]]; then
+      echo "    Skipping ${name}: marked manual-only for latency tests"
+      return
+    fi
+  done
+
+  echo "  Benchmarking latency: ${name} (${LATENCY_KEYSTROKES} keystrokes, ${LATENCY_WARMUP} warmup)"
+
+  quit_terminal "$bundle_id"
+  sleep 2
+  launch_terminal "$bundle_id"
+  sleep 2
+
+  local pid
+  pid=$(get_pid "$bundle_id" | head -1)
+  if [[ -z "$pid" ]]; then
+    echo "    Could not find PID for ${name}, skipping." >&2
+    return
+  fi
+
+  local outfile="${RESULTS_DIR}/latency-${name}.json"
+
+  # Run the probe
+  "$PROBE" \
+    --pid "$pid" \
+    --keystrokes "$LATENCY_KEYSTROKES" \
+    --warmup "$LATENCY_WARMUP" \
+    --output "$outfile" \
+    --terminal "$name" \
+    --bundle-id "$bundle_id"
+
+  quit_terminal "$bundle_id"
+
+  if [[ -f "$outfile" ]]; then
+    echo "  Results saved to ${outfile}"
+  else
+    echo "  Warning: no results file produced" >&2
+  fi
+}
+
+mkdir -p "$RESULTS_DIR"
+
+echo "==> Latency Benchmark"
+for target in "${TARGETS[@]}"; do
+  target=$(echo "$target" | tr -d '[:space:]')
+  if [[ -n "${TERMINAL_BUNDLE_IDS[$target]+x}" ]]; then
+    run_latency_bench "$target"
+  else
+    echo "  Unknown terminal: ${target}" >&2
+  fi
+done

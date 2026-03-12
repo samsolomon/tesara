@@ -10,3 +10,9 @@ DerivedData/
 
 # Swift Package Manager
 .build/
+
+# Benchmarks
+benchmarks/results/
+!benchmarks/results/.gitkeep
+benchmarks/throughput/.payload-*
+benchmarks/latency/latency-probe
