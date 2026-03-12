@@ -33,25 +33,11 @@ struct TesaraAppCommands: Commands {
         }
 
         CommandGroup(before: .toolbar) {
-            Button("Split Right") {
-                manager.splitActivePane(
-                    direction: .horizontal,
-                    shellPath: settingsStore.settings.shellPath,
-                    workingDirectory: settingsStore.settings.defaultWorkingDirectory,
-                    blockStore: blockStore
-                )
-            }
-            .keyboardShortcut("d")
+            Button("Split Right") { split(.horizontal) }
+                .keyboardShortcut("d")
 
-            Button("Split Down") {
-                manager.splitActivePane(
-                    direction: .vertical,
-                    shellPath: settingsStore.settings.shellPath,
-                    workingDirectory: settingsStore.settings.defaultWorkingDirectory,
-                    blockStore: blockStore
-                )
-            }
-            .keyboardShortcut("d", modifiers: [.command, .shift])
+            Button("Split Down") { split(.vertical) }
+                .keyboardShortcut("d", modifiers: [.command, .shift])
         }
 
         CommandGroup(after: .toolbar) {
@@ -74,5 +60,14 @@ struct TesaraAppCommands: Commands {
                 .keyboardShortcut(KeyEquivalent(Character(String(index + 1))), modifiers: .command)
             }
         }
+    }
+
+    private func split(_ direction: PaneNode.SplitDirection) {
+        manager.splitActivePane(
+            direction: direction,
+            shellPath: settingsStore.settings.shellPath,
+            workingDirectory: settingsStore.settings.defaultWorkingDirectory,
+            blockStore: blockStore
+        )
     }
 }

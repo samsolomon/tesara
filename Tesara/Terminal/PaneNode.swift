@@ -69,7 +69,7 @@ indirect enum PaneNode: Identifiable {
         switch self {
         case .leaf(let id, _):
             return id == targetID ? nil : self
-        case .split(_, _, let first, let second, _):
+        case .split(let id, let direction, let first, let second, let ratio):
             if first.id == targetID || (first.contains(paneID: targetID) && first.removingPane(id: targetID) == nil) {
                 return second
             }
@@ -77,10 +77,10 @@ indirect enum PaneNode: Identifiable {
                 return first
             }
             if let newFirst = first.removingPane(id: targetID) {
-                return .split(id: id, direction: self.splitDirection!, first: newFirst, second: second, ratio: self.splitRatio!)
+                return .split(id: id, direction: direction, first: newFirst, second: second, ratio: ratio)
             }
             if let newSecond = second.removingPane(id: targetID) {
-                return .split(id: id, direction: self.splitDirection!, first: first, second: newSecond, ratio: self.splitRatio!)
+                return .split(id: id, direction: direction, first: first, second: newSecond, ratio: ratio)
             }
             return self
         }
@@ -105,13 +105,4 @@ indirect enum PaneNode: Identifiable {
         }
     }
 
-    private var splitDirection: SplitDirection? {
-        if case .split(_, let d, _, _, _) = self { return d }
-        return nil
-    }
-
-    private var splitRatio: CGFloat? {
-        if case .split(_, _, _, _, let r) = self { return r }
-        return nil
-    }
 }

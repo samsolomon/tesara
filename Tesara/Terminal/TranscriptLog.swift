@@ -9,10 +9,17 @@ struct TranscriptLog {
     private(set) var segments: [Segment] = []
     private(set) var totalLength: Int = 0
 
+    private static let maxRetainedBytes = 1_048_576 // 1 MB
+
     mutating func append(_ text: String) {
         guard !text.isEmpty else { return }
         segments.append(Segment(offset: totalLength, text: text))
         totalLength += text.utf8.count
+
+        let pruneThreshold = totalLength - Self.maxRetainedBytes
+        if pruneThreshold > 0 {
+            pruneSegments(before: pruneThreshold)
+        }
     }
 
     func contentSince(offset: Int) -> String {
