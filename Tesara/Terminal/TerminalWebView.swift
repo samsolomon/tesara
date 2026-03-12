@@ -76,6 +76,7 @@ struct TerminalWebView: NSViewRepresentable {
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             isReady = true
             lastRenderedOffset = 0
+            webView.window?.makeFirstResponder(webView)
             if let pendingRenderState {
                 renderScript = makeRenderScript(
                     theme: pendingRenderState.theme,

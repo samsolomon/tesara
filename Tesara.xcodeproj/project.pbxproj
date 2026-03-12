@@ -25,6 +25,7 @@
 		6AF0589C77DB137229E55557 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = DF6EF21EAA4938CD8F036D14 /* GRDB */; };
 		757F00F9B3700BB46988C6CF /* TranscriptLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCE89E00B323BA621EC2A946 /* TranscriptLog.swift */; };
 		79F0B4BD6843110ADF62D883 /* CheckForUpdatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D87C2B989F7DF6FA07307499 /* CheckForUpdatesView.swift */; };
+		7ADF0BFCCCC2FE2B9B7D57B9 /* TerminalAssets in Resources */ = {isa = PBXBuildFile; fileRef = E5DF1026520568D0FBC2BAAF /* TerminalAssets */; };
 		7C4EC6EB70E96401AD27AFB9 /* SettingsStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0913B2DEDB933D3E3356B83 /* SettingsStoreTests.swift */; };
 		81D353BEAF13304C4935B40F /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6D9B1F4149EB9724158875C /* HistoryView.swift */; };
 		81F684B3EE723B89F0976D5E /* TerminalThemeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 692291F83027B0F2F4CA76BF /* TerminalThemeTests.swift */; };
@@ -43,6 +44,7 @@
 		DC4B28FCBE3C849D3766A101 /* TerminalSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9ACBFEB7F97B6D7DB444D4F /* TerminalSession.swift */; };
 		E9CC8D1BFE1AFC349433C4B4 /* TabBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C43028483E4CE7E65A49B780 /* TabBarView.swift */; };
 		FA3301A36AF954E7509D1206 /* TranscriptLogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A8E49D78FD3DA47DB08402 /* TranscriptLogTests.swift */; };
+		FA96111B4FCCEF18236CA364 /* TerminalIntegration in Resources */ = {isa = PBXBuildFile; fileRef = 2292F5BCC3AC767DAD9619D7 /* TerminalIntegration */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -60,6 +62,7 @@
 		085DF302ED385DA3320C4E00 /* WorkspaceManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceManager.swift; sourceTree = "<group>"; };
 		17224DA6FD3857B58A8F2C64 /* WorkspaceManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceManagerTests.swift; sourceTree = "<group>"; };
 		17E46BFDCDCA182651723141 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		2292F5BCC3AC767DAD9619D7 /* TerminalIntegration */ = {isa = PBXFileReference; lastKnownFileType = folder; name = TerminalIntegration; path = Tesara/Resources/TerminalIntegration; sourceTree = SOURCE_ROOT; };
 		230B62F5C9074F2BEC567B40 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		36D96A4177859EA0D14FAFCB /* PaneNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaneNode.swift; sourceTree = "<group>"; };
 		3CD405E88C7464BC61180F28 /* TerminalWKWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalWKWebView.swift; sourceTree = "<group>"; };
@@ -89,6 +92,7 @@
 		D87C2B989F7DF6FA07307499 /* CheckForUpdatesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckForUpdatesView.swift; sourceTree = "<group>"; };
 		D89D726E46FBCEF09C9F3737 /* BlockStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockStore.swift; sourceTree = "<group>"; };
 		D9ACBFEB7F97B6D7DB444D4F /* TerminalSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalSession.swift; sourceTree = "<group>"; };
+		E5DF1026520568D0FBC2BAAF /* TerminalAssets */ = {isa = PBXFileReference; lastKnownFileType = folder; name = TerminalAssets; path = Tesara/Resources/TerminalAssets; sourceTree = SOURCE_ROOT; };
 		E6D9B1F4149EB9724158875C /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		ED0F772A0E12C469683DBCB8 /* TesaraApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TesaraApp.swift; sourceTree = "<group>"; };
 		EDDA22FF0E3CCF02CE8BCD05 /* TerminalWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalWorkspaceView.swift; sourceTree = "<group>"; };
@@ -175,6 +179,8 @@
 		D2FD19F036CF21642B166830 = {
 			isa = PBXGroup;
 			children = (
+				E5DF1026520568D0FBC2BAAF /* TerminalAssets */,
+				2292F5BCC3AC767DAD9619D7 /* TerminalIntegration */,
 				C2D544A7AD3135CE00E10F2F /* Tesara */,
 				DD4AAB2F3096D1C59637D82F /* TesaraTests */,
 				34B833143B10337A33E2F84D /* Products */,
@@ -243,6 +249,7 @@
 			buildConfigurationList = B7993B1D1E2EB56146B2D3AB /* Build configuration list for PBXNativeTarget "Tesara" */;
 			buildPhases = (
 				745D21EE4A597C4AC195D588 /* Sources */,
+				77B56804943EAF1DBB18B234 /* Resources */,
 				B0AE7EA6A42600C37E7ACDBB /* Frameworks */,
 			);
 			buildRules = (
@@ -299,6 +306,18 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		77B56804943EAF1DBB18B234 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7ADF0BFCCCC2FE2B9B7D57B9 /* TerminalAssets in Resources */,
+				FA96111B4FCCEF18236CA364 /* TerminalIntegration in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		745D21EE4A597C4AC195D588 /* Sources */ = {

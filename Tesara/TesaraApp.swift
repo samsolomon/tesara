@@ -19,10 +19,11 @@ struct TesaraApp: App {
                 .onAppear {
                     updaterController.updater.automaticallyChecksForUpdates = settingsStore.settings.updateChecksEnabled
                 }
-                .onChange(of: settingsStore.settings.updateChecksEnabled) { newValue in
-                    updaterController.updater.automaticallyChecksForUpdates = newValue
+                .onChange(of: settingsStore.settings.updateChecksEnabled) {
+                    updaterController.updater.automaticallyChecksForUpdates = settingsStore.settings.updateChecksEnabled
                 }
         }
+        .windowToolbarStyle(.unifiedCompact)
         .commands {
             TesaraAppCommands(manager: workspaceManager, settingsStore: settingsStore, blockStore: blockStore, updater: updaterController.updater)
         }

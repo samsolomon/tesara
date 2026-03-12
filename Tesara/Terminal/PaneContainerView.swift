@@ -12,19 +12,15 @@ struct PaneContainerView: View {
     var body: some View {
         switch node {
         case .leaf(let id, let session):
-            TerminalWebView(
+            TerminalPaneLeafView(
+                id: id,
+                session: session,
                 theme: theme,
                 fontFamily: fontFamily,
                 fontSize: fontSize,
-                transcriptLog: session.transcriptLog,
-                onInput: session.send(text:),
-                onResize: session.resize(cols:rows:)
+                isActive: id == activePaneID,
+                onSelectPane: onSelectPane
             )
-            .border(id == activePaneID ? Color.accentColor : Color.clear, width: 2)
-            .contentShape(Rectangle())
-            .onTapGesture {
-                onSelectPane(id)
-            }
 
         case .split(let splitID, let direction, let first, let second, let ratio):
             GeometryReader { geometry in
@@ -71,6 +67,32 @@ struct PaneContainerView: View {
                 divider
                 secondChild
             }
+        }
+    }
+}
+
+private struct TerminalPaneLeafView: View {
+    let id: UUID
+    @ObservedObject var session: TerminalSession
+    let theme: TerminalTheme
+    let fontFamily: String
+    let fontSize: Double
+    let isActive: Bool
+    let onSelectPane: (UUID) -> Void
+
+    var body: some View {
+        TerminalWebView(
+            theme: theme,
+            fontFamily: fontFamily,
+            fontSize: fontSize,
+            transcriptLog: session.transcriptLog,
+            onInput: session.send(text:),
+            onResize: session.resize(cols:rows:)
+        )
+        .border(isActive ? Color.accentColor : Color.clear, width: 2)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            onSelectPane(id)
         }
     }
 }

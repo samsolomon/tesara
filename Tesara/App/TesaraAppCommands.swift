@@ -36,6 +36,18 @@ struct TesaraAppCommands: Commands {
             .keyboardShortcut("w")
         }
 
+        CommandMenu("Shell") {
+            Button("Restart Shell") {
+                guard let session = manager.activeSession else { return }
+                session.stop()
+                session.start(
+                    shellPath: settingsStore.settings.shellPath,
+                    workingDirectory: settingsStore.settings.defaultWorkingDirectory
+                )
+            }
+            .keyboardShortcut("r", modifiers: [.command, .shift])
+        }
+
         CommandGroup(before: .toolbar) {
             Button("Split Right") { split(.horizontal) }
                 .keyboardShortcut("d")

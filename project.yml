@@ -25,8 +25,12 @@ targets:
       - path: Tesara
         excludes:
           - Resources
-    resources:
-      - path: Tesara/Resources
+      - path: Tesara/Resources/TerminalAssets
+        buildPhase: resources
+        type: folder
+      - path: Tesara/Resources/TerminalIntegration
+        buildPhase: resources
+        type: folder
     info:
       path: Tesara/Info.plist
     settings:
