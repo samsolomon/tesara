@@ -38,9 +38,13 @@ targets:
         script: |
           set -euo pipefail
           EXPECTED_ZIG=$(cat "$SRCROOT/.zig-version" | tr -d '[:space:]')
+          if [ -z "$EXPECTED_ZIG" ]; then
+            echo "error: .zig-version is empty or missing"
+            exit 1
+          fi
           ZIG=$(command -v zig || echo "/opt/homebrew/bin/zig")
           if [ ! -x "$ZIG" ]; then
-            echo "error: Zig $EXPECTED_ZIG not found. Install with: brew install zig"
+            echo "error: Zig not found. Install $EXPECTED_ZIG with: brew install zig"
             exit 1
           fi
           ACTUAL_ZIG=$("$ZIG" version)
@@ -49,8 +53,10 @@ targets:
             exit 1
           fi
           cd "$SRCROOT/vendor/ghostty"
-          git apply --check "$SRCROOT/vendor/patches/ghostty-build.patch" 2>/dev/null && \
-            git apply "$SRCROOT/vendor/patches/ghostty-build.patch" || true
+          PATCH="$SRCROOT/vendor/patches/ghostty-build.patch"
+          if git apply --check "$PATCH" 2>/dev/null; then
+            git apply "$PATCH"
+          fi
           "$ZIG" build -Doptimize=ReleaseFast -Dapp-runtime=none -Demit-xcframework=false
         outputFiles:
           - $(SRCROOT)/vendor/ghostty/zig-out/lib/libghostty.a
