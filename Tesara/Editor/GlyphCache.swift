@@ -1,0 +1,238 @@
+import CoreGraphics
+import CoreText
+import Foundation
+
+/// Rasterizes glyphs via CTFont into a GlyphAtlas, caching results.
+final class GlyphCache {
+
+    struct GlyphKey: Hashable {
+        let glyph: CGGlyph
+        let fontHash: Int
+        let subpixelBin: UInt8  // 0-3 for non-Retina, 0 for Retina
+    }
+
+    struct CachedGlyph {
+        let region: GlyphAtlas.Region
+        let bearingX: Int16
+        let bearingY: Int16
+        let advance: Float
+        let isPlaceholder: Bool
+    }
+
+    private var cache: [GlyphKey: CachedGlyph] = [:]
+    private let atlas: GlyphAtlas
+
+    /// Placeholder region for color glyphs (emoji).
+    private var placeholderRegion: GlyphAtlas.Region?
+
+    init(atlas: GlyphAtlas) {
+        self.atlas = atlas
+    }
+
+    func lookup(glyph: CGGlyph, font: CTFont, subpixelOffset: CGFloat = 0) -> CachedGlyph? {
+        let key = makeKey(glyph: glyph, font: font, subpixelOffset: subpixelOffset)
+        return cache[key]
+    }
+
+    func rasterize(glyph: CGGlyph, font: CTFont, subpixelOffset: CGFloat = 0) -> CachedGlyph {
+        let key = makeKey(glyph: glyph, font: font, subpixelOffset: subpixelOffset)
+        if let cached = cache[key] { return cached }
+
+        // Check for color glyph (emoji)
+        if isColorGlyph(glyph: glyph, font: font) {
+            let placeholder = makePlaceholder(font: font, glyph: glyph)
+            cache[key] = placeholder
+            return placeholder
+        }
+
+        // Get glyph metrics
+        var glyphRef = glyph
+        var boundingRect = CGRect.zero
+        CTFontGetBoundingRectsForGlyphs(font, .default, &glyphRef, &boundingRect, 1)
+
+        var advance = CGSize.zero
+        CTFontGetAdvancesForGlyphs(font, .default, &glyphRef, &advance, 1)
+
+        // Add padding for rasterization
+        let padding: Int = 1
+        let width = Int(ceil(boundingRect.width)) + padding * 2
+        let height = Int(ceil(boundingRect.height)) + padding * 2
+
+        guard width > 0, height > 0 else {
+            // Zero-size glyph (e.g., space) — cache with empty region
+            let empty = CachedGlyph(
+                region: GlyphAtlas.Region(x: 0, y: 0, width: 0, height: 0),
+                bearingX: 0,
+                bearingY: 0,
+                advance: Float(advance.width),
+                isPlaceholder: false
+            )
+            cache[key] = empty
+            return empty
+        }
+
+        // Allocate in atlas, growing if needed
+        var region = atlas.allocate(width: width, height: height)
+        if region == nil {
+            atlas.grow()
+            region = atlas.allocate(width: width, height: height)
+        }
+
+        guard let region else {
+            // Fallback: return empty
+            let empty = CachedGlyph(
+                region: GlyphAtlas.Region(x: 0, y: 0, width: 0, height: 0),
+                bearingX: 0,
+                bearingY: 0,
+                advance: Float(advance.width),
+                isPlaceholder: false
+            )
+            cache[key] = empty
+            return empty
+        }
+
+        // Rasterize glyph into grayscale bitmap
+        let bitmapData = rasterizeGlyph(
+            glyph: glyph,
+            font: font,
+            width: width,
+            height: height,
+            bearingX: boundingRect.origin.x,
+            bearingY: boundingRect.origin.y,
+            subpixelOffset: subpixelOffset,
+            padding: padding
+        )
+
+        atlas.write(data: bitmapData, to: region)
+
+        let cached = CachedGlyph(
+            region: region,
+            bearingX: Int16(floor(boundingRect.origin.x)) - Int16(padding),
+            bearingY: Int16(ceil(boundingRect.origin.y + boundingRect.height)) + Int16(padding),
+            advance: Float(advance.width),
+            isPlaceholder: false
+        )
+        cache[key] = cached
+        return cached
+    }
+
+    func isColorGlyph(glyph: CGGlyph, font: CTFont) -> Bool {
+        // Check if the font has sbix or COLR tables (color glyph tables)
+        let sbix = CTFontCopyTable(font, CTFontTableTag(kCTFontTableSbix), [])
+        if sbix != nil { return true }
+        let colr = CTFontCopyTable(font, CTFontTableTag(kCTFontTableCOLR), [])
+        if colr != nil { return true }
+        return false
+    }
+
+    func invalidateAll() {
+        cache.removeAll()
+        placeholderRegion = nil
+        atlas.reset()
+    }
+
+    // MARK: - Private
+
+    private func makeKey(glyph: CGGlyph, font: CTFont, subpixelOffset: CGFloat) -> GlyphKey {
+        let fontHash = Int(bitPattern: ObjectIdentifier(font))
+        // Quantize subpixel offset into 4 bins
+        let bin = UInt8(((subpixelOffset - floor(subpixelOffset)) * 4).rounded(.down).clamped(to: 0...3))
+        return GlyphKey(glyph: glyph, fontHash: fontHash, subpixelBin: bin)
+    }
+
+    private func makePlaceholder(font: CTFont, glyph: CGGlyph) -> CachedGlyph {
+        var glyphRef = glyph
+        var advance = CGSize.zero
+        CTFontGetAdvancesForGlyphs(font, .default, &glyphRef, &advance, 1)
+
+        // Use a small filled rect as placeholder
+        let w = max(Int(advance.width), 8)
+        let h = Int(CTFontGetAscent(font) + CTFontGetDescent(font))
+
+        if let existing = placeholderRegion, existing.width == UInt16(w), existing.height == UInt16(h) {
+            return CachedGlyph(
+                region: existing,
+                bearingX: 0,
+                bearingY: Int16(CTFontGetAscent(font)),
+                advance: Float(advance.width),
+                isPlaceholder: true
+            )
+        }
+
+        var region = atlas.allocate(width: w, height: h)
+        if region == nil {
+            atlas.grow()
+            region = atlas.allocate(width: w, height: h)
+        }
+
+        if let region {
+            // Fill with a light gray box (tofu placeholder)
+            let data = [UInt8](repeating: 80, count: w * h)
+            atlas.write(data: data, to: region)
+            placeholderRegion = region
+
+            return CachedGlyph(
+                region: region,
+                bearingX: 0,
+                bearingY: Int16(CTFontGetAscent(font)),
+                advance: Float(advance.width),
+                isPlaceholder: true
+            )
+        }
+
+        return CachedGlyph(
+            region: GlyphAtlas.Region(x: 0, y: 0, width: 0, height: 0),
+            bearingX: 0,
+            bearingY: 0,
+            advance: Float(advance.width),
+            isPlaceholder: true
+        )
+    }
+
+    private func rasterizeGlyph(
+        glyph: CGGlyph,
+        font: CTFont,
+        width: Int,
+        height: Int,
+        bearingX: CGFloat,
+        bearingY: CGFloat,
+        subpixelOffset: CGFloat,
+        padding: Int
+    ) -> [UInt8] {
+        let bytesPerRow = width
+        var pixelData = [UInt8](repeating: 0, count: width * height)
+
+        pixelData.withUnsafeMutableBufferPointer { buffer in
+            guard let context = CGContext(
+                data: buffer.baseAddress,
+                width: width,
+                height: height,
+                bitsPerComponent: 8,
+                bytesPerRow: bytesPerRow,
+                space: CGColorSpaceCreateDeviceGray(),
+                bitmapInfo: CGImageAlphaInfo.none.rawValue
+            ) else { return }
+
+            context.setAllowsFontSmoothing(true)
+            context.setShouldSmoothFonts(true)
+            context.setAllowsAntialiasing(true)
+            context.setShouldAntialias(true)
+
+            // Position glyph so its origin aligns with the bitmap
+            let drawX = -bearingX + CGFloat(padding) + subpixelOffset
+            let drawY = -bearingY + CGFloat(padding)
+
+            var position = CGPoint(x: drawX, y: drawY)
+            var glyphRef = glyph
+            CTFontDrawGlyphs(font, &glyphRef, &position, 1, context)
+        }
+
+        return pixelData
+    }
+}
+
+private extension CGFloat {
+    func clamped(to range: ClosedRange<CGFloat>) -> CGFloat {
+        return Swift.min(Swift.max(self, range.lowerBound), range.upperBound)
+    }
+}

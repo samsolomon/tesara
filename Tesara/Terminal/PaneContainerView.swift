@@ -19,6 +19,15 @@ struct PaneContainerView: View {
                 onSelectPane: onSelectPane
             )
 
+        case .editor(let id, let editorSession):
+            EditorPaneLeafView(
+                id: id,
+                session: editorSession,
+                isActive: id == activePaneID,
+                showBorder: isSplit,
+                onSelectPane: onSelectPane
+            )
+
         case .split(let splitID, let direction, let first, let second, let ratio):
             GeometryReader { geometry in
                 splitContent(
@@ -66,6 +75,35 @@ struct PaneContainerView: View {
                 divider
                 secondChild
             }
+        }
+    }
+}
+
+private struct EditorPaneLeafView: View {
+    let id: UUID
+    @ObservedObject var session: EditorSession
+    let isActive: Bool
+    let showBorder: Bool
+    let onSelectPane: (UUID) -> Void
+
+    var body: some View {
+        Group {
+            if let editorView = session.editorView as? EditorView {
+                GeometryReader { geo in
+                    EditorViewRepresentable(editorView: editorView)
+                        .onChange(of: geo.size) { _, newSize in
+                            editorView.sizeDidChange(newSize)
+                        }
+                }
+                .id(session.id)
+            } else {
+                Color.clear
+            }
+        }
+        .border(showBorder && isActive ? Color.accentColor : Color.clear, width: showBorder ? 2 : 0)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            onSelectPane(id)
         }
     }
 }

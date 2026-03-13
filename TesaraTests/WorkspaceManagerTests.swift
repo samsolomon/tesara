@@ -293,4 +293,101 @@ final class WorkspaceManagerTests: XCTestCase {
         // Verify active session corresponds to the selected pane
         XCTAssertNotNil(manager.activeSession)
     }
+
+    // MARK: - Editor Panes
+
+    func testSplitWithEditorCreatesEditorPane() {
+        addTab()
+        let initialPaneID = manager.activePaneID!
+        manager.splitActivePaneWithEditor(
+            direction: .horizontal,
+            theme: TerminalTheme(
+                id: "test", name: "Test",
+                foreground: "#cccccc", background: "#1e1e1e",
+                cursor: "#cccccc", cursorText: "#1e1e1e",
+                selectionBackground: "#3c5a96",
+                black: "#000000", red: "#ff0000", green: "#00ff00",
+                yellow: "#ffff00", blue: "#0000ff", magenta: "#ff00ff",
+                cyan: "#00ffff", white: "#ffffff",
+                brightBlack: "#808080", brightRed: "#ff0000",
+                brightGreen: "#00ff00", brightYellow: "#ffff00",
+                brightBlue: "#0000ff", brightMagenta: "#ff00ff",
+                brightCyan: "#00ffff", brightWhite: "#ffffff"
+            ),
+            fontFamily: "SF Mono",
+            fontSize: 13
+        )
+        XCTAssertNotEqual(manager.activePaneID, initialPaneID)
+        // Active pane should be the editor
+        XCTAssertNotNil(manager.activeEditorSession)
+        XCTAssertNil(manager.activeSession) // Not a terminal
+    }
+
+    func testCloseEditorPane() {
+        addTab()
+        let termPaneID = manager.activePaneID!
+        manager.splitActivePaneWithEditor(
+            direction: .horizontal,
+            theme: TerminalTheme(
+                id: "test", name: "Test",
+                foreground: "#cccccc", background: "#1e1e1e",
+                cursor: "#cccccc", cursorText: "#1e1e1e",
+                selectionBackground: "#3c5a96",
+                black: "#000000", red: "#ff0000", green: "#00ff00",
+                yellow: "#ffff00", blue: "#0000ff", magenta: "#ff00ff",
+                cyan: "#00ffff", white: "#ffffff",
+                brightBlack: "#808080", brightRed: "#ff0000",
+                brightGreen: "#00ff00", brightYellow: "#ffff00",
+                brightBlue: "#0000ff", brightMagenta: "#ff00ff",
+                brightCyan: "#00ffff", brightWhite: "#ffffff"
+            ),
+            fontFamily: "SF Mono",
+            fontSize: 13
+        )
+        let editorPaneID = manager.activePaneID!
+
+        manager.closePane(id: editorPaneID)
+        XCTAssertEqual(manager.activePaneID, termPaneID)
+        if case .leaf = manager.activeTab?.rootPane {
+            // success
+        } else {
+            XCTFail("Expected leaf root pane after closing editor")
+        }
+    }
+
+    func testSelectBetweenTerminalAndEditor() {
+        addTab()
+        let termPaneID = manager.activePaneID!
+        manager.splitActivePaneWithEditor(
+            direction: .horizontal,
+            theme: TerminalTheme(
+                id: "test", name: "Test",
+                foreground: "#cccccc", background: "#1e1e1e",
+                cursor: "#cccccc", cursorText: "#1e1e1e",
+                selectionBackground: "#3c5a96",
+                black: "#000000", red: "#ff0000", green: "#00ff00",
+                yellow: "#ffff00", blue: "#0000ff", magenta: "#ff00ff",
+                cyan: "#00ffff", white: "#ffffff",
+                brightBlack: "#808080", brightRed: "#ff0000",
+                brightGreen: "#00ff00", brightYellow: "#ffff00",
+                brightBlue: "#0000ff", brightMagenta: "#ff00ff",
+                brightCyan: "#00ffff", brightWhite: "#ffffff"
+            ),
+            fontFamily: "SF Mono",
+            fontSize: 13
+        )
+        let editorPaneID = manager.activePaneID!
+
+        // Switch to terminal
+        manager.selectPane(id: termPaneID)
+        XCTAssertEqual(manager.activePaneID, termPaneID)
+        XCTAssertNotNil(manager.activeSession)
+        XCTAssertNil(manager.activeEditorSession)
+
+        // Switch back to editor
+        manager.selectPane(id: editorPaneID)
+        XCTAssertEqual(manager.activePaneID, editorPaneID)
+        XCTAssertNil(manager.activeSession)
+        XCTAssertNotNil(manager.activeEditorSession)
+    }
 }

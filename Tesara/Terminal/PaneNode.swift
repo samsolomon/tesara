@@ -2,6 +2,7 @@ import Foundation
 
 indirect enum PaneNode: Identifiable {
     case leaf(id: UUID, session: TerminalSession)
+    case editor(id: UUID, session: EditorSession)
     case split(id: UUID, direction: SplitDirection, first: PaneNode, second: PaneNode, ratio: CGFloat)
 
     enum SplitDirection {
@@ -12,6 +13,7 @@ indirect enum PaneNode: Identifiable {
     var id: UUID {
         switch self {
         case .leaf(let id, _): return id
+        case .editor(let id, _): return id
         case .split(let id, _, _, _, _): return id
         }
     }
@@ -19,6 +21,15 @@ indirect enum PaneNode: Identifiable {
     var session: TerminalSession? {
         switch self {
         case .leaf(_, let session): return session
+        case .editor: return nil
+        case .split: return nil
+        }
+    }
+
+    var editorSession: EditorSession? {
+        switch self {
+        case .leaf: return nil
+        case .editor(_, let session): return session
         case .split: return nil
         }
     }
@@ -27,14 +38,29 @@ indirect enum PaneNode: Identifiable {
         switch self {
         case .leaf(let id, let session):
             return id == paneID ? session : nil
+        case .editor:
+            return nil
         case .split(_, _, let first, let second, _):
             return first.findSession(forPaneID: paneID) ?? second.findSession(forPaneID: paneID)
+        }
+    }
+
+    func findEditorSession(forPaneID paneID: UUID) -> EditorSession? {
+        switch self {
+        case .leaf:
+            return nil
+        case .editor(let id, let session):
+            return id == paneID ? session : nil
+        case .split(_, _, let first, let second, _):
+            return first.findEditorSession(forPaneID: paneID) ?? second.findEditorSession(forPaneID: paneID)
         }
     }
 
     func allLeafIDs() -> [UUID] {
         switch self {
         case .leaf(let id, _):
+            return [id]
+        case .editor(let id, _):
             return [id]
         case .split(_, _, let first, let second, _):
             return first.allLeafIDs() + second.allLeafIDs()
@@ -45,6 +71,8 @@ indirect enum PaneNode: Identifiable {
         switch self {
         case .leaf(let id, _):
             return id == paneID
+        case .editor(let id, _):
+            return id == paneID
         case .split(let id, _, let first, let second, _):
             return id == paneID || first.contains(paneID: paneID) || second.contains(paneID: paneID)
         }
@@ -53,6 +81,8 @@ indirect enum PaneNode: Identifiable {
     func replacingPane(id targetID: UUID, with newNode: PaneNode) -> PaneNode {
         switch self {
         case .leaf(let id, _):
+            return id == targetID ? newNode : self
+        case .editor(let id, _):
             return id == targetID ? newNode : self
         case .split(let id, let direction, let first, let second, let ratio):
             return .split(
@@ -68,6 +98,8 @@ indirect enum PaneNode: Identifiable {
     func removingPane(id targetID: UUID) -> PaneNode? {
         switch self {
         case .leaf(let id, _):
+            return id == targetID ? nil : self
+        case .editor(let id, _):
             return id == targetID ? nil : self
         case .split(let id, let direction, let first, let second, let ratio):
             if first.id == targetID || (first.contains(paneID: targetID) && first.removingPane(id: targetID) == nil) {
@@ -90,6 +122,8 @@ indirect enum PaneNode: Identifiable {
         let clamped = min(max(ratio, 0.1), 0.9)
         switch self {
         case .leaf:
+            return self
+        case .editor:
             return self
         case .split(let id, let direction, let first, let second, let currentRatio):
             if id == splitID {

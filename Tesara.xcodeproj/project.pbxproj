@@ -55,6 +55,18 @@
 		EDC1E85DDAF298E3EA0D7E25 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0A3302C81E3683C9C6F70DE2 /* CoreGraphics.framework */; };
 		F3A965F6F8A10320AB0FA888 /* CoreText.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 025C0C0CA0E7477A899440FC /* CoreText.framework */; };
 		FA96111B4FCCEF18236CA364 /* TerminalIntegration in Resources */ = {isa = PBXBuildFile; fileRef = 2292F5BCC3AC767DAD9619D7 /* TerminalIntegration */; };
+		BB0001BB0001BB0001BB0001 /* EditorLayoutEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0001AA0001AA0001AA0001 /* EditorLayoutEngine.swift */; };
+		BB0002BB0002BB0002BB0002 /* EditorRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0002AA0002AA0002AA0002 /* EditorRenderer.swift */; };
+		BB0003BB0003BB0003BB0003 /* EditorSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0003AA0003AA0003AA0003 /* EditorSession.swift */; };
+		BB0004BB0004BB0004BB0004 /* EditorShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = AA0004AA0004AA0004AA0004 /* EditorShaders.metal */; };
+		BB0005BB0005BB0005BB0005 /* EditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0005AA0005AA0005AA0005 /* EditorView.swift */; };
+		BB0006BB0006BB0006BB0006 /* EditorViewRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0006AA0006AA0006AA0006 /* EditorViewRepresentable.swift */; };
+		BB0007BB0007BB0007BB0007 /* GlyphAtlas.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0007AA0007AA0007AA0007 /* GlyphAtlas.swift */; };
+		BB0008BB0008BB0008BB0008 /* GlyphCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0008AA0008AA0008AA0008 /* GlyphCache.swift */; };
+		BB0009BB0009BB0009BB0009 /* TextStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0009AA0009AA0009AA0009 /* TextStorage.swift */; };
+		BB0010BB0010BB0010BB0010 /* EditorSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0010AA0010AA0010AA0010 /* EditorSessionTests.swift */; };
+		BB0011BB0011BB0011BB0011 /* GlyphAtlasTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0011AA0011AA0011AA0011 /* GlyphAtlasTests.swift */; };
+		BB0012BB0012BB0012BB0012 /* TextStorageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0012AA0012AA0012AA0012 /* TextStorageTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -119,6 +131,18 @@
 		F55C30259BAA845533624745 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		F7D656612F1AA5C6D7C0A0F2 /* TesaraTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TesaraTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		FF7543B634720042FBCD3C12 /* GhosttyConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhosttyConfig.swift; sourceTree = "<group>"; };
+		AA0001AA0001AA0001AA0001 /* EditorLayoutEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorLayoutEngine.swift; sourceTree = "<group>"; };
+		AA0002AA0002AA0002AA0002 /* EditorRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorRenderer.swift; sourceTree = "<group>"; };
+		AA0003AA0003AA0003AA0003 /* EditorSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorSession.swift; sourceTree = "<group>"; };
+		AA0004AA0004AA0004AA0004 /* EditorShaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = EditorShaders.metal; sourceTree = "<group>"; };
+		AA0005AA0005AA0005AA0005 /* EditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorView.swift; sourceTree = "<group>"; };
+		AA0006AA0006AA0006AA0006 /* EditorViewRepresentable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorViewRepresentable.swift; sourceTree = "<group>"; };
+		AA0007AA0007AA0007AA0007 /* GlyphAtlas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlyphAtlas.swift; sourceTree = "<group>"; };
+		AA0008AA0008AA0008AA0008 /* GlyphCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlyphCache.swift; sourceTree = "<group>"; };
+		AA0009AA0009AA0009AA0009 /* TextStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextStorage.swift; sourceTree = "<group>"; };
+		AA0010AA0010AA0010AA0010 /* EditorSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorSessionTests.swift; sourceTree = "<group>"; };
+		AA0011AA0011AA0011AA0011 /* GlyphAtlasTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlyphAtlasTests.swift; sourceTree = "<group>"; };
+		AA0012AA0012AA0012AA0012 /* TextStorageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextStorageTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -196,6 +220,7 @@
 				47AE7A424F00C8FA129FC9B7 /* Tesara-Bridging-Header.h */,
 				C0A422BFC855684762B34843 /* Tesara.entitlements */,
 				ED0F772A0E12C469683DBCB8 /* TesaraApp.swift */,
+				CC0001CC0001CC0001CC0001 /* Editor */,
 				6B95A204B4BC8E7AADC76CD0 /* App */,
 				EFAD21C5DB576774E4949687 /* Ghostty */,
 				5943DB594FC73579D8E90FD1 /* History */,
@@ -261,6 +286,9 @@
 				692291F83027B0F2F4CA76BF /* TerminalThemeTests.swift */,
 				F3E6DBF6FBE09F48C83448BD /* TesaraTests.swift */,
 				17224DA6FD3857B58A8F2C64 /* WorkspaceManagerTests.swift */,
+				AA0012AA0012AA0012AA0012 /* TextStorageTests.swift */,
+				AA0011AA0011AA0011AA0011 /* GlyphAtlasTests.swift */,
+				AA0010AA0010AA0010AA0010 /* EditorSessionTests.swift */,
 			);
 			path = TesaraTests;
 			sourceTree = "<group>";
@@ -276,6 +304,22 @@
 				139103356B0F22292C032A08 /* GhosttySurfaceView.swift */,
 			);
 			path = Ghostty;
+			sourceTree = "<group>";
+		};
+		CC0001CC0001CC0001CC0001 /* Editor */ = {
+			isa = PBXGroup;
+			children = (
+				AA0001AA0001AA0001AA0001 /* EditorLayoutEngine.swift */,
+				AA0002AA0002AA0002AA0002 /* EditorRenderer.swift */,
+				AA0003AA0003AA0003AA0003 /* EditorSession.swift */,
+				AA0004AA0004AA0004AA0004 /* EditorShaders.metal */,
+				AA0005AA0005AA0005AA0005 /* EditorView.swift */,
+				AA0006AA0006AA0006AA0006 /* EditorViewRepresentable.swift */,
+				AA0007AA0007AA0007AA0007 /* GlyphAtlas.swift */,
+				AA0008AA0008AA0008AA0008 /* GlyphCache.swift */,
+				AA0009AA0009AA0009AA0009 /* TextStorage.swift */,
+			);
+			path = Editor;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -426,6 +470,15 @@
 				C9FA15C125CD87815FF03CEC /* TesaraApp.swift in Sources */,
 				3D72C5CAEC99162968379EB2 /* TesaraAppCommands.swift in Sources */,
 				BD773D1042EF68102567BF4B /* WorkspaceManager.swift in Sources */,
+				BB0001BB0001BB0001BB0001 /* EditorLayoutEngine.swift in Sources */,
+				BB0002BB0002BB0002BB0002 /* EditorRenderer.swift in Sources */,
+				BB0003BB0003BB0003BB0003 /* EditorSession.swift in Sources */,
+				BB0004BB0004BB0004BB0004 /* EditorShaders.metal in Sources */,
+				BB0005BB0005BB0005BB0005 /* EditorView.swift in Sources */,
+				BB0006BB0006BB0006BB0006 /* EditorViewRepresentable.swift in Sources */,
+				BB0007BB0007BB0007BB0007 /* GlyphAtlas.swift in Sources */,
+				BB0008BB0008BB0008BB0008 /* GlyphCache.swift in Sources */,
+				BB0009BB0009BB0009BB0009 /* TextStorage.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -446,6 +499,9 @@
 				81F684B3EE723B89F0976D5E /* TerminalThemeTests.swift in Sources */,
 				BF3F8B3950CB544D24CA8525 /* TesaraTests.swift in Sources */,
 				9F58E3CCFC266817AA5F8732 /* WorkspaceManagerTests.swift in Sources */,
+				BB0010BB0010BB0010BB0010 /* EditorSessionTests.swift in Sources */,
+				BB0011BB0011BB0011BB0011 /* GlyphAtlasTests.swift in Sources */,
+				BB0012BB0012BB0012BB0012 /* TextStorageTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

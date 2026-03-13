@@ -56,6 +56,18 @@ struct TesaraAppCommands: Commands {
 
             Button("Split Down") { split(.vertical) }
                 .keyboardShortcut("d", modifiers: [.command, .shift])
+
+            Divider()
+
+            Button("New Editor") {
+                manager.splitActivePaneWithEditor(
+                    direction: .horizontal,
+                    theme: settingsStore.activeTheme,
+                    fontFamily: settingsStore.settings.fontFamily,
+                    fontSize: settingsStore.settings.fontSize
+                )
+            }
+            .keyboardShortcut("e", modifiers: [.command, .shift])
         }
 
         CommandGroup(after: .toolbar) {

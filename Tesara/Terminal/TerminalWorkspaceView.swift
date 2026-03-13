@@ -17,6 +17,9 @@ struct TerminalWorkspaceView: View {
                     )
                 }
             }
+            .onChange(of: settingsStore.activeTheme) { _, newTheme in
+                propagateThemeToEditors(theme: newTheme)
+            }
     }
 
     private var terminalContent: some View {
@@ -49,9 +52,34 @@ struct TerminalWorkspaceView: View {
             if let surface = session.surfaceView?.surface {
                 ghostty_surface_set_occlusion(surface, occluded)
             }
+        case .editor(_, let editorSession):
+            if let editorView = editorSession.editorView as? EditorView {
+                if occluded {
+                    editorView.pauseDisplayLink()
+                } else {
+                    editorView.resumeDisplayLink()
+                }
+            }
         case .split(_, _, let first, let second, _):
             setOcclusion(for: first, occluded: occluded)
             setOcclusion(for: second, occluded: occluded)
+        }
+    }
+
+    private func propagateThemeToEditors(theme: TerminalTheme) {
+        guard let activeTab = manager.activeTab else { return }
+        propagateThemeToEditors(in: activeTab.rootPane, theme: theme)
+    }
+
+    private func propagateThemeToEditors(in node: PaneNode, theme: TerminalTheme) {
+        switch node {
+        case .leaf:
+            break
+        case .editor(_, let editorSession):
+            editorSession.updateTheme(theme)
+        case .split(_, _, let first, let second, _):
+            propagateThemeToEditors(in: first, theme: theme)
+            propagateThemeToEditors(in: second, theme: theme)
         }
     }
 }

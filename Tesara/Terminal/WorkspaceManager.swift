@@ -89,12 +89,26 @@ final class WorkspaceManager: ObservableObject {
         return activeTab.rootPane.findSession(forPaneID: activePaneID)
     }
 
+    var activeEditorSession: EditorSession? {
+        guard let activePaneID, let activeTab else { return nil }
+        return activeTab.rootPane.findEditorSession(forPaneID: activePaneID)
+    }
+
     // MARK: - Split Panes
 
     func splitActivePane(direction: PaneNode.SplitDirection, shellPath: String, workingDirectory: URL, blockStore: BlockStore) {
         guard let activePaneID,
-              let tabIndex = tabs.firstIndex(where: { $0.id == activeTabID }),
-              let currentSession = tabs[tabIndex].rootPane.findSession(forPaneID: activePaneID) else { return }
+              let tabIndex = tabs.firstIndex(where: { $0.id == activeTabID }) else { return }
+
+        // Find the current pane node to preserve it in the split
+        let currentNode: PaneNode
+        if let termSession = tabs[tabIndex].rootPane.findSession(forPaneID: activePaneID) {
+            currentNode = .leaf(id: activePaneID, session: termSession)
+        } else if let editorSession = tabs[tabIndex].rootPane.findEditorSession(forPaneID: activePaneID) {
+            currentNode = .editor(id: activePaneID, session: editorSession)
+        } else {
+            return
+        }
 
         let newSession = sessionFactory()
         newSession.configure(blockStore: blockStore)
@@ -104,7 +118,7 @@ final class WorkspaceManager: ObservableObject {
         let splitNode = PaneNode.split(
             id: UUID(),
             direction: direction,
-            first: .leaf(id: activePaneID, session: currentSession),
+            first: currentNode,
             second: newLeaf,
             ratio: 0.5
         )
@@ -114,10 +128,41 @@ final class WorkspaceManager: ObservableObject {
         newSession.start(shellPath: shellPath, workingDirectory: workingDirectory)
     }
 
+    func splitActivePaneWithEditor(direction: PaneNode.SplitDirection, theme: TerminalTheme, fontFamily: String, fontSize: Double) {
+        guard let activePaneID,
+              let tabIndex = tabs.firstIndex(where: { $0.id == activeTabID }) else { return }
+
+        // Find the current pane node to preserve it in the split
+        let currentNode: PaneNode
+        if let termSession = tabs[tabIndex].rootPane.findSession(forPaneID: activePaneID) {
+            currentNode = .leaf(id: activePaneID, session: termSession)
+        } else if let editorSession = tabs[tabIndex].rootPane.findEditorSession(forPaneID: activePaneID) {
+            currentNode = .editor(id: activePaneID, session: editorSession)
+        } else {
+            return
+        }
+
+        let editorSession = EditorSession()
+        editorSession.createView(theme: theme, fontFamily: fontFamily, fontSize: fontSize)
+        let newPaneID = UUID()
+        let newEditor = PaneNode.editor(id: newPaneID, session: editorSession)
+
+        let splitNode = PaneNode.split(
+            id: UUID(),
+            direction: direction,
+            first: currentNode,
+            second: newEditor,
+            ratio: 0.5
+        )
+
+        tabs[tabIndex].rootPane = tabs[tabIndex].rootPane.replacingPane(id: activePaneID, with: splitNode)
+        self.activePaneID = newPaneID
+    }
+
     func closePane(id: UUID) {
         guard let tabIndex = tabs.firstIndex(where: { $0.id == activeTabID }) else { return }
 
-        // Stop the session being closed
+        // Stop the terminal session being closed (editor sessions need no stop)
         if let session = tabs[tabIndex].rootPane.findSession(forPaneID: id) {
             session.stop()
         }
@@ -143,18 +188,25 @@ final class WorkspaceManager: ObservableObject {
         let previousPaneID = activePaneID
         activePaneID = id
 
-        // Update ghostty surface focus state for the previous and new pane
-        if let activeTab {
-            if let previousPaneID,
-               let prevSession = activeTab.rootPane.findSession(forPaneID: previousPaneID) {
-                prevSession.surfaceView?.focusDidChange(false)
+        guard let activeTab else { return }
+
+        // Defocus previous pane
+        if let previousPaneID {
+            if let prevTermSession = activeTab.rootPane.findSession(forPaneID: previousPaneID) {
+                prevTermSession.surfaceView?.focusDidChange(false)
+            } else if let prevEditorSession = activeTab.rootPane.findEditorSession(forPaneID: previousPaneID) {
+                (prevEditorSession.editorView as? EditorView)?.focusDidChange(false)
             }
-            if let newSession = activeTab.rootPane.findSession(forPaneID: id) {
-                newSession.surfaceView?.focusDidChange(true)
-                if let surface = newSession.surfaceView?.surface {
-                    GhosttyApp.shared.setFocusedSurface(surface)
-                }
+        }
+
+        // Focus new pane
+        if let newTermSession = activeTab.rootPane.findSession(forPaneID: id) {
+            newTermSession.surfaceView?.focusDidChange(true)
+            if let surface = newTermSession.surfaceView?.surface {
+                GhosttyApp.shared.setFocusedSurface(surface)
             }
+        } else if let newEditorSession = activeTab.rootPane.findEditorSession(forPaneID: id) {
+            (newEditorSession.editorView as? EditorView)?.focusDidChange(true)
         }
     }
 
@@ -164,6 +216,8 @@ final class WorkspaceManager: ObservableObject {
         switch node {
         case .leaf(_, let session):
             session.stop()
+        case .editor:
+            break  // Editor sessions need no explicit stop
         case .split(_, _, let first, let second, _):
             stopAllSessions(in: first)
             stopAllSessions(in: second)

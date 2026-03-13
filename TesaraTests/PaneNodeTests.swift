@@ -166,4 +166,84 @@ final class PaneNodeTests: XCTestCase {
             XCTFail("Expected split")
         }
     }
+
+    // MARK: - Editor Pane
+
+    private func makeEditor() -> PaneNode {
+        .editor(id: UUID(), session: EditorSession())
+    }
+
+    func testEditorHasCorrectID() {
+        let id = UUID()
+        let node = PaneNode.editor(id: id, session: EditorSession())
+        XCTAssertEqual(node.id, id)
+    }
+
+    func testEditorSessionIsNilForTerminal() {
+        let node = PaneNode.editor(id: UUID(), session: EditorSession())
+        XCTAssertNil(node.session) // .session returns TerminalSession?
+    }
+
+    func testEditorSessionIsAccessible() {
+        let editorSession = EditorSession()
+        let node = PaneNode.editor(id: UUID(), session: editorSession)
+        XCTAssertTrue(node.editorSession === editorSession)
+    }
+
+    func testFindEditorSessionInSplit() {
+        let editorID = UUID()
+        let editorSession = EditorSession()
+        let node = PaneNode.split(
+            id: UUID(), direction: .horizontal,
+            first: makeLeaf(),
+            second: .editor(id: editorID, session: editorSession),
+            ratio: 0.5
+        )
+        XCTAssertTrue(node.findEditorSession(forPaneID: editorID) === editorSession)
+        XCTAssertNil(node.findSession(forPaneID: editorID))
+    }
+
+    func testEditorIncludedInAllLeafIDs() {
+        let editorID = UUID()
+        let leafID = UUID()
+        let node = PaneNode.split(
+            id: UUID(), direction: .horizontal,
+            first: .leaf(id: leafID, session: TerminalSession()),
+            second: .editor(id: editorID, session: EditorSession()),
+            ratio: 0.5
+        )
+        let ids = node.allLeafIDs()
+        XCTAssertEqual(ids, [leafID, editorID])
+    }
+
+    func testRemoveEditorPromotesTerminal() {
+        let leafID = UUID()
+        let editorID = UUID()
+        let termSession = TerminalSession()
+        let node = PaneNode.split(
+            id: UUID(), direction: .horizontal,
+            first: .leaf(id: leafID, session: termSession),
+            second: .editor(id: editorID, session: EditorSession()),
+            ratio: 0.5
+        )
+        let result = node.removingPane(id: editorID)
+        XCTAssertNotNil(result)
+        XCTAssertEqual(result?.id, leafID)
+        XCTAssertTrue(result?.session === termSession)
+    }
+
+    func testContainsEditorID() {
+        let editorID = UUID()
+        let node = PaneNode.editor(id: editorID, session: EditorSession())
+        XCTAssertTrue(node.contains(paneID: editorID))
+        XCTAssertFalse(node.contains(paneID: UUID()))
+    }
+
+    func testReplaceEditorWithLeaf() {
+        let editorID = UUID()
+        let node = PaneNode.editor(id: editorID, session: EditorSession())
+        let replacement = makeLeaf()
+        let result = node.replacingPane(id: editorID, with: replacement)
+        XCTAssertNotNil(result.session)
+    }
 }
