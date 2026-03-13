@@ -3,7 +3,7 @@ import SwiftUI
 
 @main
 struct TesaraApp: App {
-    private let minimumWindowSize = CGSize(width: 480, height: 320)
+    private let minimumWindowSize = CGSize(width: 120, height: 80)
     private let updaterController = SPUStandardUpdaterController(startingUpdater: false, updaterDelegate: nil, userDriverDelegate: nil)
 
     @StateObject private var settingsStore = SettingsStore()
