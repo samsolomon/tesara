@@ -33,6 +33,20 @@ targets:
         type: folder
     info:
       path: Tesara/Info.plist
+    preBuildScripts:
+      - name: Build libghostty
+        script: |
+          set -euo pipefail
+          ZIG_VERSION=$(cat "$SRCROOT/.zig-version" | tr -d '[:space:]')
+          ZIG=$(command -v zig || echo "/opt/homebrew/bin/zig")
+          if [ ! -x "$ZIG" ]; then
+            echo "error: Zig $ZIG_VERSION not found. Install with: brew install zig"
+            exit 1
+          fi
+          cd "$SRCROOT/vendor/ghostty"
+          "$ZIG" build -Doptimize=ReleaseFast -Dapp-runtime=none -Demit-xcframework=false
+        outputFiles:
+          - $(SRCROOT)/vendor/ghostty/zig-out/lib/libghostty.a
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.samsolomon.tesara
@@ -46,11 +60,25 @@ targets:
         INFOPLIST_KEY_CFBundleDisplayName: Tesara
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.developer-tools
         INFOPLIST_KEY_NSHumanReadableCopyright: Copyright 2026 Sam Solomon
+        SWIFT_OBJC_BRIDGING_HEADER: Tesara/Tesara-Bridging-Header.h
+        HEADER_SEARCH_PATHS:
+          - $(SRCROOT)/vendor/ghostty/zig-out/include
+        LIBRARY_SEARCH_PATHS:
+          - $(SRCROOT)/vendor/ghostty/zig-out/lib
+        OTHER_LDFLAGS:
+          - -lghostty
+          - -lc++
     dependencies:
       - package: GRDB
         product: GRDB
       - package: Sparkle
         product: Sparkle
+      - sdk: Metal.framework
+      - sdk: QuartzCore.framework
+      - sdk: CoreText.framework
+      - sdk: CoreGraphics.framework
+      - sdk: IOSurface.framework
+      - sdk: IOKit.framework
     scheme:
       testTargets:
         - TesaraTests

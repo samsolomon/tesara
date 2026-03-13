@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		006547217CEB29410796DDE2 /* PerformanceBenchmarkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC8A5E83190F2BE454002AF3 /* PerformanceBenchmarkTests.swift */; };
 		0C5ADD3FC3569EE95E75361B /* TerminalLauncher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02E268CDB3B981F061FA12B4 /* TerminalLauncher.swift */; };
 		0FAC866DE2F0E11344222CC0 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 4914B0341A868631C86F9855 /* Sparkle */; };
 		17A1E6F4A360BF5C97590C6E /* PaneContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57E292C9A04F867FABB9662E /* PaneContainerView.swift */; };
@@ -20,7 +21,9 @@
 		406A4786F958C46D88472E0F /* TerminalBlockCaptureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9098467F6B5E13AF93A1ECD /* TerminalBlockCaptureTests.swift */; };
 		4AE351D65A72B81935CF5F47 /* OSC133Parser.swift in Sources */ = {isa = PBXBuildFile; fileRef = A89157F3A840F54E50D34C8F /* OSC133Parser.swift */; };
 		57DB5F9B4BEF7FD97B9BF8FF /* TerminalWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CC37374EE18F616BCE45DD3 /* TerminalWebView.swift */; };
+		5AA7A60643A0EC3F1EABDB83 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 17813D398B505968462B467F /* QuartzCore.framework */; };
 		68D5579883F02571544A846D /* TerminalWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDDA22FF0E3CCF02CE8BCD05 /* TerminalWorkspaceView.swift */; };
+		6AA10AC1A5725D9460FA0F8C /* IOSurface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1EE22681A74E38D510DFCDA3 /* IOSurface.framework */; };
 		6AB4D491DF5F118108162EEA /* MainWindowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8CF6564CD0AF8278F222619 /* MainWindowView.swift */; };
 		6AF0589C77DB137229E55557 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = DF6EF21EAA4938CD8F036D14 /* GRDB */; };
 		757F00F9B3700BB46988C6CF /* TranscriptLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCE89E00B323BA621EC2A946 /* TranscriptLog.swift */; };
@@ -30,11 +33,11 @@
 		81D353BEAF13304C4935B40F /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6D9B1F4149EB9724158875C /* HistoryView.swift */; };
 		81F684B3EE723B89F0976D5E /* TerminalThemeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 692291F83027B0F2F4CA76BF /* TerminalThemeTests.swift */; };
 		861065493F8E969DF9419959 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57A5490A849F9317664968E7 /* AppSettings.swift */; };
+		984A29B50C6127DD3BC92DB0 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F55C30259BAA845533624745 /* Metal.framework */; };
 		98D591A7F087E347F49D20BA /* OSC133ParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 777BE1DB38F60C0E7CA37F7C /* OSC133ParserTests.swift */; };
 		98FA319CCB290CC39E9EEF73 /* TerminalTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BB4D282162AFDF0A2DB5D51 /* TerminalTheme.swift */; };
 		9D2AA9AEBFD5CEEB5FED047D /* BlockStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5563A901A8F611AC6D01A419 /* BlockStoreTests.swift */; };
 		9F58E3CCFC266817AA5F8732 /* WorkspaceManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17224DA6FD3857B58A8F2C64 /* WorkspaceManagerTests.swift */; };
-		A1B2C301BENCH000000000091 /* PerformanceBenchmarkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C301BENCH000000000090 /* PerformanceBenchmarkTests.swift */; };
 		B4F68462773E6A1D220DA476 /* PaneDividerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B184B08FFBEE976991C8F22 /* PaneDividerView.swift */; };
 		BD773D1042EF68102567BF4B /* WorkspaceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 085DF302ED385DA3320C4E00 /* WorkspaceManager.swift */; };
 		BF3F8B3950CB544D24CA8525 /* TesaraTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3E6DBF6FBE09F48C83448BD /* TesaraTests.swift */; };
@@ -44,6 +47,9 @@
 		D92C7A0446CBC7553B01AD55 /* PaneNodeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64F682A08A5ECC9A73792C74 /* PaneNodeTests.swift */; };
 		DC4B28FCBE3C849D3766A101 /* TerminalSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9ACBFEB7F97B6D7DB444D4F /* TerminalSession.swift */; };
 		E9CC8D1BFE1AFC349433C4B4 /* TabBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C43028483E4CE7E65A49B780 /* TabBarView.swift */; };
+		EA98351C0BD53659BCAE0D5A /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4696C2FAC81FD918FCF4CDCF /* IOKit.framework */; };
+		EDC1E85DDAF298E3EA0D7E25 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0A3302C81E3683C9C6F70DE2 /* CoreGraphics.framework */; };
+		F3A965F6F8A10320AB0FA888 /* CoreText.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 025C0C0CA0E7477A899440FC /* CoreText.framework */; };
 		FA3301A36AF954E7509D1206 /* TranscriptLogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A8E49D78FD3DA47DB08402 /* TranscriptLogTests.swift */; };
 		FA96111B4FCCEF18236CA364 /* TerminalIntegration in Resources */ = {isa = PBXBuildFile; fileRef = 2292F5BCC3AC767DAD9619D7 /* TerminalIntegration */; };
 /* End PBXBuildFile section */
@@ -59,14 +65,20 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		025C0C0CA0E7477A899440FC /* CoreText.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreText.framework; path = System/Library/Frameworks/CoreText.framework; sourceTree = SDKROOT; };
 		02E268CDB3B981F061FA12B4 /* TerminalLauncher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalLauncher.swift; sourceTree = "<group>"; };
 		085DF302ED385DA3320C4E00 /* WorkspaceManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceManager.swift; sourceTree = "<group>"; };
+		0A3302C81E3683C9C6F70DE2 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		17224DA6FD3857B58A8F2C64 /* WorkspaceManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceManagerTests.swift; sourceTree = "<group>"; };
+		17813D398B505968462B467F /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		17E46BFDCDCA182651723141 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		1EE22681A74E38D510DFCDA3 /* IOSurface.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOSurface.framework; path = System/Library/Frameworks/IOSurface.framework; sourceTree = SDKROOT; };
 		2292F5BCC3AC767DAD9619D7 /* TerminalIntegration */ = {isa = PBXFileReference; lastKnownFileType = folder; name = TerminalIntegration; path = Tesara/Resources/TerminalIntegration; sourceTree = SOURCE_ROOT; };
 		230B62F5C9074F2BEC567B40 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		36D96A4177859EA0D14FAFCB /* PaneNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaneNode.swift; sourceTree = "<group>"; };
 		3CD405E88C7464BC61180F28 /* TerminalWKWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalWKWebView.swift; sourceTree = "<group>"; };
+		4696C2FAC81FD918FCF4CDCF /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
+		47AE7A424F00C8FA129FC9B7 /* Tesara-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Tesara-Bridging-Header.h"; sourceTree = "<group>"; };
 		4BA08886415B515EB410905D /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
 		5563A901A8F611AC6D01A419 /* BlockStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockStoreTests.swift; sourceTree = "<group>"; };
 		57A5490A849F9317664968E7 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
@@ -80,11 +92,11 @@
 		99905701CAB7B5AB4F5558C2 /* TerminalSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalSessionTests.swift; sourceTree = "<group>"; };
 		9BB4D282162AFDF0A2DB5D51 /* TerminalTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalTheme.swift; sourceTree = "<group>"; };
 		9CC37374EE18F616BCE45DD3 /* TerminalWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalWebView.swift; sourceTree = "<group>"; };
-		A1B2C301BENCH000000000090 /* PerformanceBenchmarkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PerformanceBenchmarkTests.swift; sourceTree = "<group>"; };
 		A89157F3A840F54E50D34C8F /* OSC133Parser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OSC133Parser.swift; sourceTree = "<group>"; };
 		B8C0E5566A3C23FA6CFC0EB2 /* BuiltInTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuiltInTheme.swift; sourceTree = "<group>"; };
 		B8CF6564CD0AF8278F222619 /* MainWindowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindowView.swift; sourceTree = "<group>"; };
 		B9098467F6B5E13AF93A1ECD /* TerminalBlockCaptureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalBlockCaptureTests.swift; sourceTree = "<group>"; };
+		BC8A5E83190F2BE454002AF3 /* PerformanceBenchmarkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PerformanceBenchmarkTests.swift; sourceTree = "<group>"; };
 		C0913B2DEDB933D3E3356B83 /* SettingsStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStoreTests.swift; sourceTree = "<group>"; };
 		C0A422BFC855684762B34843 /* Tesara.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Tesara.entitlements; sourceTree = "<group>"; };
 		C43028483E4CE7E65A49B780 /* TabBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBarView.swift; sourceTree = "<group>"; };
@@ -99,6 +111,7 @@
 		ED0F772A0E12C469683DBCB8 /* TesaraApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TesaraApp.swift; sourceTree = "<group>"; };
 		EDDA22FF0E3CCF02CE8BCD05 /* TerminalWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalWorkspaceView.swift; sourceTree = "<group>"; };
 		F3E6DBF6FBE09F48C83448BD /* TesaraTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TesaraTests.swift; sourceTree = "<group>"; };
+		F55C30259BAA845533624745 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		F7D656612F1AA5C6D7C0A0F2 /* TesaraTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TesaraTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -109,6 +122,12 @@
 			files = (
 				6AF0589C77DB137229E55557 /* GRDB in Frameworks */,
 				0FAC866DE2F0E11344222CC0 /* Sparkle in Frameworks */,
+				984A29B50C6127DD3BC92DB0 /* Metal.framework in Frameworks */,
+				5AA7A60643A0EC3F1EABDB83 /* QuartzCore.framework in Frameworks */,
+				F3A965F6F8A10320AB0FA888 /* CoreText.framework in Frameworks */,
+				EDC1E85DDAF298E3EA0D7E25 /* CoreGraphics.framework in Frameworks */,
+				6AA10AC1A5725D9460FA0F8C /* IOSurface.framework in Frameworks */,
+				EA98351C0BD53659BCAE0D5A /* IOKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -167,6 +186,7 @@
 			children = (
 				230B62F5C9074F2BEC567B40 /* Info.plist */,
 				B8CF6564CD0AF8278F222619 /* MainWindowView.swift */,
+				47AE7A424F00C8FA129FC9B7 /* Tesara-Bridging-Header.h */,
 				C0A422BFC855684762B34843 /* Tesara.entitlements */,
 				ED0F772A0E12C469683DBCB8 /* TesaraApp.swift */,
 				6B95A204B4BC8E7AADC76CD0 /* App */,
@@ -185,8 +205,22 @@
 				2292F5BCC3AC767DAD9619D7 /* TerminalIntegration */,
 				C2D544A7AD3135CE00E10F2F /* Tesara */,
 				DD4AAB2F3096D1C59637D82F /* TesaraTests */,
+				D460DB315892E713AA8BCD8A /* Frameworks */,
 				34B833143B10337A33E2F84D /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		D460DB315892E713AA8BCD8A /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				0A3302C81E3683C9C6F70DE2 /* CoreGraphics.framework */,
+				025C0C0CA0E7477A899440FC /* CoreText.framework */,
+				4696C2FAC81FD918FCF4CDCF /* IOKit.framework */,
+				1EE22681A74E38D510DFCDA3 /* IOSurface.framework */,
+				F55C30259BAA845533624745 /* Metal.framework */,
+				17813D398B505968462B467F /* QuartzCore.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 		DAF7F752BD488515A0DA51E4 /* Terminal */ = {
@@ -214,7 +248,7 @@
 				5563A901A8F611AC6D01A419 /* BlockStoreTests.swift */,
 				777BE1DB38F60C0E7CA37F7C /* OSC133ParserTests.swift */,
 				64F682A08A5ECC9A73792C74 /* PaneNodeTests.swift */,
-				A1B2C301BENCH000000000090 /* PerformanceBenchmarkTests.swift */,
+				BC8A5E83190F2BE454002AF3 /* PerformanceBenchmarkTests.swift */,
 				C0913B2DEDB933D3E3356B83 /* SettingsStoreTests.swift */,
 				B9098467F6B5E13AF93A1ECD /* TerminalBlockCaptureTests.swift */,
 				99905701CAB7B5AB4F5558C2 /* TerminalSessionTests.swift */,
@@ -251,6 +285,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = B7993B1D1E2EB56146B2D3AB /* Build configuration list for PBXNativeTarget "Tesara" */;
 			buildPhases = (
+				292D9A847560F2E0416FC7D8 /* Build libghostty */,
 				745D21EE4A597C4AC195D588 /* Sources */,
 				77B56804943EAF1DBB18B234 /* Resources */,
 				B0AE7EA6A42600C37E7ACDBB /* Frameworks */,
@@ -279,7 +314,6 @@
 				TargetAttributes = {
 					5C14A70B34F853FC4C34AC20 = {
 						DevelopmentTeam = 9ZLX6W79P6;
-						TestTargetID = F5D4C707C0FA0C0F03A19903;
 					};
 					F5D4C707C0FA0C0F03A19903 = {
 						DevelopmentTeam = 9ZLX6W79P6;
@@ -323,6 +357,28 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		292D9A847560F2E0416FC7D8 /* Build libghostty */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Build libghostty";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(SRCROOT)/vendor/ghostty/zig-out/lib/libghostty.a",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -euo pipefail\nZIG_VERSION=$(cat \"$SRCROOT/.zig-version\" | tr -d '[:space:]')\nZIG=$(command -v zig || echo \"/opt/homebrew/bin/zig\")\nif [ ! -x \"$ZIG\" ]; then\n  echo \"error: Zig $ZIG_VERSION not found. Install with: brew install zig\"\n  exit 1\nfi\ncd \"$SRCROOT/vendor/ghostty\"\n\"$ZIG\" build -Doptimize=ReleaseFast -Dapp-runtime=none -Demit-xcframework=false\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		745D21EE4A597C4AC195D588 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -362,6 +418,7 @@
 				9D2AA9AEBFD5CEEB5FED047D /* BlockStoreTests.swift in Sources */,
 				98D591A7F087E347F49D20BA /* OSC133ParserTests.swift in Sources */,
 				D92C7A0446CBC7553B01AD55 /* PaneNodeTests.swift in Sources */,
+				006547217CEB29410796DDE2 /* PerformanceBenchmarkTests.swift in Sources */,
 				7C4EC6EB70E96401AD27AFB9 /* SettingsStoreTests.swift in Sources */,
 				406A4786F958C46D88472E0F /* TerminalBlockCaptureTests.swift in Sources */,
 				37429BDCCFCD0878073F997A /* TerminalSessionTests.swift in Sources */,
@@ -369,7 +426,6 @@
 				BF3F8B3950CB544D24CA8525 /* TesaraTests.swift in Sources */,
 				FA3301A36AF954E7509D1206 /* TranscriptLogTests.swift in Sources */,
 				9F58E3CCFC266817AA5F8732 /* WorkspaceManagerTests.swift in Sources */,
-				A1B2C301BENCH000000000091 /* PerformanceBenchmarkTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -394,6 +450,9 @@
 				DEVELOPMENT_TEAM = 9ZLX6W79P6;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
+				HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)/vendor/ghostty/zig-out/include",
+				);
 				INFOPLIST_FILE = Tesara/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Tesara;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
@@ -402,9 +461,17 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(SRCROOT)/vendor/ghostty/zig-out/lib",
+				);
+				OTHER_LDFLAGS = (
+					"-lghostty",
+					"-lc++",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.samsolomon.tesara;
 				PRODUCT_NAME = Tesara;
 				SDKROOT = macosx;
+				SWIFT_OBJC_BRIDGING_HEADER = "Tesara/Tesara-Bridging-Header.h";
 				SWIFT_VERSION = 5.1;
 			};
 			name = Release;
@@ -419,6 +486,9 @@
 				DEVELOPMENT_TEAM = 9ZLX6W79P6;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
+				HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)/vendor/ghostty/zig-out/include",
+				);
 				INFOPLIST_FILE = Tesara/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Tesara;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
@@ -427,9 +497,17 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(SRCROOT)/vendor/ghostty/zig-out/lib",
+				);
+				OTHER_LDFLAGS = (
+					"-lghostty",
+					"-lc++",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.samsolomon.tesara;
 				PRODUCT_NAME = Tesara;
 				SDKROOT = macosx;
+				SWIFT_OBJC_BRIDGING_HEADER = "Tesara/Tesara-Bridging-Header.h";
 				SWIFT_VERSION = 5.1;
 			};
 			name = Debug;
@@ -449,7 +527,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.samsolomon.tesaraTests;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.1;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Tesara.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Tesara";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Tesara.app/Contents/MacOS/Tesara";
 			};
 			name = Debug;
 		};
@@ -468,7 +546,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.samsolomon.tesaraTests;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.1;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Tesara.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Tesara";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Tesara.app/Contents/MacOS/Tesara";
 			};
 			name = Release;
 		};
