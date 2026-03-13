@@ -92,6 +92,7 @@ targets:
       - sdk: CoreGraphics.framework
       - sdk: IOSurface.framework
       - sdk: IOKit.framework
+      - sdk: Carbon.framework
     scheme:
       testTargets:
         - TesaraTests
@@ -106,5 +107,7 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         SWIFT_VERSION: 5.10
         DEVELOPMENT_TEAM: 9ZLX6W79P6
+        HEADER_SEARCH_PATHS:
+          - $(SRCROOT)/vendor/ghostty/zig-out/include
     dependencies:
       - target: Tesara

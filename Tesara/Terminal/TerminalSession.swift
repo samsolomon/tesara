@@ -241,6 +241,33 @@ final class TerminalSession: ObservableObject {
         self.activeCapture = nil
     }
 
+    // MARK: - Ghostty Action Handlers (Phase 2 stubs, expanded in Phase 3)
+
+    func updateWorkingDirectory(_ url: URL) {
+        currentWorkingDirectory = url.path
+    }
+
+    func updateTitle(_ title: String) {
+        // Title display will be wired up in Phase 3
+    }
+
+    func handleCommandFinished(exitCode: Int16, durationNs: UInt64) {
+        let code = exitCode == -1 ? nil : Int(exitCode)
+        // TODO: Phase 4 — store durationNs in TerminalBlockCapture
+        finalizeActiveCaptureIfNeeded(exitCode: code)
+    }
+
+    func handleChildExited(exitCode: UInt32) {
+        flushPendingOutput()
+        finalizeActiveCaptureIfNeeded(exitCode: Int(exitCode))
+        processHandle = nil
+        status = .stopped
+    }
+
+    func handleSurfaceClosed() {
+        stop()
+    }
+
     private func sanitizeCommand(_ command: String) -> String {
         command
             .replacingOccurrences(of: "\r\n", with: "\n")

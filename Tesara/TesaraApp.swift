@@ -18,6 +18,10 @@ struct TesaraApp: App {
                 .frame(minWidth: 960, minHeight: 640)
                 .onAppear {
                     updaterController.updater.automaticallyChecksForUpdates = settingsStore.settings.updateChecksEnabled
+                    GhosttyApp.shared.initialize(
+                        theme: settingsStore.activeTheme,
+                        settings: settingsStore.settings
+                    )
                 }
                 .onChange(of: settingsStore.settings.updateChecksEnabled) {
                     updaterController.updater.automaticallyChecksForUpdates = settingsStore.settings.updateChecksEnabled
