@@ -38,7 +38,8 @@ sample_process_tree() {
 
 run_resource_bench() {
   local name="$1"
-  local bundle_id="${TERMINAL_BUNDLE_IDS[$name]}"
+  local bundle_id
+  bundle_id=$(get_bundle_id "$name")
 
   echo "  Benchmarking resources: ${name}"
 
@@ -162,7 +163,7 @@ mkdir -p "$RESULTS_DIR"
 echo "==> Resource Benchmark"
 for target in "${TARGETS[@]}"; do
   target=$(echo "$target" | tr -d '[:space:]')
-  if [[ -n "${TERMINAL_BUNDLE_IDS[$target]+x}" ]]; then
+  if [[ -n "$(get_bundle_id "$target")" ]]; then
     run_resource_bench "$target"
   else
     echo "  Unknown terminal: ${target}" >&2

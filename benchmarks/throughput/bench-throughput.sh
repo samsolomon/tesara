@@ -12,25 +12,30 @@ source "${SCRIPT_DIR}/../lib/helpers.sh"
 
 TARGETS=("${@:-$(detect_terminals)}")
 
-declare -A PAYLOADS=(
-  [ascii]=".payload-ascii"
-  [seq]=".payload-seq"
-  [unicode]=".payload-unicode"
-  [ansi]=".payload-ansi"
-)
+PAYLOAD_NAMES="ascii seq unicode ansi"
+
+get_payload_file() {
+  case "$1" in
+    ascii)   echo ".payload-ascii" ;;
+    seq)     echo ".payload-seq" ;;
+    unicode) echo ".payload-unicode" ;;
+    ansi)    echo ".payload-ansi" ;;
+  esac
+}
 
 # Generate payloads if missing
 bash "${SCRIPT_DIR}/generate-payloads.sh"
 
 run_throughput_bench() {
   local name="$1"
-  local bundle_id="${TERMINAL_BUNDLE_IDS[$name]}"
+  local bundle_id
+  bundle_id=$(get_bundle_id "$name")
   local all_results="{}"
 
   echo "  Benchmarking throughput: ${name}"
 
-  for payload_name in "${!PAYLOADS[@]}"; do
-    local payload_file="${PAYLOAD_DIR}/${PAYLOADS[$payload_name]}"
+  for payload_name in $PAYLOAD_NAMES; do
+    local payload_file="${PAYLOAD_DIR}/$(get_payload_file "$payload_name")"
     if [[ ! -f "$payload_file" ]]; then
       echo "    Skipping ${payload_name}: payload not found" >&2
       continue
@@ -111,7 +116,7 @@ mkdir -p "$RESULTS_DIR"
 echo "==> Throughput Benchmark"
 for target in "${TARGETS[@]}"; do
   target=$(echo "$target" | tr -d '[:space:]')
-  if [[ -n "${TERMINAL_BUNDLE_IDS[$target]+x}" ]]; then
+  if [[ -n "$(get_bundle_id "$target")" ]]; then
     run_throughput_bench "$target"
   else
     echo "  Unknown terminal: ${target}" >&2

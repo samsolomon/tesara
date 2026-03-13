@@ -34,6 +34,7 @@
 		98FA319CCB290CC39E9EEF73 /* TerminalTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BB4D282162AFDF0A2DB5D51 /* TerminalTheme.swift */; };
 		9D2AA9AEBFD5CEEB5FED047D /* BlockStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5563A901A8F611AC6D01A419 /* BlockStoreTests.swift */; };
 		9F58E3CCFC266817AA5F8732 /* WorkspaceManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17224DA6FD3857B58A8F2C64 /* WorkspaceManagerTests.swift */; };
+		A1B2C301BENCH000000000091 /* PerformanceBenchmarkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C301BENCH000000000090 /* PerformanceBenchmarkTests.swift */; };
 		B4F68462773E6A1D220DA476 /* PaneDividerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B184B08FFBEE976991C8F22 /* PaneDividerView.swift */; };
 		BD773D1042EF68102567BF4B /* WorkspaceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 085DF302ED385DA3320C4E00 /* WorkspaceManager.swift */; };
 		BF3F8B3950CB544D24CA8525 /* TesaraTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3E6DBF6FBE09F48C83448BD /* TesaraTests.swift */; };
@@ -79,6 +80,7 @@
 		99905701CAB7B5AB4F5558C2 /* TerminalSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalSessionTests.swift; sourceTree = "<group>"; };
 		9BB4D282162AFDF0A2DB5D51 /* TerminalTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalTheme.swift; sourceTree = "<group>"; };
 		9CC37374EE18F616BCE45DD3 /* TerminalWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalWebView.swift; sourceTree = "<group>"; };
+		A1B2C301BENCH000000000090 /* PerformanceBenchmarkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PerformanceBenchmarkTests.swift; sourceTree = "<group>"; };
 		A89157F3A840F54E50D34C8F /* OSC133Parser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OSC133Parser.swift; sourceTree = "<group>"; };
 		B8C0E5566A3C23FA6CFC0EB2 /* BuiltInTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuiltInTheme.swift; sourceTree = "<group>"; };
 		B8CF6564CD0AF8278F222619 /* MainWindowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindowView.swift; sourceTree = "<group>"; };
@@ -212,6 +214,7 @@
 				5563A901A8F611AC6D01A419 /* BlockStoreTests.swift */,
 				777BE1DB38F60C0E7CA37F7C /* OSC133ParserTests.swift */,
 				64F682A08A5ECC9A73792C74 /* PaneNodeTests.swift */,
+				A1B2C301BENCH000000000090 /* PerformanceBenchmarkTests.swift */,
 				C0913B2DEDB933D3E3356B83 /* SettingsStoreTests.swift */,
 				B9098467F6B5E13AF93A1ECD /* TerminalBlockCaptureTests.swift */,
 				99905701CAB7B5AB4F5558C2 /* TerminalSessionTests.swift */,
@@ -276,6 +279,7 @@
 				TargetAttributes = {
 					5C14A70B34F853FC4C34AC20 = {
 						DevelopmentTeam = 9ZLX6W79P6;
+						TestTargetID = F5D4C707C0FA0C0F03A19903;
 					};
 					F5D4C707C0FA0C0F03A19903 = {
 						DevelopmentTeam = 9ZLX6W79P6;
@@ -365,6 +369,7 @@
 				BF3F8B3950CB544D24CA8525 /* TesaraTests.swift in Sources */,
 				FA3301A36AF954E7509D1206 /* TranscriptLogTests.swift in Sources */,
 				9F58E3CCFC266817AA5F8732 /* WorkspaceManagerTests.swift in Sources */,
+				A1B2C301BENCH000000000091 /* PerformanceBenchmarkTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -444,7 +449,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.samsolomon.tesaraTests;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.1;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Tesara.app/Contents/MacOS/Tesara";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Tesara.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Tesara";
 			};
 			name = Debug;
 		};
@@ -463,7 +468,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.samsolomon.tesaraTests;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.1;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Tesara.app/Contents/MacOS/Tesara";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Tesara.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Tesara";
 			};
 			name = Release;
 		};

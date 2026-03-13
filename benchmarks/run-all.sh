@@ -40,12 +40,15 @@ jq -n \
 if (( $# > 0 )); then
   TARGETS=("$@")
 else
-  mapfile -t TARGETS < <(detect_terminals)
+  TARGETS=()
+  while IFS= read -r line; do
+    TARGETS+=("$line")
+  done < <(detect_terminals)
 fi
 
 echo "Terminals to benchmark:"
 for t in "${TARGETS[@]}"; do
-  echo "  - ${t} (${TERMINAL_BUNDLE_IDS[$t]:-unknown})"
+  echo "  - ${t} ($(get_bundle_id "$t"))"
 done
 echo ""
 

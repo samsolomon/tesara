@@ -36,9 +36,10 @@ quit_terminal() {
 detect_terminals() {
   source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/config.sh"
 
-  for name in "${!TERMINAL_BUNDLE_IDS[@]}"; do
-    local bundle_id="${TERMINAL_BUNDLE_IDS[$name]}"
-    if mdfind "kMDItemCFBundleIdentifier == '${bundle_id}'" 2>/dev/null | head -1 | grep -q .; then
+  for name in $TERMINAL_NAMES; do
+    local bundle_id
+    bundle_id=$(get_bundle_id "$name")
+    if [[ -n "$bundle_id" ]] && mdfind "kMDItemCFBundleIdentifier == '${bundle_id}'" 2>/dev/null | head -1 | grep -q .; then
       echo "$name"
     fi
   done | sort

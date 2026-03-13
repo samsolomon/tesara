@@ -3,16 +3,22 @@
 
 set -euo pipefail
 
-# ── Terminal bundle IDs ──────────────────────────────────────────────
-declare -A TERMINAL_BUNDLE_IDS=(
-  [Tesara]="com.samsolomon.Tesara"
-  [Terminal]="com.apple.Terminal"
-  [iTerm2]="com.googlecode.iterm2"
-  [Ghostty]="com.mitchellh.ghostty"
-  [Alacritty]="org.alacritty"
-  [Kitty]="net.kovidgoyal.kitty"
-  [Warp]="dev.warp.Warp-Stable"
-)
+# ── Terminal names (order matters for iteration) ─────────────────────
+TERMINAL_NAMES="Tesara Terminal iTerm2 Ghostty Alacritty Kitty Warp"
+
+# ── Terminal bundle ID lookup ────────────────────────────────────────
+get_bundle_id() {
+  case "$1" in
+    Tesara)    echo "com.samsolomon.Tesara" ;;
+    Terminal)  echo "com.apple.Terminal" ;;
+    iTerm2)    echo "com.googlecode.iterm2" ;;
+    Ghostty)   echo "com.mitchellh.ghostty" ;;
+    Alacritty) echo "org.alacritty" ;;
+    Kitty)     echo "net.kovidgoyal.kitty" ;;
+    Warp)      echo "dev.warp.Warp-Stable" ;;
+    *)         echo "" ;;
+  esac
+}
 
 # ── Iteration counts ────────────────────────────────────────────────
 STARTUP_ITERATIONS=10
@@ -29,5 +35,10 @@ PAYLOAD_DIR="${BENCH_DIR}/throughput"
 SENTINEL_PREFIX="/tmp/tesara-bench-sentinel"
 
 # ── Terminals that don't support AppleScript keystroke injection ─────
-# These will be marked manual-only for latency tests
-MANUAL_ONLY_LATENCY=(Alacritty Kitty)
+MANUAL_ONLY_LATENCY="Alacritty Kitty"
+
+# Check if a terminal is in the manual-only list
+is_manual_only() {
+  local name="$1"
+  echo "$MANUAL_ONLY_LATENCY" | tr ' ' '\n' | grep -qx "$name"
+}
