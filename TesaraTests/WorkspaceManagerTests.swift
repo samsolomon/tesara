@@ -6,6 +6,7 @@ import GRDB
 final class WorkspaceManagerTests: XCTestCase {
     private var manager: WorkspaceManager!
     private var blockStore: BlockStore!
+    private var tempDir: URL!
 
     override func setUp() async throws {
         try await super.setUp()
@@ -13,6 +14,13 @@ final class WorkspaceManagerTests: XCTestCase {
         manager.sessionFactory = { TerminalSession() }
         manager.setConfirmOnCloseRunningSessionEnabled(false)
         blockStore = try BlockStore(dbQueue: DatabaseQueue())
+        tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+    }
+
+    override func tearDown() async throws {
+        try? FileManager.default.removeItem(at: tempDir)
+        try await super.tearDown()
     }
 
     private func addTab() {
@@ -29,6 +37,12 @@ final class WorkspaceManagerTests: XCTestCase {
             expectation.fulfill()
         }
         wait(for: [expectation], timeout: 1)
+    }
+
+    private func tempFile(name: String, content: String) throws -> URL {
+        let url = tempDir.appendingPathComponent(name)
+        try content.write(to: url, atomically: true, encoding: .utf8)
+        return url
     }
 
     // MARK: Tab Creation
@@ -175,6 +189,82 @@ final class WorkspaceManagerTests: XCTestCase {
 
         XCTAssertTrue(manager.tabs.isEmpty)
         XCTAssertNil(manager.pendingCloseConfirmation)
+    }
+
+    func testDirtyPaneSaveWaitsForSavePanelBeforeClosing() throws {
+        addTab()
+        let terminalPaneID = try XCTUnwrap(manager.activePaneID)
+
+        manager.splitActivePaneWithEditor(
+            direction: .horizontal,
+            theme: testTheme,
+            fontFamily: "SF Mono",
+            fontSize: 13
+        )
+
+        let editorPaneID = try XCTUnwrap(manager.activePaneID)
+        let editorSession = try XCTUnwrap(manager.activeEditorSession)
+        editorSession.insertText("hello")
+
+        manager.closePane(id: editorPaneID)
+        XCTAssertEqual(manager.pendingCloseConfirmation, .dirtyPane(editorPaneID))
+
+        manager.resolvePendingClose(.save)
+        XCTAssertEqual(manager.pendingSavePanel, editorSession.id)
+        XCTAssertNotNil(manager.activeTab?.rootPane.findEditorSession(forPaneID: editorPaneID))
+
+        let url = tempDir.appendingPathComponent("pane-save.txt")
+        manager.completePendingSavePanel(sessionID: editorSession.id, url: url)
+
+        XCTAssertEqual(manager.activePaneID, terminalPaneID)
+        XCTAssertNil(manager.activeTab?.rootPane.findEditorSession(forPaneID: editorPaneID))
+    }
+
+    func testCloseDirtyTabRequestsConfirmation() throws {
+        addTab()
+        let tabID = try XCTUnwrap(manager.activeTabID)
+
+        manager.splitActivePaneWithEditor(
+            direction: .horizontal,
+            theme: testTheme,
+            fontFamily: "SF Mono",
+            fontSize: 13
+        )
+
+        let editorSession = try XCTUnwrap(manager.activeEditorSession)
+        editorSession.insertText("unsaved")
+
+        manager.closeTab(id: tabID)
+
+        XCTAssertEqual(manager.pendingCloseConfirmation, .dirtyTab(tabID))
+        XCTAssertEqual(manager.tabs.count, 1)
+    }
+
+    func testDirtyTabSaveWaitsForSavePanelBeforeClosing() throws {
+        addTab()
+        let tabID = try XCTUnwrap(manager.activeTabID)
+
+        manager.splitActivePaneWithEditor(
+            direction: .horizontal,
+            theme: testTheme,
+            fontFamily: "SF Mono",
+            fontSize: 13
+        )
+
+        let editorSession = try XCTUnwrap(manager.activeEditorSession)
+        editorSession.insertText("unsaved")
+
+        manager.closeTab(id: tabID)
+        manager.resolvePendingClose(.save)
+
+        XCTAssertEqual(manager.pendingSavePanel, editorSession.id)
+        XCTAssertEqual(manager.tabs.count, 1)
+
+        let url = tempDir.appendingPathComponent("tab-save.txt")
+        manager.completePendingSavePanel(sessionID: editorSession.id, url: url)
+
+        XCTAssertTrue(manager.tabs.isEmpty)
+        XCTAssertNil(manager.pendingSavePanel)
     }
 
     func testSelectingTabRestoresItsSelectedPane() {
@@ -497,5 +587,21 @@ final class WorkspaceManagerTests: XCTestCase {
         XCTAssertEqual(manager.activePaneID, editorPaneID)
         XCTAssertNil(manager.activeSession)
         XCTAssertNotNil(manager.activeEditorSession)
+    }
+
+    private var testTheme: TerminalTheme {
+        TerminalTheme(
+            id: "test", name: "Test",
+            foreground: "#cccccc", background: "#1e1e1e",
+            cursor: "#cccccc", cursorText: "#1e1e1e",
+            selectionBackground: "#3c5a96",
+            black: "#000000", red: "#ff0000", green: "#00ff00",
+            yellow: "#ffff00", blue: "#0000ff", magenta: "#ff00ff",
+            cyan: "#00ffff", white: "#ffffff",
+            brightBlack: "#808080", brightRed: "#ff0000",
+            brightGreen: "#00ff00", brightYellow: "#ffff00",
+            brightBlue: "#0000ff", brightMagenta: "#ff00ff",
+            brightCyan: "#00ffff", brightWhite: "#ffffff"
+        )
     }
 }

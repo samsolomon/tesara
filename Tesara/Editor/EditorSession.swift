@@ -29,10 +29,9 @@ final class EditorSession: ObservableObject, Identifiable {
     @Published var filePath: URL?
     @Published var fileModificationDate: Date?
 
-    private var mutationGeneration: UInt64 = 0
-    private var savedAtGeneration: UInt64 = 0
+    private var savedContentsSnapshot = ""
 
-    var isDirty: Bool { mutationGeneration != savedAtGeneration }
+    var isDirty: Bool { storage.entireString() != savedContentsSnapshot }
 
     var displayTitle: String {
         let name = filePath?.lastPathComponent ?? "Untitled"
@@ -46,9 +45,10 @@ final class EditorSession: ObservableObject, Identifiable {
 
     private(set) var syntaxHighlighter: SyntaxHighlighter?
 
-    private func incrementGeneration() {
-        mutationGeneration += 1
+    private func documentDidChange() {
+        syntaxHighlighter?.fullTokenize(storage: storage)
         objectWillChange.send()
+        (editorView as? EditorView)?.documentDidChange()
     }
 
     // MARK: - Cursor Movement
@@ -158,7 +158,7 @@ final class EditorSession: ObservableObject, Identifiable {
                 cursorPosition = storage.insert(text, at: cursorPosition, undoManager: undoManager)
             }
         }
-        incrementGeneration()
+        documentDidChange()
         needsRenderCallback?()
     }
 
@@ -182,7 +182,7 @@ final class EditorSession: ObservableObject, Identifiable {
                 cursorPosition = deleteStart
             }
         }
-        incrementGeneration()
+        documentDidChange()
         needsRenderCallback?()
     }
 
@@ -206,7 +206,7 @@ final class EditorSession: ObservableObject, Identifiable {
                 storage.delete(range: TextStorage.Range(start: cursorPosition, end: deleteEnd), undoManager: undoManager)
             }
         }
-        incrementGeneration()
+        documentDidChange()
         needsRenderCallback?()
     }
 
@@ -259,7 +259,7 @@ final class EditorSession: ObservableObject, Identifiable {
                 cursorPosition = norm.start
                 selection = nil
             }
-            incrementGeneration()
+            documentDidChange()
             needsRenderCallback?()
         }
     }
@@ -269,14 +269,14 @@ final class EditorSession: ObservableObject, Identifiable {
     func undo() {
         guard undoManager.canUndo else { return }
         undoManager.undo()
-        incrementGeneration()
+        documentDidChange()
         needsRenderCallback?()
     }
 
     func redo() {
         guard undoManager.canRedo else { return }
         undoManager.redo()
-        incrementGeneration()
+        documentDidChange()
         needsRenderCallback?()
     }
 
@@ -302,24 +302,23 @@ final class EditorSession: ObservableObject, Identifiable {
         filePath = url
         fileModificationDate = try? FileManager.default.attributesOfItem(atPath: url.path)[.modificationDate] as? Date
         undoManager.removeAllActions()
-        mutationGeneration = 0
-        savedAtGeneration = 0
+        savedContentsSnapshot = normalized
         cursorPosition = TextStorage.Position(line: 0, column: 0)
         selection = nil
 
         // Setup syntax highlighting based on file extension
         syntaxHighlighter = SyntaxHighlighter(fileExtension: url.pathExtension)
-        syntaxHighlighter?.fullTokenize(storage: storage)
 
-        objectWillChange.send()
+        documentDidChange()
         needsRenderCallback?()
     }
 
     func save() throws {
         guard let filePath else { throw EditorFileError.noFilePath }
-        try storage.entireString().write(to: filePath, atomically: true, encoding: .utf8)
+        let currentContents = storage.entireString()
+        try currentContents.write(to: filePath, atomically: true, encoding: .utf8)
         fileModificationDate = try? FileManager.default.attributesOfItem(atPath: filePath.path)[.modificationDate] as? Date
-        savedAtGeneration = mutationGeneration
+        savedContentsSnapshot = currentContents
         objectWillChange.send()
     }
 

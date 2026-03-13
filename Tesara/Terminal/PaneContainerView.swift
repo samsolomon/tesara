@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct PaneContainerView: View {
+    private let dividerThickness: CGFloat = 4
+
     let node: PaneNode
     let theme: TerminalTheme
     let activePaneID: UUID?
@@ -38,20 +40,34 @@ struct PaneContainerView: View {
 
         case .split(let splitID, let direction, let first, let second, let ratio):
             GeometryReader { geometry in
+                let containerSize = geometry.size
+                let mainAxisSize = max(
+                    (direction == .horizontal ? containerSize.width : containerSize.height) - dividerThickness,
+                    1
+                )
                 splitContent(
                     splitID: splitID,
                     direction: direction,
                     first: first,
                     second: second,
                     ratio: ratio,
-                    totalSize: direction == .horizontal ? geometry.size.width : geometry.size.height
+                    containerSize: containerSize,
+                    mainAxisSize: mainAxisSize
                 )
             }
         }
     }
 
     @ViewBuilder
-    private func splitContent(splitID: UUID, direction: PaneNode.SplitDirection, first: PaneNode, second: PaneNode, ratio: CGFloat, totalSize: CGFloat) -> some View {
+    private func splitContent(
+        splitID: UUID,
+        direction: PaneNode.SplitDirection,
+        first: PaneNode,
+        second: PaneNode,
+        ratio: CGFloat,
+        containerSize: CGSize,
+        mainAxisSize: CGFloat
+    ) -> some View {
         let firstChild = PaneContainerView(
             node: first, theme: theme,
             activePaneID: activePaneID,
@@ -71,22 +87,40 @@ struct PaneContainerView: View {
         let divider = PaneDividerView(
             direction: direction,
             initialRatio: ratio,
-            totalSize: totalSize,
+            totalSize: mainAxisSize,
             onUpdateRatio: { newRatio in onUpdateRatio(splitID, newRatio) }
         )
+        let firstPaneSize = max(0, min(mainAxisSize * ratio, mainAxisSize))
+        let secondPaneSize = max(0, mainAxisSize - firstPaneSize)
 
         if direction == .horizontal {
-            HStack(spacing: 0) {
-                firstChild.frame(width: totalSize * ratio)
+            ZStack(alignment: .topLeading) {
+                firstChild
+                    .frame(width: firstPaneSize, height: containerSize.height, alignment: .topLeading)
+                    .clipped()
                 divider
+                    .frame(width: dividerThickness, height: containerSize.height)
+                    .offset(x: firstPaneSize)
                 secondChild
+                    .frame(width: secondPaneSize, height: containerSize.height, alignment: .topLeading)
+                    .offset(x: firstPaneSize + dividerThickness)
+                    .clipped()
             }
+            .frame(width: containerSize.width, height: containerSize.height, alignment: .topLeading)
         } else {
-            VStack(spacing: 0) {
-                firstChild.frame(height: totalSize * ratio)
+            ZStack(alignment: .topLeading) {
+                firstChild
+                    .frame(width: containerSize.width, height: firstPaneSize, alignment: .topLeading)
+                    .clipped()
                 divider
+                    .frame(width: containerSize.width, height: dividerThickness)
+                    .offset(y: firstPaneSize)
                 secondChild
+                    .frame(width: containerSize.width, height: secondPaneSize, alignment: .topLeading)
+                    .offset(y: firstPaneSize + dividerThickness)
+                    .clipped()
             }
+            .frame(width: containerSize.width, height: containerSize.height, alignment: .topLeading)
         }
     }
 }

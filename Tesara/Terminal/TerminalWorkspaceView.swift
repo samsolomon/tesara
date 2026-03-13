@@ -100,15 +100,10 @@ struct TerminalWorkspaceView: View {
         panel.begin { response in
             DispatchQueue.main.async {
                 guard response == .OK, let url = panel.url else {
-                    manager.pendingSavePanel = nil
+                    manager.cancelPendingSavePanel()
                     return
                 }
-                do {
-                    try session.saveAs(url: url)
-                } catch {
-                    manager.lastFileError = error
-                }
-                manager.pendingSavePanel = nil
+                manager.completePendingSavePanel(sessionID: session.id, url: url)
             }
         }
     }
@@ -190,7 +185,7 @@ private struct CloseConfirmationAlert: ViewModifier {
             }
             .alert(alertTitle, isPresented: $showAlert) {
                 switch manager.pendingCloseConfirmation {
-                case .dirtyPane:
+                case .dirtyPane, .dirtyTab:
                     Button("Save") {
                         manager.resolvePendingClose(.save)
                     }
@@ -216,6 +211,8 @@ private struct CloseConfirmationAlert: ViewModifier {
         switch manager.pendingCloseConfirmation {
         case .dirtyPane:
             return "Unsaved Changes"
+        case .dirtyTab:
+            return "Unsaved Changes in Tab"
         case .runningPane, .runningTab:
             return "Close Running Session?"
         case nil:
@@ -227,6 +224,8 @@ private struct CloseConfirmationAlert: ViewModifier {
         switch manager.pendingCloseConfirmation {
         case .dirtyPane:
             return "Do you want to save changes before closing?"
+        case .dirtyTab:
+            return "This tab contains unsaved editor changes. Save them before closing the tab?"
         case .runningPane:
             return "This pane still has a running terminal session. Closing it will stop that session."
         case .runningTab:

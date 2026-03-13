@@ -152,6 +152,22 @@ class EditorView: NSView, NSTextInputClient {
         resetCursorBlink()
     }
 
+    func documentDidChange() {
+        guard let session else { return }
+
+        if session.wordWrapEnabled {
+            let viewportWidth = contentSize.width > 0 ? contentSize.width : bounds.width
+            layoutEngine.recomputeWrapCounts(storage: session.storage, viewportWidth: viewportWidth)
+            lastLayoutWidth = viewportWidth
+        }
+
+        let totalLines = session.wordWrapEnabled
+            ? max(1, layoutEngine.visualLineMap.totalVisualLines)
+            : max(1, session.storage.lineCount)
+        scrollOffsetVisualLine = min(scrollOffsetVisualLine, totalLines - 1)
+        setNeedsRender()
+    }
+
     func pauseDisplayLink() {
         renderTimer?.invalidate()
         renderTimer = nil
@@ -664,6 +680,12 @@ class EditorView: NSView, NSTextInputClient {
         }
         needsRender = true
     }
+
+#if DEBUG
+    func totalVisualLinesForTesting() -> Int {
+        layoutEngine.visualLineMap.totalVisualLines
+    }
+#endif
 
     private func applyTheme(_ theme: TerminalTheme) {
         themeColors = EditorLayoutEngine.ThemeColors(

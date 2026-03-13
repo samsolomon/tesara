@@ -141,7 +141,7 @@ indirect enum PaneNode: Identifiable {
     }
 
     func updatingRatio(splitID: UUID, ratio: CGFloat) -> PaneNode {
-        let clamped = min(max(ratio, 0.1), 0.9)
+        let clamped = min(max(ratio, 0.05), 0.95)
         switch self {
         case .leaf:
             return self

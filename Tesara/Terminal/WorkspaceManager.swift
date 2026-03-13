@@ -5,6 +5,7 @@ import Foundation
 final class WorkspaceManager: ObservableObject {
     enum CloseConfirmationRequest: Identifiable, Equatable {
         case dirtyPane(UUID)
+        case dirtyTab(UUID)
         case runningPane(UUID)
         case runningTab(UUID)
 
@@ -12,6 +13,8 @@ final class WorkspaceManager: ObservableObject {
             switch self {
             case .dirtyPane(let id):
                 "dirty-pane-\(id.uuidString)"
+            case .dirtyTab(let id):
+                "dirty-tab-\(id.uuidString)"
             case .runningPane(let id):
                 "running-pane-\(id.uuidString)"
             case .runningTab(let id):
@@ -42,6 +45,12 @@ final class WorkspaceManager: ObservableObject {
     private var confirmOnCloseRunningSessionEnabled = true
     private var tabTitleMode: TabTitleMode = .shellTitle
     private var paneObservers: [UUID: AnyCancellable] = [:]
+    private var pendingSaveContinuation: PendingSaveContinuation?
+
+    private enum PendingSaveContinuation {
+        case closePane(UUID)
+        case closeTab(UUID, remainingEditorSessionIDs: [UUID])
+    }
 
     func newTab(shellPath: String, workingDirectory: URL, blockStore: BlockStore) {
         let session = sessionFactory()
@@ -56,6 +65,11 @@ final class WorkspaceManager: ObservableObject {
     }
 
     func closeTab(id: UUID) {
+        if dirtyEditorSessionIDs(inTabID: id).isEmpty == false {
+            pendingCloseConfirmation = .dirtyTab(id)
+            return
+        }
+
         if confirmOnCloseRunningSessionEnabled, tabContainsRunningTerminal(tabID: id) {
             pendingCloseConfirmation = .runningTab(id)
             return
@@ -382,9 +396,17 @@ final class WorkspaceManager: ObservableObject {
         switch request {
         case .dirtyPane(let paneID):
             if resolution == .save {
-                saveEditorForPane(id: paneID)
+                saveDirtyPaneAndClose(id: paneID)
+            } else {
+                performClosePane(id: paneID)
             }
-            performClosePane(id: paneID)
+
+        case .dirtyTab(let tabID):
+            if resolution == .save {
+                saveDirtyEditorsAndCloseTab(id: tabID)
+            } else {
+                continueClosingTabAfterDirtyResolution(id: tabID)
+            }
 
         case .runningPane(let paneID):
             performClosePane(id: paneID)
@@ -394,21 +416,45 @@ final class WorkspaceManager: ObservableObject {
         }
     }
 
+    func completePendingSavePanel(sessionID: UUID, url: URL) {
+        guard pendingSavePanel == sessionID else { return }
+        guard let session = editorSession(withID: sessionID) else {
+            cancelPendingSavePanel()
+            return
+        }
+
+        do {
+            try session.saveAs(url: url)
+        } catch {
+            lastFileError = error
+            cancelPendingSavePanel()
+            return
+        }
+
+        pendingSavePanel = nil
+        let continuation = pendingSaveContinuation
+        pendingSaveContinuation = nil
+        if let continuation {
+            handlePendingSaveSuccess(continuation)
+        }
+    }
+
+    func cancelPendingSavePanel() {
+        pendingSavePanel = nil
+        pendingSaveContinuation = nil
+    }
+
     /// Save the editor session associated with a specific pane (not necessarily the active one).
     private func saveEditorForPane(id: UUID) {
-        for tab in tabs {
-            if let session = tab.rootPane.findEditorSession(forPaneID: id) {
-                if session.filePath != nil {
-                    do {
-                        try session.save()
-                    } catch {
-                        lastFileError = error
-                    }
-                } else {
-                    pendingSavePanel = session.id
-                }
-                return
+        guard let session = editorSession(forPaneID: id) else { return }
+        if session.filePath != nil {
+            do {
+                try session.save()
+            } catch {
+                lastFileError = error
             }
+        } else {
+            pendingSavePanel = session.id
         }
     }
 
@@ -427,6 +473,69 @@ final class WorkspaceManager: ObservableObject {
     private func refreshWorkspaceMetadata() {
         refreshPaneObservers()
         refreshTabTitles()
+    }
+
+    private func saveDirtyPaneAndClose(id paneID: UUID) {
+        guard let session = editorSession(forPaneID: paneID) else { return }
+        requestSave(for: session, continuation: .closePane(paneID))
+    }
+
+    private func saveDirtyEditorsAndCloseTab(id tabID: UUID) {
+        continueSavingDirtyEditorsAndCloseTab(id: tabID, remainingEditorSessionIDs: dirtyEditorSessionIDs(inTabID: tabID))
+    }
+
+    private func continueSavingDirtyEditorsAndCloseTab(id tabID: UUID, remainingEditorSessionIDs: [UUID]) {
+        let remainingDirtySessionIDs = remainingEditorSessionIDs.filter { sessionID in
+            editorSession(withID: sessionID)?.isDirty == true
+        }
+
+        guard let nextSessionID = remainingDirtySessionIDs.first else {
+            continueClosingTabAfterDirtyResolution(id: tabID)
+            return
+        }
+
+        guard let session = editorSession(withID: nextSessionID) else {
+            continueSavingDirtyEditorsAndCloseTab(id: tabID, remainingEditorSessionIDs: Array(remainingDirtySessionIDs.dropFirst()))
+            return
+        }
+
+        requestSave(
+            for: session,
+            continuation: .closeTab(tabID, remainingEditorSessionIDs: Array(remainingDirtySessionIDs.dropFirst()))
+        )
+    }
+
+    private func requestSave(for session: EditorSession, continuation: PendingSaveContinuation) {
+        if session.filePath != nil {
+            do {
+                try session.save()
+                handlePendingSaveSuccess(continuation)
+            } catch {
+                lastFileError = error
+            }
+            return
+        }
+
+        pendingSaveContinuation = continuation
+        pendingSavePanel = session.id
+    }
+
+    private func handlePendingSaveSuccess(_ continuation: PendingSaveContinuation) {
+        switch continuation {
+        case .closePane(let paneID):
+            performClosePane(id: paneID)
+        case .closeTab(let tabID, let remainingEditorSessionIDs):
+            continueSavingDirtyEditorsAndCloseTab(id: tabID, remainingEditorSessionIDs: remainingEditorSessionIDs)
+        }
+    }
+
+    private func continueClosingTabAfterDirtyResolution(id tabID: UUID) {
+        if confirmOnCloseRunningSessionEnabled, tabContainsRunningTerminal(tabID: tabID) {
+            pendingCloseConfirmation = .runningTab(tabID)
+            return
+        }
+
+        performCloseTab(id: tabID)
     }
 
     private func refreshPaneObservers() {
@@ -543,6 +652,35 @@ final class WorkspaceManager: ObservableObject {
             .contains { _, session in
                 session.status == .running || session.status == .starting
             }
+    }
+
+    private func dirtyEditorSessionIDs(inTabID tabID: UUID) -> [UUID] {
+        guard let tab = tabs.first(where: { $0.id == tabID }) else { return [] }
+        return tab.rootPane
+            .allEditorSessions()
+            .map(\.session)
+            .filter(\.isDirty)
+            .map(\.id)
+    }
+
+    private func editorSession(forPaneID paneID: UUID) -> EditorSession? {
+        for tab in tabs {
+            if let session = tab.rootPane.findEditorSession(forPaneID: paneID) {
+                return session
+            }
+        }
+
+        return nil
+    }
+
+    private func editorSession(withID sessionID: UUID) -> EditorSession? {
+        for tab in tabs {
+            for (_, session) in tab.rootPane.allEditorSessions() where session.id == sessionID {
+                return session
+            }
+        }
+
+        return nil
     }
 
     private func stopAllSessions(in node: PaneNode) {

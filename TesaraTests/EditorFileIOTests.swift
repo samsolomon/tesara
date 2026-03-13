@@ -139,6 +139,17 @@ final class EditorFileIOTests: XCTestCase {
         XCTAssertTrue(session.isDirty)
     }
 
+    func testDirtyClearsAfterUndoBackToSavedContents() throws {
+        let url = try tempFile(name: "test.txt", content: "hello")
+        try session.loadFile(url: url)
+        session.insertText("!")
+        XCTAssertTrue(session.isDirty)
+
+        session.undo()
+
+        XCTAssertFalse(session.isDirty)
+    }
+
     func testDirtyAfterUndoPastSavePoint() throws {
         let url = try tempFile(name: "test.txt", content: "hello")
         try session.loadFile(url: url)
@@ -186,5 +197,59 @@ final class EditorFileIOTests: XCTestCase {
         let url = try tempFile(name: "stale.txt", content: "original")
         try session.loadFile(url: url)
         XCTAssertFalse(session.checkFileStale())
+    }
+
+    // MARK: - Syntax Highlighting
+
+    func testEditingRetokenizesSyntaxHighlighting() throws {
+        let url = try tempFile(name: "token.swift", content: "value")
+        try session.loadFile(url: url)
+
+        session.insertText("let ")
+
+        let line = session.storage.lineContent(0)
+        let keywordToken = session.syntaxHighlighter?
+            .tokens(forLine: 0)?
+            .first(where: { $0.kind == .keyword })
+
+        XCTAssertEqual(extractText(line, token: keywordToken), "let")
+    }
+
+    // MARK: - Word Wrap
+
+    func testWordWrapRecomputesAfterDocumentChange() {
+        session.createView(theme: testTheme, fontFamily: "Menlo", fontSize: 13)
+        session.wordWrapEnabled = true
+
+        let editorView = session.editorView as! EditorView
+        editorView.sizeDidChange(CGSize(width: 120, height: 240))
+        XCTAssertEqual(editorView.totalVisualLinesForTesting(), 1)
+
+        session.insertText(String(repeating: "abcdefghij ", count: 20))
+
+        XCTAssertGreaterThan(editorView.totalVisualLinesForTesting(), 1)
+    }
+
+    private func extractText(_ line: String, token: SyntaxToken?) -> String? {
+        guard let token else { return nil }
+        let utf16 = Array(line.utf16)
+        let slice = Array(utf16[token.range])
+        return String(decoding: slice, as: UTF16.self)
+    }
+
+    private var testTheme: TerminalTheme {
+        TerminalTheme(
+            id: "test", name: "Test",
+            foreground: "#cccccc", background: "#1e1e1e",
+            cursor: "#cccccc", cursorText: "#1e1e1e",
+            selectionBackground: "#3c5a96",
+            black: "#000000", red: "#ff0000", green: "#00ff00",
+            yellow: "#ffff00", blue: "#0000ff", magenta: "#ff00ff",
+            cyan: "#00ffff", white: "#ffffff",
+            brightBlack: "#808080", brightRed: "#ff0000",
+            brightGreen: "#00ff00", brightYellow: "#ffff00",
+            brightBlue: "#0000ff", brightMagenta: "#ff00ff",
+            brightCyan: "#00ffff", brightWhite: "#ffffff"
+        )
     }
 }

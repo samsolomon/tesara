@@ -12,4 +12,8 @@ struct EditorViewRepresentable: NSViewRepresentable {
     func updateNSView(_ nsView: EditorView, context: Context) {
         // No updates needed — the session manages the view directly
     }
+
+    func sizeThatFits(_ proposal: ProposedViewSize, nsView: EditorView, context: Context) -> CGSize {
+        proposal.replacingUnspecifiedDimensions()
+    }
 }

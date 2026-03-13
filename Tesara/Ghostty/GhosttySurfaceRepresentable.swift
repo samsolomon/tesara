@@ -17,5 +17,9 @@ struct GhosttySurfaceRepresentable: NSViewRepresentable {
         // No updates needed — the session manages the view directly
     }
 
+    func sizeThatFits(_ proposal: ProposedViewSize, nsView: GhosttySurfaceView, context: Context) -> CGSize {
+        proposal.replacingUnspecifiedDimensions()
+    }
+
     // No dismantleNSView — the session retains the view
 }
