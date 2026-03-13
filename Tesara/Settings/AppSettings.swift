@@ -33,7 +33,7 @@ struct AppSettings: Codable, Equatable {
         localLoggingEnabled: Bool = true,
         historyCaptureEnabled: Bool = true,
         pasteProtectionMode: PasteProtectionMode = .multiline,
-        confirmOnCloseRunningSession: Bool = true,
+        confirmOnCloseRunningSession: Bool = false,
         tabTitleMode: TabTitleMode = .shellTitle,
         dimInactiveSplits: Bool = true,
         inactiveSplitDimAmount: Double = 0.1
@@ -116,7 +116,7 @@ struct AppSettings: Codable, Equatable {
         localLoggingEnabled = try container.decodeIfPresent(Bool.self, forKey: .localLoggingEnabled) ?? true
         historyCaptureEnabled = try container.decodeIfPresent(Bool.self, forKey: .historyCaptureEnabled) ?? true
         pasteProtectionMode = try container.decodeIfPresent(PasteProtectionMode.self, forKey: .pasteProtectionMode) ?? .multiline
-        confirmOnCloseRunningSession = try container.decodeIfPresent(Bool.self, forKey: .confirmOnCloseRunningSession) ?? true
+        confirmOnCloseRunningSession = try container.decodeIfPresent(Bool.self, forKey: .confirmOnCloseRunningSession) ?? false
         tabTitleMode = try container.decodeIfPresent(TabTitleMode.self, forKey: .tabTitleMode) ?? .shellTitle
         dimInactiveSplits = try container.decodeIfPresent(Bool.self, forKey: .dimInactiveSplits) ?? true
         inactiveSplitDimAmount = try container.decodeIfPresent(Double.self, forKey: .inactiveSplitDimAmount) ?? 0.1

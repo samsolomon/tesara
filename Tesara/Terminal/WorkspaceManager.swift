@@ -59,7 +59,7 @@ final class WorkspaceManager: ObservableObject {
     var sessionFactory: () -> TerminalSession = { TerminalSession() }
     weak var settingsStore: SettingsStore?
     weak var blockStore: BlockStore?
-    private var confirmOnCloseRunningSessionEnabled = true
+    private var confirmOnCloseRunningSessionEnabled = false
     private var tabTitleMode: TabTitleMode = .shellTitle
     private var paneObservers: [UUID: AnyCancellable] = [:]
     private var pendingSaveContinuation: PendingSaveContinuation?
