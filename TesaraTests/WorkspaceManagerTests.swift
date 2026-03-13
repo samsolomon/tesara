@@ -2,22 +2,6 @@ import XCTest
 import GRDB
 @testable import Tesara
 
-private final class StubProcessHandle: TerminalProcessHandle {
-    func send(_ input: String) throws {}
-    func resize(cols: UInt16, rows: UInt16) {}
-    func stop() {}
-}
-
-private final class StubLauncher: TerminalLaunching {
-    func launch(
-        shellPath: String,
-        workingDirectory: URL,
-        onEvent: @escaping @Sendable (TerminalEvent) -> Void
-    ) throws -> TerminalProcessHandle {
-        StubProcessHandle()
-    }
-}
-
 @MainActor
 final class WorkspaceManagerTests: XCTestCase {
     private var manager: WorkspaceManager!
@@ -26,7 +10,7 @@ final class WorkspaceManagerTests: XCTestCase {
     override func setUp() async throws {
         try await super.setUp()
         manager = WorkspaceManager()
-        manager.sessionFactory = { TerminalSession(launcher: StubLauncher()) }
+        manager.sessionFactory = { TerminalSession() }
         blockStore = try BlockStore(dbQueue: DatabaseQueue())
     }
 
@@ -145,7 +129,6 @@ final class WorkspaceManagerTests: XCTestCase {
         addTab()
         addTab()
         addTab()
-        // Active is last (index 2)
         manager.selectPreviousTab()
         XCTAssertEqual(manager.activeTabID, manager.tabs[1].id)
     }
@@ -170,7 +153,6 @@ final class WorkspaceManagerTests: XCTestCase {
     func testSelectNextTabWrapsToStart() {
         addTab()
         addTab()
-        // Active is last (index 1)
         manager.selectNextTab()
         XCTAssertEqual(manager.activeTabID, manager.tabs[0].id)
     }
@@ -238,9 +220,7 @@ final class WorkspaceManagerTests: XCTestCase {
             workingDirectory: URL(fileURLWithPath: "/tmp"),
             blockStore: blockStore
         )
-        // Active pane should have changed to the new pane
         XCTAssertNotEqual(manager.activePaneID, initialPaneID)
-        // Root should now be a split
         if case .split = manager.activeTab?.rootPane {
             // success
         } else {
@@ -259,11 +239,10 @@ final class WorkspaceManagerTests: XCTestCase {
         )
         let newPaneID = manager.activePaneID!
 
-        // Close the new pane, first pane should be promoted
         manager.closePane(id: newPaneID)
         XCTAssertEqual(manager.activePaneID, firstPaneID)
         if case .leaf = manager.activeTab?.rootPane {
-            // success — back to single pane
+            // success
         } else {
             XCTFail("Expected leaf root pane after closing split pane")
         }

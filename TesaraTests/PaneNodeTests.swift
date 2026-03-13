@@ -4,19 +4,19 @@ import XCTest
 @MainActor
 final class PaneNodeTests: XCTestCase {
     private func makeLeaf() -> PaneNode {
-        .leaf(id: UUID(), session: TerminalSession(launcher: MockPaneTestLauncher()))
+        .leaf(id: UUID(), session: TerminalSession())
     }
 
     // MARK: Leaf Basics
 
     func testLeafHasCorrectID() {
         let id = UUID()
-        let node = PaneNode.leaf(id: id, session: TerminalSession(launcher: MockPaneTestLauncher()))
+        let node = PaneNode.leaf(id: id, session: TerminalSession())
         XCTAssertEqual(node.id, id)
     }
 
     func testLeafSessionIsAccessible() {
-        let session = TerminalSession(launcher: MockPaneTestLauncher())
+        let session = TerminalSession()
         let node = PaneNode.leaf(id: UUID(), session: session)
         XCTAssertTrue(node.session === session)
     }
@@ -30,7 +30,7 @@ final class PaneNodeTests: XCTestCase {
 
     func testLeafReturnsOwnID() {
         let id = UUID()
-        let node = PaneNode.leaf(id: id, session: TerminalSession(launcher: MockPaneTestLauncher()))
+        let node = PaneNode.leaf(id: id, session: TerminalSession())
         XCTAssertEqual(node.allLeafIDs(), [id])
     }
 
@@ -39,8 +39,8 @@ final class PaneNodeTests: XCTestCase {
         let id2 = UUID()
         let node = PaneNode.split(
             id: UUID(), direction: .horizontal,
-            first: .leaf(id: id1, session: TerminalSession(launcher: MockPaneTestLauncher())),
-            second: .leaf(id: id2, session: TerminalSession(launcher: MockPaneTestLauncher())),
+            first: .leaf(id: id1, session: TerminalSession()),
+            second: .leaf(id: id2, session: TerminalSession()),
             ratio: 0.5
         )
         XCTAssertEqual(node.allLeafIDs(), [id1, id2])
@@ -50,7 +50,7 @@ final class PaneNodeTests: XCTestCase {
 
     func testFindSessionInLeaf() {
         let id = UUID()
-        let session = TerminalSession(launcher: MockPaneTestLauncher())
+        let session = TerminalSession()
         let node = PaneNode.leaf(id: id, session: session)
         XCTAssertTrue(node.findSession(forPaneID: id) === session)
     }
@@ -58,10 +58,10 @@ final class PaneNodeTests: XCTestCase {
     func testFindSessionInSplit() {
         let id1 = UUID()
         let id2 = UUID()
-        let session2 = TerminalSession(launcher: MockPaneTestLauncher())
+        let session2 = TerminalSession()
         let node = PaneNode.split(
             id: UUID(), direction: .horizontal,
-            first: .leaf(id: id1, session: TerminalSession(launcher: MockPaneTestLauncher())),
+            first: .leaf(id: id1, session: TerminalSession()),
             second: .leaf(id: id2, session: session2),
             ratio: 0.5
         )
@@ -77,7 +77,7 @@ final class PaneNodeTests: XCTestCase {
 
     func testContainsLeafID() {
         let id = UUID()
-        let node = PaneNode.leaf(id: id, session: TerminalSession(launcher: MockPaneTestLauncher()))
+        let node = PaneNode.leaf(id: id, session: TerminalSession())
         XCTAssertTrue(node.contains(paneID: id))
         XCTAssertFalse(node.contains(paneID: UUID()))
     }
@@ -86,7 +86,7 @@ final class PaneNodeTests: XCTestCase {
 
     func testReplaceLeafWithSplit() {
         let id = UUID()
-        let node = PaneNode.leaf(id: id, session: TerminalSession(launcher: MockPaneTestLauncher()))
+        let node = PaneNode.leaf(id: id, session: TerminalSession())
         let replacement = PaneNode.split(
             id: UUID(), direction: .horizontal,
             first: makeLeaf(), second: makeLeaf(), ratio: 0.5
@@ -103,17 +103,17 @@ final class PaneNodeTests: XCTestCase {
 
     func testRemoveOnlyLeafReturnsNil() {
         let id = UUID()
-        let node = PaneNode.leaf(id: id, session: TerminalSession(launcher: MockPaneTestLauncher()))
+        let node = PaneNode.leaf(id: id, session: TerminalSession())
         XCTAssertNil(node.removingPane(id: id))
     }
 
     func testRemoveFromSplitPromotesSibling() {
         let id1 = UUID()
         let id2 = UUID()
-        let session2 = TerminalSession(launcher: MockPaneTestLauncher())
+        let session2 = TerminalSession()
         let node = PaneNode.split(
             id: UUID(), direction: .horizontal,
-            first: .leaf(id: id1, session: TerminalSession(launcher: MockPaneTestLauncher())),
+            first: .leaf(id: id1, session: TerminalSession()),
             second: .leaf(id: id2, session: session2),
             ratio: 0.5
         )
@@ -166,21 +166,4 @@ final class PaneNodeTests: XCTestCase {
             XCTFail("Expected split")
         }
     }
-}
-
-// Minimal mock launcher for PaneNode tests
-private struct MockPaneTestLauncher: TerminalLaunching {
-    func launch(
-        shellPath: String,
-        workingDirectory: URL,
-        onEvent: @escaping @Sendable (TerminalEvent) -> Void
-    ) throws -> TerminalProcessHandle {
-        MockPaneTestHandle()
-    }
-}
-
-private struct MockPaneTestHandle: TerminalProcessHandle {
-    func send(_ input: String) throws {}
-    func resize(cols: UInt16, rows: UInt16) {}
-    func stop() {}
 }

@@ -19,8 +19,7 @@ struct MainWindowView: View {
         workspaceManager.newTab(
             shellPath: settingsStore.settings.shellPath,
             workingDirectory: settingsStore.settings.defaultWorkingDirectory,
-            blockStore: blockStore,
-            useGhosttyRenderer: settingsStore.settings.useGhosttyRenderer
+            blockStore: blockStore
         )
     }
 }

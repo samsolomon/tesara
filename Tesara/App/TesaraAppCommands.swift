@@ -23,8 +23,7 @@ struct TesaraAppCommands: Commands {
                 manager.newTab(
                     shellPath: settingsStore.settings.shellPath,
                     workingDirectory: settingsStore.settings.defaultWorkingDirectory,
-                    blockStore: blockStore,
-                    useGhosttyRenderer: settingsStore.settings.useGhosttyRenderer
+                    blockStore: blockStore
                 )
             }
             .keyboardShortcut("t")
@@ -84,8 +83,7 @@ struct TesaraAppCommands: Commands {
             direction: direction,
             shellPath: settingsStore.settings.shellPath,
             workingDirectory: settingsStore.settings.defaultWorkingDirectory,
-            blockStore: blockStore,
-            useGhosttyRenderer: settingsStore.settings.useGhosttyRenderer
+            blockStore: blockStore
         )
     }
 }

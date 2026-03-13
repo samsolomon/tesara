@@ -13,7 +13,6 @@ struct AppSettings: Codable, Equatable {
     var keyBindingOverrides: [KeyBindingOverride]
     var updateChecksEnabled: Bool
     var localLoggingEnabled: Bool
-    var useGhosttyRenderer: Bool
 
     init(
         schemaVersion: Int = currentSchemaVersion,
@@ -25,8 +24,7 @@ struct AppSettings: Codable, Equatable {
         defaultWorkingDirectoryBookmark: Data? = nil,
         keyBindingOverrides: [KeyBindingOverride] = [],
         updateChecksEnabled: Bool = true,
-        localLoggingEnabled: Bool = true,
-        useGhosttyRenderer: Bool = false
+        localLoggingEnabled: Bool = true
     ) {
         self.schemaVersion = schemaVersion
         self.fontFamily = fontFamily
@@ -38,7 +36,6 @@ struct AppSettings: Codable, Equatable {
         self.keyBindingOverrides = keyBindingOverrides
         self.updateChecksEnabled = updateChecksEnabled
         self.localLoggingEnabled = localLoggingEnabled
-        self.useGhosttyRenderer = useGhosttyRenderer
     }
 
     static var `default`: AppSettings {

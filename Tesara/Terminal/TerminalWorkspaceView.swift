@@ -13,8 +13,7 @@ struct TerminalWorkspaceView: View {
                     manager.newTab(
                         shellPath: settingsStore.settings.shellPath,
                         workingDirectory: settingsStore.settings.defaultWorkingDirectory,
-                        blockStore: blockStore,
-                        useGhosttyRenderer: settingsStore.settings.useGhosttyRenderer
+                        blockStore: blockStore
                     )
                 }
             }
@@ -27,8 +26,6 @@ struct TerminalWorkspaceView: View {
                 PaneContainerView(
                     node: tab.rootPane,
                     theme: settingsStore.activeTheme,
-                    fontFamily: settingsStore.settings.fontFamily,
-                    fontSize: settingsStore.settings.fontSize,
                     activePaneID: manager.activePaneID,
                     onSelectPane: { paneID in
                         manager.selectPane(id: paneID)
@@ -40,7 +37,6 @@ struct TerminalWorkspaceView: View {
                 .opacity(isActive ? 1 : 0)
                 .allowsHitTesting(isActive)
                 .onChange(of: isActive) { _, nowActive in
-                    // Pause/resume Metal rendering for inactive/active tabs
                     setOcclusion(for: tab.rootPane, occluded: !nowActive)
                 }
             }

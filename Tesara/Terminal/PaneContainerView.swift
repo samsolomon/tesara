@@ -3,8 +3,6 @@ import SwiftUI
 struct PaneContainerView: View {
     let node: PaneNode
     let theme: TerminalTheme
-    let fontFamily: String
-    let fontSize: Double
     let activePaneID: UUID?
     let onSelectPane: (UUID) -> Void
     let onUpdateRatio: (UUID, CGFloat) -> Void
@@ -16,9 +14,6 @@ struct PaneContainerView: View {
             TerminalPaneLeafView(
                 id: id,
                 session: session,
-                theme: theme,
-                fontFamily: fontFamily,
-                fontSize: fontSize,
                 isActive: id == activePaneID,
                 showBorder: isSplit,
                 onSelectPane: onSelectPane
@@ -41,14 +36,14 @@ struct PaneContainerView: View {
     @ViewBuilder
     private func splitContent(splitID: UUID, direction: PaneNode.SplitDirection, first: PaneNode, second: PaneNode, ratio: CGFloat, totalSize: CGFloat) -> some View {
         let firstChild = PaneContainerView(
-            node: first, theme: theme, fontFamily: fontFamily,
-            fontSize: fontSize, activePaneID: activePaneID,
+            node: first, theme: theme,
+            activePaneID: activePaneID,
             onSelectPane: onSelectPane, onUpdateRatio: onUpdateRatio,
             isSplit: true
         )
         let secondChild = PaneContainerView(
-            node: second, theme: theme, fontFamily: fontFamily,
-            fontSize: fontSize, activePaneID: activePaneID,
+            node: second, theme: theme,
+            activePaneID: activePaneID,
             onSelectPane: onSelectPane, onUpdateRatio: onUpdateRatio,
             isSplit: true
         )
@@ -78,16 +73,13 @@ struct PaneContainerView: View {
 private struct TerminalPaneLeafView: View {
     let id: UUID
     @ObservedObject var session: TerminalSession
-    let theme: TerminalTheme
-    let fontFamily: String
-    let fontSize: Double
     let isActive: Bool
     let showBorder: Bool
     let onSelectPane: (UUID) -> Void
 
     var body: some View {
         Group {
-            if session.mode == .ghostty, let surfaceView = session.surfaceView {
+            if let surfaceView = session.surfaceView {
                 GeometryReader { geo in
                     GhosttySurfaceRepresentable(surfaceView: surfaceView)
                         .onChange(of: geo.size) { _, newSize in
@@ -96,14 +88,7 @@ private struct TerminalPaneLeafView: View {
                 }
                 .id(session.id)
             } else {
-                TerminalWebView(
-                    theme: theme,
-                    fontFamily: fontFamily,
-                    fontSize: fontSize,
-                    transcriptLog: session.transcriptLog,
-                    onInput: session.send(text:),
-                    onResize: session.resize(cols:rows:)
-                )
+                Color.clear
             }
         }
         .border(showBorder && isActive ? Color.accentColor : Color.clear, width: showBorder ? 2 : 0)

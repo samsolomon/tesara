@@ -14,10 +14,9 @@ final class WorkspaceManager: ObservableObject {
 
     var sessionFactory: () -> TerminalSession = { TerminalSession() }
 
-    func newTab(shellPath: String, workingDirectory: URL, blockStore: BlockStore, useGhosttyRenderer: Bool = false) {
+    func newTab(shellPath: String, workingDirectory: URL, blockStore: BlockStore) {
         let session = sessionFactory()
-        let mode: TerminalSession.Mode = useGhosttyRenderer ? .ghostty : .pty
-        session.configure(blockStore: blockStore, mode: mode)
+        session.configure(blockStore: blockStore)
         let paneID = UUID()
         let tab = Tab(rootPane: .leaf(id: paneID, session: session), title: "Shell")
         tabs.append(tab)
@@ -92,14 +91,13 @@ final class WorkspaceManager: ObservableObject {
 
     // MARK: - Split Panes
 
-    func splitActivePane(direction: PaneNode.SplitDirection, shellPath: String, workingDirectory: URL, blockStore: BlockStore, useGhosttyRenderer: Bool = false) {
+    func splitActivePane(direction: PaneNode.SplitDirection, shellPath: String, workingDirectory: URL, blockStore: BlockStore) {
         guard let activePaneID,
               let tabIndex = tabs.firstIndex(where: { $0.id == activeTabID }),
               let currentSession = tabs[tabIndex].rootPane.findSession(forPaneID: activePaneID) else { return }
 
         let newSession = sessionFactory()
-        let mode: TerminalSession.Mode = useGhosttyRenderer ? .ghostty : .pty
-        newSession.configure(blockStore: blockStore, mode: mode)
+        newSession.configure(blockStore: blockStore)
         let newPaneID = UUID()
         let newLeaf = PaneNode.leaf(id: newPaneID, session: newSession)
 
