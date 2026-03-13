@@ -158,7 +158,7 @@ private struct TabCapsuleButton: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.leading, 12)
-            .padding(.trailing, 8)
+            .padding(.trailing, 4)
             .padding(.vertical, 4)
             .contentShape(Capsule())
         }
