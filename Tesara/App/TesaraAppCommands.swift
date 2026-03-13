@@ -11,11 +11,6 @@ struct TesaraAppCommands: Commands {
     var body: some Commands {
         CommandGroup(after: .appInfo) {
             CheckForUpdatesView(updater: updater)
-
-            Button("Settings...") {
-                NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-            }
-            .keyboardShortcut(",")
         }
 
         CommandGroup(replacing: .newItem) {
