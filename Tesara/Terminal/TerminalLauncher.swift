@@ -400,15 +400,13 @@ private final class PTYShellProcessHandle: TerminalProcessHandle {
 
     private func drainReadableData() {
         var buffer = [UInt8](repeating: 0, count: 4096)
+        var accumulated = Data()
 
         while true {
             let bytesRead = Darwin.read(masterFileDescriptor, &buffer, buffer.count)
 
             if bytesRead > 0 {
-                let data = Data(buffer.prefix(Int(bytesRead)))
-                if let text = String(data: data, encoding: .utf8), !text.isEmpty {
-                    onEvent(.stdout(text))
-                }
+                accumulated.append(contentsOf: buffer.prefix(Int(bytesRead)))
                 continue
             }
 
@@ -417,6 +415,10 @@ private final class PTYShellProcessHandle: TerminalProcessHandle {
             }
 
             break
+        }
+
+        if !accumulated.isEmpty, let text = String(data: accumulated, encoding: .utf8), !text.isEmpty {
+            onEvent(.stdout(text))
         }
     }
 

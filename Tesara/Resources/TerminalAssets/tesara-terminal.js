@@ -54,6 +54,13 @@
     term.clearSelection();
   };
 
+  // Fast path: content-only write, no theme/font/fit overhead
+  window.tesaraWrite = function (content) {
+    if (content) {
+      term.write(content);
+    }
+  };
+
   window.tesaraRender = function (payload) {
     document.body.style.background = payload.theme.background;
     term.options.theme = {

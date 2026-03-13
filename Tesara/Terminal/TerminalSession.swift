@@ -39,6 +39,12 @@ final class TerminalSession: ObservableObject {
     private var activeCapture: TerminalBlockCapture?
     private var blockOrderIndex = 0
 
+    // Render coalescing: buffer appends and flush on a timer
+    private var pendingTranscriptText = ""
+    private var pendingLines: [(Line.Kind, String)] = []
+    private var flushTask: Task<Void, Never>?
+    private static let coalesceInterval: TimeInterval = 0.008  // 8ms ≈ 120fps cap
+
     init(launcher: TerminalLaunching = PTYShellLauncher(), parser: OSC133Parsing = OSC133Parser()) {
         self.launcher = launcher
         self.parser = parser
@@ -107,6 +113,7 @@ final class TerminalSession: ObservableObject {
     }
 
     func stop() {
+        flushPendingOutput()
         processHandle?.stop()
         processHandle = nil
         if status != .failed {
@@ -131,6 +138,7 @@ final class TerminalSession: ObservableObject {
             appendToCaptureOutput(text)
         case .exit(let code):
             append(.info, "Shell exited with status \(code)")
+            flushPendingOutput()
             finalizeActiveCaptureIfNeeded(exitCode: Int(code))
             processHandle = nil
             status = .stopped
@@ -242,11 +250,38 @@ final class TerminalSession: ObservableObject {
 
     private func append(_ kind: Line.Kind, _ text: String) {
         let normalized = text.replacingOccurrences(of: "\r\n", with: "\n")
-        transcriptLog.append(normalized)
-        let splitLines = normalized.split(separator: "\n", omittingEmptySubsequences: false)
 
+        // Buffer the text instead of publishing immediately
+        pendingTranscriptText.append(normalized)
+        let splitLines = normalized.split(separator: "\n", omittingEmptySubsequences: false)
         for item in splitLines {
-            lines.append(Line(kind: kind, text: String(item)))
+            pendingLines.append((kind, String(item)))
         }
+
+        scheduleFlush()
+    }
+
+    private func scheduleFlush() {
+        guard flushTask == nil else { return }
+        flushTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(Self.coalesceInterval))
+            self?.flushPendingOutput()
+        }
+    }
+
+    /// Flushes buffered output to `transcriptLog` and `lines`.
+    /// Internal (not private) so tests can drain the coalescing buffer synchronously.
+    func flushPendingOutput() {
+        flushTask?.cancel()
+        flushTask = nil
+        guard !pendingTranscriptText.isEmpty else { return }
+
+        transcriptLog.append(pendingTranscriptText)
+        for (kind, text) in pendingLines {
+            lines.append(Line(kind: kind, text: text))
+        }
+
+        pendingTranscriptText.removeAll(keepingCapacity: true)
+        pendingLines.removeAll(keepingCapacity: true)
     }
 }

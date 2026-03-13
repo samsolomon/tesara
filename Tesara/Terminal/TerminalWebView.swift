@@ -68,6 +68,12 @@ struct TerminalWebView: NSViewRepresentable {
         private var lastReportedSize: (cols: Int, rows: Int)?
         private var pendingRenderState: RenderState?
 
+        // Track last-rendered theme/font to skip full renders on content-only updates
+        private var lastTheme: TerminalTheme?
+        private var lastFontFamily: String?
+        private var lastFontSize: Double?
+        private static let jsonEncoder = JSONEncoder()
+
         init(onInput: @escaping (String) -> Void, onResize: @escaping (Int, Int) -> Void) {
             self.onInput = onInput
             self.onResize = onResize
@@ -89,6 +95,35 @@ struct TerminalWebView: NSViewRepresentable {
         }
 
         func makeRenderScript(theme: TerminalTheme, fontFamily: String, fontSize: Double, transcriptLog: TranscriptLog) -> String? {
+            let themeChanged = lastTheme != theme
+            let fontChanged = lastFontFamily != fontFamily || lastFontSize != fontSize
+            let needsFullRender = themeChanged || fontChanged
+
+            // Determine content delta
+            let replace: Bool
+            let content: String
+
+            if transcriptLog.totalLength == 0 {
+                replace = true
+                content = ""
+                lastRenderedOffset = 0
+            } else if transcriptLog.totalLength >= lastRenderedOffset {
+                replace = false
+                content = transcriptLog.contentSince(offset: lastRenderedOffset)
+                lastRenderedOffset = transcriptLog.totalLength
+            } else {
+                // Log was reset — full replace
+                replace = true
+                content = transcriptLog.contentSince(offset: 0)
+                lastRenderedOffset = transcriptLog.totalLength
+            }
+
+            // Nothing to do — no theme change and no new content
+            if !needsFullRender && !replace && content.isEmpty {
+                return nil
+            }
+
+            // Store pending state for replay after navigation finishes
             pendingRenderState = RenderState(
                 theme: theme,
                 fontFamily: fontFamily,
@@ -96,24 +131,24 @@ struct TerminalWebView: NSViewRepresentable {
                 transcriptLog: transcriptLog
             )
 
-            let payload: Payload
-
-            if transcriptLog.totalLength == 0 {
-                payload = Payload(theme: theme, fontFamily: fontFamily, fontSize: fontSize, replace: true, content: "")
-                lastRenderedOffset = 0
-            } else if transcriptLog.totalLength >= lastRenderedOffset {
-                let chunk = transcriptLog.contentSince(offset: lastRenderedOffset)
-                payload = Payload(theme: theme, fontFamily: fontFamily, fontSize: fontSize, replace: false, content: chunk)
-                lastRenderedOffset = transcriptLog.totalLength
-            } else {
-                // Log was reset — full replace
-                let all = transcriptLog.contentSince(offset: 0)
-                payload = Payload(theme: theme, fontFamily: fontFamily, fontSize: fontSize, replace: true, content: all)
-                lastRenderedOffset = transcriptLog.totalLength
+            // Fast path: content-only write (no theme/font JSON encoding)
+            if !needsFullRender && !replace {
+                guard let escaped = try? Self.jsonEncoder.encode(content),
+                      let json = String(data: escaped, encoding: .utf8) else {
+                    return nil
+                }
+                return "window.tesaraWrite(\(json));"
             }
 
+            // Full render path: theme/font changed or log reset
+            lastTheme = theme
+            lastFontFamily = fontFamily
+            lastFontSize = fontSize
+
+            let payload = Payload(theme: theme, fontFamily: fontFamily, fontSize: fontSize, replace: replace, content: content)
+
             guard
-                let data = try? JSONEncoder().encode(payload),
+                let data = try? Self.jsonEncoder.encode(payload),
                 let json = String(data: data, encoding: .utf8)
             else {
                 return nil

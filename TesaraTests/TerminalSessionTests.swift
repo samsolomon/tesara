@@ -291,5 +291,7 @@ final class TerminalSessionTests: XCTestCase {
         // Allow Task { @MainActor } blocks from onEvent to execute
         await Task.yield()
         await Task.yield()
+        // Flush coalesced output so tests can assert immediately
+        session.flushPendingOutput()
     }
 }
