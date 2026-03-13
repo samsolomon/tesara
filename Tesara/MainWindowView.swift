@@ -5,12 +5,17 @@ struct MainWindowView: View {
     @EnvironmentObject private var blockStore: BlockStore
     @EnvironmentObject private var workspaceManager: WorkspaceManager
 
+    private var showTabBar: Bool {
+        workspaceManager.tabs.count > 1
+    }
+
     var body: some View {
         TerminalWorkspaceView(manager: workspaceManager)
             .toolbar(removing: .sidebarToggle)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    TitleBarTabStrip(manager: workspaceManager, onNewTab: addTab)
+            .safeAreaInset(edge: .top, spacing: 0) {
+                if showTabBar {
+                    TitleBarTabStrip(manager: workspaceManager, isDarkBackground: settingsStore.activeTheme.isDarkBackground, onNewTab: addTab)
+                        .padding(.vertical, 4)
                 }
             }
     }
