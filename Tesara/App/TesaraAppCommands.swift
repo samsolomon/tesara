@@ -21,7 +21,7 @@ struct TesaraAppCommands: Commands {
                     blockStore: blockStore
                 )
             }
-            .keyboardShortcut("t")
+            .keyboardShortcut(settingsStore.resolvedShortcut(for: .newTab, fallback: KeyShortcut(key: "t", modifiers: [.command])))
 
             Button("Close Pane") {
                 if let id = manager.activePaneID {
@@ -35,7 +35,7 @@ struct TesaraAppCommands: Commands {
                     manager.closeTab(id: id)
                 }
             }
-            .keyboardShortcut("w", modifiers: [.command, .shift])
+            .keyboardShortcut(settingsStore.resolvedShortcut(for: .closeTab, fallback: KeyShortcut(key: "w", modifiers: [.command, .shift])))
         }
 
         CommandGroup(replacing: .saveItem) {
@@ -120,5 +120,11 @@ struct TesaraAppCommands: Commands {
             workingDirectory: settingsStore.settings.defaultWorkingDirectory,
             blockStore: blockStore
         )
+    }
+}
+
+private extension View {
+    func keyboardShortcut(_ shortcut: KeyShortcut) -> some View {
+        self.keyboardShortcut(shortcut.keyEquivalent, modifiers: shortcut.eventModifiers)
     }
 }

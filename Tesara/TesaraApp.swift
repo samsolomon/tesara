@@ -9,6 +9,7 @@ struct TesaraApp: App {
     @StateObject private var settingsStore = SettingsStore()
     @StateObject private var blockStore = BlockStore()
     @StateObject private var workspaceManager = WorkspaceManager()
+    @StateObject private var keyBindingDispatcher = KeyBindingDispatcher()
 
     var body: some Scene {
         WindowGroup {
@@ -31,6 +32,11 @@ struct TesaraApp: App {
                     workspaceManager.settingsStore = settingsStore
                     workspaceManager.blockStore = blockStore
                     GhosttyApp.shared.actionDelegate = workspaceManager
+                    keyBindingDispatcher.configure(
+                        settingsStore: settingsStore,
+                        workspaceManager: workspaceManager,
+                        blockStore: blockStore
+                    )
                 }
                 .onChange(of: settingsStore.settings.updateChecksEnabled) {
                     updaterController.updater.automaticallyChecksForUpdates = settingsStore.settings.updateChecksEnabled

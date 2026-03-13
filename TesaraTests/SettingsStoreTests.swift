@@ -180,6 +180,129 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertTrue(store.settings.keyBindingOverrides.isEmpty)
     }
 
+    // MARK: - Key Binding CRUD
+
+    func testUpdateKeyBindingAddsNewOverride() {
+        let store = makeStore()
+        let shortcut = KeyShortcut(key: "k", modifiers: [.command, .shift])
+        store.updateKeyBinding(action: .newTab, shortcut: shortcut)
+
+        XCTAssertEqual(store.settings.keyBindingOverrides.count, 1)
+        XCTAssertEqual(store.settings.keyBindingOverrides.first?.action, .newTab)
+        XCTAssertEqual(store.settings.keyBindingOverrides.first?.shortcut, shortcut)
+    }
+
+    func testUpdateKeyBindingReplacesExisting() {
+        let store = makeStore()
+        let original = KeyShortcut(key: "k", modifiers: [.command])
+        let replacement = KeyShortcut(key: "j", modifiers: [.command])
+
+        store.updateKeyBinding(action: .copy, shortcut: original)
+        store.updateKeyBinding(action: .copy, shortcut: replacement)
+
+        XCTAssertEqual(store.settings.keyBindingOverrides.count, 1)
+        XCTAssertEqual(store.settings.keyBindingOverrides.first?.shortcut, replacement)
+    }
+
+    func testUpdateKeyBindingResolvesConflicts() {
+        let store = makeStore()
+        let shortcut = KeyShortcut(key: "k", modifiers: [.command])
+
+        store.updateKeyBinding(action: .copy, shortcut: shortcut)
+        store.updateKeyBinding(action: .paste, shortcut: shortcut)
+
+        // Copy binding should be removed since paste took its shortcut
+        XCTAssertEqual(store.settings.keyBindingOverrides.count, 1)
+        XCTAssertEqual(store.settings.keyBindingOverrides.first?.action, .paste)
+    }
+
+    func testRemoveKeyBinding() {
+        let store = makeStore()
+        store.updateKeyBinding(action: .newTab, shortcut: KeyShortcut(key: "k", modifiers: [.command]))
+        store.removeKeyBinding(action: .newTab)
+
+        XCTAssertTrue(store.settings.keyBindingOverrides.isEmpty)
+    }
+
+    func testResolvedShortcutReturnsOverride() {
+        let store = makeStore()
+        let custom = KeyShortcut(key: "k", modifiers: [.command, .shift])
+        store.updateKeyBinding(action: .newTab, shortcut: custom)
+
+        XCTAssertEqual(store.resolvedShortcut(for: .newTab), custom)
+    }
+
+    func testResolvedShortcutFallsBackToDefault() {
+        let store = makeStore()
+        let resolved = store.resolvedShortcut(for: .newTab)
+
+        XCTAssertEqual(resolved, KeyBindingAction.newTab.defaultShortcut)
+    }
+
+    func testResolvedShortcutReturnsNilForActionWithoutDefault() {
+        let store = makeStore()
+        XCTAssertNil(store.resolvedShortcut(for: .toggleTUIPassthrough))
+    }
+
+    func testResolvedShortcutWithFallbackNeverReturnsNil() {
+        let store = makeStore()
+        let fallback = KeyShortcut(key: "z", modifiers: [.command])
+        let resolved = store.resolvedShortcut(for: .toggleTUIPassthrough, fallback: fallback)
+
+        XCTAssertEqual(resolved, fallback)
+    }
+
+    // MARK: - KeyShortcut
+
+    func testKeyShortcutDisplayValueForRegularKey() {
+        let shortcut = KeyShortcut(key: "t", modifiers: [.command])
+        XCTAssertEqual(shortcut.displayValue, "⌘T")
+    }
+
+    func testKeyShortcutDisplayValueForSpecialKey() {
+        let shortcut = KeyShortcut(key: "\u{F700}", modifiers: [.command, .shift])
+        XCTAssertEqual(shortcut.displayValue, "⌘⇧Up")
+    }
+
+    func testKeyShortcutDisplayValueMultipleModifiers() {
+        let shortcut = KeyShortcut(key: "c", modifiers: [.control, .option, .shift, .command])
+        XCTAssertEqual(shortcut.displayValue, "⌃⌥⇧⌘C")
+    }
+
+    func testKeyShortcutReservedDetection() {
+        let reserved = KeyShortcut(key: "q", modifiers: [.command])
+        XCTAssertTrue(reserved.isReserved)
+
+        let notReserved = KeyShortcut(key: "t", modifiers: [.command])
+        XCTAssertFalse(notReserved.isReserved)
+    }
+
+    func testKeyShortcutEquality() {
+        let a = KeyShortcut(key: "t", modifiers: [.command])
+        let b = KeyShortcut(key: "t", modifiers: [.command])
+        let c = KeyShortcut(key: "t", modifiers: [.command, .shift])
+
+        XCTAssertEqual(a, b)
+        XCTAssertNotEqual(a, c)
+    }
+
+    func testKeyBindingOverrideRoundTrip() throws {
+        let store = makeStore()
+        let shortcut = KeyShortcut(key: "k", modifiers: [.command, .option])
+        store.updateKeyBinding(action: .find, shortcut: shortcut)
+
+        // Re-read from same defaults
+        let suiteName = (store as AnyObject).value(forKey: "defaults") as? UserDefaults
+        // Simpler: just encode/decode the settings directly
+        let data = try JSONEncoder().encode(store.settings)
+        let decoded = try JSONDecoder().decode(AppSettings.self, from: data)
+
+        XCTAssertEqual(decoded.keyBindingOverrides.count, 1)
+        XCTAssertEqual(decoded.keyBindingOverrides.first?.action, .find)
+        XCTAssertEqual(decoded.keyBindingOverrides.first?.shortcut.key, "k")
+        XCTAssertEqual(decoded.keyBindingOverrides.first?.shortcut.modifiers, [.command, .option])
+    }
+
     func testLocalLogStoreWritesWhenEnabled() throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         let store = LocalLogStore(directoryURL: directory)

@@ -89,7 +89,7 @@ struct SettingsView: View {
         case .workspace:
             WorkspaceSettingsPane(settings: $settingsStore.settings)
         case .keyboard:
-            KeyboardSettingsPane(settings: $settingsStore.settings, onReset: settingsStore.resetKeyBindings)
+            KeyboardSettingsPane()
         case .privacy:
             UpdatesPrivacySettingsPane(settings: $settingsStore.settings, updater: updater)
         }
@@ -305,25 +305,34 @@ private struct TerminalSettingsPane: View {
 }
 
 private struct KeyboardSettingsPane: View {
-    @Binding var settings: AppSettings
-    let onReset: () -> Void
+    @EnvironmentObject private var settingsStore: SettingsStore
 
     var body: some View {
         Form {
-            ForEach(KeyBindingAction.allCases) { action in
-                LabeledContent(action.title) {
-                    Text(shortcutDisplay(for: action))
-                        .foregroundStyle(.secondary)
+            Section {
+                ForEach(KeyBindingAction.allCases) { action in
+                    LabeledContent(action.title) {
+                        KeyRecorderView(
+                            action: action,
+                            currentShortcut: settingsStore.resolvedShortcut(for: action),
+                            onRecord: { shortcut in
+                                settingsStore.updateKeyBinding(action: action, shortcut: shortcut)
+                            },
+                            onClear: {
+                                settingsStore.removeKeyBinding(action: action)
+                            }
+                        )
+                    }
                 }
+            } footer: {
+                Text("Click a shortcut to record a new key combination. Press Escape to cancel. System shortcuts (⌘Q, ⌘H, ⌘M) cannot be overridden.")
             }
 
-            Button("Reset Overrides", action: onReset)
+            Button("Reset All to Defaults") {
+                settingsStore.resetKeyBindings()
+            }
         }
         .formStyle(.grouped)
-    }
-
-    private func shortcutDisplay(for action: KeyBindingAction) -> String {
-        settings.keyBindingOverrides.first(where: { $0.action == action })?.shortcut.displayValue ?? "Default"
     }
 }
 

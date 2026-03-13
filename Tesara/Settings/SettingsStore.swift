@@ -60,6 +60,29 @@ final class SettingsStore: ObservableObject {
         settings.keyBindingOverrides = []
     }
 
+    func updateKeyBinding(action: KeyBindingAction, shortcut: KeyShortcut) {
+        // Remove any existing binding that uses this shortcut (conflict resolution)
+        settings.keyBindingOverrides.removeAll { $0.action != action && $0.shortcut == shortcut }
+
+        if let index = settings.keyBindingOverrides.firstIndex(where: { $0.action == action }) {
+            settings.keyBindingOverrides[index].shortcut = shortcut
+        } else {
+            settings.keyBindingOverrides.append(KeyBindingOverride(action: action, shortcut: shortcut))
+        }
+    }
+
+    func removeKeyBinding(action: KeyBindingAction) {
+        settings.keyBindingOverrides.removeAll { $0.action == action }
+    }
+
+    func resolvedShortcut(for action: KeyBindingAction) -> KeyShortcut? {
+        settings.keyBindingOverrides.first(where: { $0.action == action })?.shortcut ?? action.defaultShortcut
+    }
+
+    func resolvedShortcut(for action: KeyBindingAction, fallback: KeyShortcut) -> KeyShortcut {
+        settings.keyBindingOverrides.first(where: { $0.action == action })?.shortcut ?? action.defaultShortcut ?? fallback
+    }
+
     func importTheme(from data: Data) throws {
         let imported = try decoder.decode(TerminalTheme.self, from: data)
         if let existingIndex = settings.importedThemes.firstIndex(where: { $0.id == imported.id }) {

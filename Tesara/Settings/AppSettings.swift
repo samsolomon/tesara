@@ -1,4 +1,6 @@
+import AppKit
 import Foundation
+import SwiftUI
 
 struct AppSettings: Codable, Equatable {
     static let currentSchemaVersion = 4
@@ -199,6 +201,19 @@ enum KeyBindingAction: String, Codable, CaseIterable, Identifiable {
             "Toggle TUI Passthrough"
         }
     }
+
+    var defaultShortcut: KeyShortcut? {
+        switch self {
+        case .newTab: KeyShortcut(key: "t", modifiers: [.command])
+        case .newWindow: nil
+        case .closeTab: KeyShortcut(key: "w", modifiers: [.command, .shift])
+        case .copy: KeyShortcut(key: "c", modifiers: [.command])
+        case .paste: KeyShortcut(key: "v", modifiers: [.command])
+        case .find: nil
+        case .openSettings: KeyShortcut(key: ",", modifiers: [.command])
+        case .toggleTUIPassthrough: nil
+        }
+    }
 }
 
 struct KeyShortcut: Codable, Equatable {
@@ -207,7 +222,82 @@ struct KeyShortcut: Codable, Equatable {
 
     var displayValue: String {
         let modifierString = modifiers.map(\.symbol).joined()
-        return modifierString + key.uppercased()
+        let keyDisplay = Self.specialKeyNames[key] ?? key.uppercased()
+        return modifierString + keyDisplay
+    }
+
+    var eventModifierFlags: NSEvent.ModifierFlags {
+        var flags = NSEvent.ModifierFlags()
+        for mod in modifiers {
+            switch mod {
+            case .command: flags.insert(.command)
+            case .option: flags.insert(.option)
+            case .control: flags.insert(.control)
+            case .shift: flags.insert(.shift)
+            }
+        }
+        return flags
+    }
+
+    var keyEquivalent: KeyEquivalent {
+        guard let char = key.first else { return KeyEquivalent("?") }
+        return KeyEquivalent(char)
+    }
+
+    var eventModifiers: SwiftUI.EventModifiers {
+        var result: SwiftUI.EventModifiers = []
+        let flags = eventModifierFlags
+        if flags.contains(.command) { result.insert(.command) }
+        if flags.contains(.option) { result.insert(.option) }
+        if flags.contains(.control) { result.insert(.control) }
+        if flags.contains(.shift) { result.insert(.shift) }
+        return result
+    }
+
+    static let specialKeyNames: [String: String] = [
+        "\u{1b}": "Esc", "\r": "Return", "\t": "Tab", " ": "Space",
+        "\u{7f}": "Delete", "\u{F728}": "Forward Delete",
+        "\u{F700}": "Up", "\u{F701}": "Down", "\u{F702}": "Left", "\u{F703}": "Right",
+        "\u{F704}": "F1", "\u{F705}": "F2", "\u{F706}": "F3", "\u{F707}": "F4",
+        "\u{F708}": "F5", "\u{F709}": "F6", "\u{F70A}": "F7", "\u{F70B}": "F8",
+        "\u{F70C}": "F9", "\u{F70D}": "F10", "\u{F70E}": "F11", "\u{F70F}": "F12",
+        "\u{F729}": "Home", "\u{F72B}": "End",
+        "\u{F72C}": "Page Up", "\u{F72D}": "Page Down",
+    ]
+
+    /// System-reserved shortcuts that should not be overridden.
+    static let reservedShortcuts: Set<String> = [
+        "⌘Q", "⌘H", "⌘M",
+    ]
+
+    var isReserved: Bool {
+        Self.reservedShortcuts.contains(displayValue)
+    }
+
+    init(key: String, modifiers: [KeyModifier]) {
+        self.key = key
+        self.modifiers = modifiers
+    }
+
+    init?(event: NSEvent) {
+        guard let chars = event.charactersIgnoringModifiers?.lowercased(), !chars.isEmpty else {
+            return nil
+        }
+
+        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+
+        // Require at least one non-shift modifier to avoid breaking text input
+        let hasModifier = flags.contains(.command) || flags.contains(.control) || flags.contains(.option)
+        guard hasModifier else { return nil }
+
+        var mods: [KeyModifier] = []
+        if flags.contains(.control) { mods.append(.control) }
+        if flags.contains(.option) { mods.append(.option) }
+        if flags.contains(.shift) { mods.append(.shift) }
+        if flags.contains(.command) { mods.append(.command) }
+
+        self.key = chars
+        self.modifiers = mods
     }
 }
 

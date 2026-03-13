@@ -73,6 +73,8 @@
 		EA98351C0BD53659BCAE0D5A /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4696C2FAC81FD918FCF4CDCF /* IOKit.framework */; };
 		EDC1E85DDAF298E3EA0D7E25 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0A3302C81E3683C9C6F70DE2 /* CoreGraphics.framework */; };
 		F3A965F6F8A10320AB0FA888 /* CoreText.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 025C0C0CA0E7477A899440FC /* CoreText.framework */; };
+		DD0002DD0002DD0002DD0002 /* KeyRecorderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD0001DD0001DD0001DD0001 /* KeyRecorderView.swift */; };
+		DD0004DD0004DD0004DD0004 /* KeyBindingDispatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD0003DD0003DD0003DD0003 /* KeyBindingDispatcher.swift */; };
 		F7AE7359CEADA892CDB4EE63 /* JSONTokenizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AED370DFD7341D20F6AEBF26 /* JSONTokenizer.swift */; };
 		FA96111B4FCCEF18236CA364 /* TerminalIntegration in Resources */ = {isa = PBXBuildFile; fileRef = 2292F5BCC3AC767DAD9619D7 /* TerminalIntegration */; };
 /* End PBXBuildFile section */
@@ -145,6 +147,8 @@
 		C0A422BFC855684762B34843 /* Tesara.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Tesara.entitlements; sourceTree = "<group>"; };
 		C22B629EF42855D98028F0C4 /* GhosttySurfaceConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhosttySurfaceConfig.swift; sourceTree = "<group>"; };
 		C43028483E4CE7E65A49B780 /* TabBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBarView.swift; sourceTree = "<group>"; };
+		DD0001DD0001DD0001DD0001 /* KeyRecorderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyRecorderView.swift; sourceTree = "<group>"; };
+		DD0003DD0003DD0003DD0003 /* KeyBindingDispatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyBindingDispatcher.swift; sourceTree = "<group>"; };
 		C6C01AC8A2526A1108FCC5E8 /* Tesara.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tesara.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C768AC12E87B5CAD5629087D /* SyntaxColorMap.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SyntaxColorMap.swift; sourceTree = "<group>"; };
 		CFFBF769DCCA796E1A27EF05 /* GhosttySurfaceRepresentable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhosttySurfaceRepresentable.swift; sourceTree = "<group>"; };
@@ -213,6 +217,7 @@
 			isa = PBXGroup;
 			children = (
 				D87C2B989F7DF6FA07307499 /* CheckForUpdatesView.swift */,
+				DD0003DD0003DD0003DD0003 /* KeyBindingDispatcher.swift */,
 				8393A786736D6332BB25DC07 /* TesaraAppCommands.swift */,
 			);
 			path = App;
@@ -222,6 +227,7 @@
 			isa = PBXGroup;
 			children = (
 				57A5490A849F9317664968E7 /* AppSettings.swift */,
+				DD0001DD0001DD0001DD0001 /* KeyRecorderView.swift */,
 				02E8FA3D795EACA795F11233 /* LocalLogStore.swift */,
 				4BA08886415B515EB410905D /* SettingsStore.swift */,
 				17E46BFDCDCA182651723141 /* SettingsView.swift */,
@@ -478,6 +484,8 @@
 				A5607FF9E3A43338204C259B /* GhosttySurfaceRepresentable.swift in Sources */,
 				8B4137DA33B84A8B3057E40F /* GhosttySurfaceView.swift in Sources */,
 				81D353BEAF13304C4935B40F /* HistoryView.swift in Sources */,
+				DD0004DD0004DD0004DD0004 /* KeyBindingDispatcher.swift in Sources */,
+				DD0002DD0002DD0002DD0002 /* KeyRecorderView.swift in Sources */,
 				6AB4D491DF5F118108162EEA /* MainWindowView.swift in Sources */,
 				17A1E6F4A360BF5C97590C6E /* PaneContainerView.swift in Sources */,
 				B4F68462773E6A1D220DA476 /* PaneDividerView.swift in Sources */,
