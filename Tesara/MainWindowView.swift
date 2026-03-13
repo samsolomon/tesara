@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct MainWindowView: View {
@@ -9,9 +10,30 @@ struct MainWindowView: View {
         workspaceManager.tabs.count > 1
     }
 
+    private var themeBackgroundColor: NSColor {
+        NSColor(settingsStore.activeTheme.swiftUIColor(from: settingsStore.activeTheme.background))
+    }
+
     var body: some View {
+        if #available(macOS 15.0, *) {
+            baseContent
+                .toolbar(removing: .sidebarToggle)
+                .toolbar(removing: .title)
+                .toolbarBackgroundVisibility(.hidden, for: .windowToolbar)
+        } else {
+            baseContent
+                .toolbar(removing: .sidebarToggle)
+        }
+    }
+
+    private var baseContent: some View {
         TerminalWorkspaceView(manager: workspaceManager)
-            .toolbar(removing: .sidebarToggle)
+            .background {
+                WindowConfigurator(
+                    backgroundColor: themeBackgroundColor,
+                    isDark: settingsStore.activeTheme.isDarkBackground
+                )
+            }
             .safeAreaInset(edge: .top, spacing: 0) {
                 if showTabBar {
                     TitleBarTabStrip(manager: workspaceManager, isDarkBackground: settingsStore.activeTheme.isDarkBackground, onNewTab: addTab)
@@ -26,6 +48,35 @@ struct MainWindowView: View {
             workingDirectory: settingsStore.settings.defaultWorkingDirectory,
             blockStore: blockStore
         )
+    }
+}
+
+// MARK: - Window Configurator
+
+private struct WindowConfigurator: NSViewRepresentable {
+    let backgroundColor: NSColor
+    let isDark: Bool
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        DispatchQueue.main.async {
+            guard let window = view.window else { return }
+            self.configureWindow(window)
+        }
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        guard let window = nsView.window else { return }
+        configureWindow(window)
+    }
+
+    private func configureWindow(_ window: NSWindow) {
+        // Match the window appearance to the theme so system chrome and traffic lights
+        // adopt the correct contrast while SwiftUI owns the toolbar background.
+        window.appearance = NSAppearance(named: isDark ? .darkAqua : .aqua)
+        window.titlebarAppearsTransparent = true
+        window.backgroundColor = backgroundColor
     }
 }
 
