@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct TitleBarTabStrip: View {
+    @Environment(\.controlActiveState) private var controlActiveState
+
     @ObservedObject var manager: WorkspaceManager
     let isDarkBackground: Bool
     let onNewTab: () -> Void
@@ -11,12 +13,29 @@ struct TitleBarTabStrip: View {
         (isDarkBackground ? Color.white : Color.black).opacity(0.2)
     }
 
+    private var containerFill: Color {
+        let base = isDarkBackground ? Color.white : Color.black
+        let opacity = controlActiveState == .key ? (isDarkBackground ? 0.075 : 0.055) : (isDarkBackground ? 0.055 : 0.04)
+        return base.opacity(opacity)
+    }
+
+    private var containerStroke: Color {
+        let base = isDarkBackground ? Color.white : Color.black
+        let opacity = controlActiveState == .key ? (isDarkBackground ? 0.08 : 0.05) : (isDarkBackground ? 0.055 : 0.035)
+        return base.opacity(opacity)
+    }
+
     var body: some View {
         HStack(spacing: 2) {
             ForEach(Array(manager.tabs.enumerated()), id: \.element.id) { index, tab in
                 tabCapsule(tab, index: index)
                     .frame(maxWidth: .infinity)
             }
+
+            Rectangle()
+                .fill(containerStroke.opacity(0.8))
+                .frame(width: 1, height: 22)
+                .padding(.horizontal, 4)
 
             Button(action: onNewTab) {
                 Image(systemName: "plus")
@@ -38,7 +57,16 @@ struct TitleBarTabStrip: View {
                 isHoveringNewTab = hovering
             }
         }
-        .padding(.horizontal, 4)
+        .padding(.horizontal, 2)
+        .padding(.vertical, 2)
+        .background {
+            RoundedRectangle(cornerRadius: 13, style: .continuous)
+                .fill(containerFill)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 13, style: .continuous)
+                        .strokeBorder(containerStroke, lineWidth: 0.75)
+                }
+        }
     }
 
     private func tabCapsule(_ tab: WorkspaceManager.Tab, index: Int) -> some View {
@@ -103,7 +131,7 @@ private struct TabCapsuleButton: View {
     }
 
     private var activeStrokeOpacity: Double {
-        windowIsActive ? 0.24 : 0.16
+        windowIsActive ? 0.12 : 0.08
     }
 
     var body: some View {
@@ -169,7 +197,7 @@ private struct TabCapsuleButton: View {
                 .fill(.regularMaterial.opacity(activeFillOpacity))
                 .overlay {
                     Capsule()
-                        .strokeBorder(.white.opacity(isDarkBackground ? activeStrokeOpacity : 0.12), lineWidth: 0.75)
+                        .strokeBorder(.white.opacity(isDarkBackground ? activeStrokeOpacity : 0.08), lineWidth: 0.5)
                 }
                 .glassEffect(.regular, in: .capsule)
         } else {
@@ -177,7 +205,7 @@ private struct TabCapsuleButton: View {
                 .fill(.ultraThinMaterial.opacity(activeFillOpacity))
                 .overlay {
                     Capsule()
-                        .strokeBorder(primaryColor.opacity(activeStrokeOpacity), lineWidth: 0.75)
+                        .strokeBorder(primaryColor.opacity(activeStrokeOpacity), lineWidth: 0.5)
                 }
         }
     }
