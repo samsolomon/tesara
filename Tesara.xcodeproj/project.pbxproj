@@ -375,7 +375,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -euo pipefail\nZIG_VERSION=$(cat \"$SRCROOT/.zig-version\" | tr -d '[:space:]')\nZIG=$(command -v zig || echo \"/opt/homebrew/bin/zig\")\nif [ ! -x \"$ZIG\" ]; then\n  echo \"error: Zig $ZIG_VERSION not found. Install with: brew install zig\"\n  exit 1\nfi\ncd \"$SRCROOT/vendor/ghostty\"\n\"$ZIG\" build -Doptimize=ReleaseFast -Dapp-runtime=none -Demit-xcframework=false\n";
+			shellScript = "set -euo pipefail\nEXPECTED_ZIG=$(cat \"$SRCROOT/.zig-version\" | tr -d '[:space:]')\nZIG=$(command -v zig || echo \"/opt/homebrew/bin/zig\")\nif [ ! -x \"$ZIG\" ]; then\n  echo \"error: Zig $EXPECTED_ZIG not found. Install with: brew install zig\"\n  exit 1\nfi\nACTUAL_ZIG=$(\"$ZIG\" version)\nif [ \"$ACTUAL_ZIG\" != \"$EXPECTED_ZIG\" ]; then\n  echo \"error: Zig version mismatch: expected $EXPECTED_ZIG, found $ACTUAL_ZIG\"\n  exit 1\nfi\ncd \"$SRCROOT/vendor/ghostty\"\ngit apply --check \"$SRCROOT/vendor/patches/ghostty-build.patch\" 2>/dev/null && \\\n  git apply \"$SRCROOT/vendor/patches/ghostty-build.patch\" || true\n\"$ZIG\" build -Doptimize=ReleaseFast -Dapp-runtime=none -Demit-xcframework=false\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
