@@ -1,9 +1,6 @@
 import SwiftUI
 
 struct PaneContainerView: View {
-    private let dividerThickness: CGFloat = 4
-    private let dividerHitThickness: CGFloat = 18
-
     let node: PaneNode
     let theme: TerminalTheme
     let activePaneID: UUID?
@@ -40,104 +37,52 @@ struct PaneContainerView: View {
             )
 
         case .split(let splitID, let direction, let first, let second, let ratio):
-            GeometryReader { geometry in
-                let containerSize = geometry.size
-                let mainAxisSize = max(
-                    (direction == .horizontal ? containerSize.width : containerSize.height) - dividerThickness,
-                    1
-                )
-                splitContent(
-                    splitID: splitID,
-                    direction: direction,
-                    first: first,
-                    second: second,
-                    ratio: ratio,
-                    containerSize: containerSize,
-                    mainAxisSize: mainAxisSize
-                )
-            }
+            splitContent(
+                splitID: splitID,
+                direction: direction,
+                first: first,
+                second: second,
+                ratio: ratio
+            )
         }
     }
 
-    @ViewBuilder
     private func splitContent(
         splitID: UUID,
         direction: PaneNode.SplitDirection,
         first: PaneNode,
         second: PaneNode,
-        ratio: CGFloat,
-        containerSize: CGSize,
-        mainAxisSize: CGFloat
+        ratio: CGFloat
     ) -> some View {
-        let firstChild = PaneContainerView(
-            node: first, theme: theme,
-            activePaneID: activePaneID,
-            dimInactiveSplits: dimInactiveSplits,
-            inactiveSplitDimAmount: inactiveSplitDimAmount,
-            onSelectPane: onSelectPane, onUpdateRatio: onUpdateRatio,
-            isSplit: true
-        )
-        let secondChild = PaneContainerView(
-            node: second, theme: theme,
-            activePaneID: activePaneID,
-            dimInactiveSplits: dimInactiveSplits,
-            inactiveSplitDimAmount: inactiveSplitDimAmount,
-            onSelectPane: onSelectPane, onUpdateRatio: onUpdateRatio,
-            isSplit: true
-        )
-        let divider = PaneDividerView(direction: direction)
-        let firstPaneSize = max(0, min(mainAxisSize * ratio, mainAxisSize))
-        let secondPaneSize = max(0, mainAxisSize - firstPaneSize)
-
-        if direction == .horizontal {
-            ZStack(alignment: .topLeading) {
-                firstChild
-                    .frame(width: firstPaneSize, height: containerSize.height, alignment: .topLeading)
-                    .clipped()
-                secondChild
-                    .frame(width: secondPaneSize, height: containerSize.height, alignment: .topLeading)
-                    .offset(x: firstPaneSize + dividerThickness)
-                    .clipped()
-                divider
-                    .frame(width: dividerThickness, height: containerSize.height)
-                    .offset(x: firstPaneSize)
-                    .zIndex(10)
-                PaneDividerDragOverlay(
-                    direction: direction,
-                    initialRatio: ratio,
-                    totalSize: mainAxisSize,
-                    onUpdateRatio: { newRatio in onUpdateRatio(splitID, newRatio) }
+        PaneSplitView(
+            direction: direction,
+            ratio: ratio,
+            onUpdateRatio: { newRatio in onUpdateRatio(splitID, newRatio) },
+            first: {
+                PaneContainerView(
+                    node: first,
+                    theme: theme,
+                    activePaneID: activePaneID,
+                    dimInactiveSplits: dimInactiveSplits,
+                    inactiveSplitDimAmount: inactiveSplitDimAmount,
+                    onSelectPane: onSelectPane,
+                    onUpdateRatio: onUpdateRatio,
+                    isSplit: true
                 )
-                .frame(width: dividerHitThickness, height: containerSize.height)
-                .offset(x: firstPaneSize - (dividerHitThickness - dividerThickness) / 2)
-                .zIndex(20)
-            }
-            .frame(width: containerSize.width, height: containerSize.height, alignment: .topLeading)
-        } else {
-            ZStack(alignment: .topLeading) {
-                firstChild
-                    .frame(width: containerSize.width, height: firstPaneSize, alignment: .topLeading)
-                    .clipped()
-                secondChild
-                    .frame(width: containerSize.width, height: secondPaneSize, alignment: .topLeading)
-                    .offset(y: firstPaneSize + dividerThickness)
-                    .clipped()
-                divider
-                    .frame(width: containerSize.width, height: dividerThickness)
-                    .offset(y: firstPaneSize)
-                    .zIndex(10)
-                PaneDividerDragOverlay(
-                    direction: direction,
-                    initialRatio: ratio,
-                    totalSize: mainAxisSize,
-                    onUpdateRatio: { newRatio in onUpdateRatio(splitID, newRatio) }
+            },
+            second: {
+                PaneContainerView(
+                    node: second,
+                    theme: theme,
+                    activePaneID: activePaneID,
+                    dimInactiveSplits: dimInactiveSplits,
+                    inactiveSplitDimAmount: inactiveSplitDimAmount,
+                    onSelectPane: onSelectPane,
+                    onUpdateRatio: onUpdateRatio,
+                    isSplit: true
                 )
-                .frame(width: containerSize.width, height: dividerHitThickness)
-                .offset(y: firstPaneSize - (dividerHitThickness - dividerThickness) / 2)
-                .zIndex(20)
             }
-            .frame(width: containerSize.width, height: containerSize.height, alignment: .topLeading)
-        }
+        )
     }
 }
 
@@ -157,12 +102,16 @@ private struct EditorPaneLeafView: View {
                 GeometryReader { geo in
                     EditorViewRepresentable(editorView: editorView)
                         .onAppear {
+                            #if DEBUG
                             LocalLogStore.shared.log("[EditorPane] pane=\(id.uuidString) size=\(Int(geo.size.width))x\(Int(geo.size.height))")
+                            #endif
                             editorView.setFrameSize(geo.size)
                             editorView.sizeDidChange(geo.size)
                         }
                         .onChange(of: geo.size) { _, newSize in
+                            #if DEBUG
                             LocalLogStore.shared.log("[EditorPane] pane=\(id.uuidString) size=\(Int(newSize.width))x\(Int(newSize.height))")
+                            #endif
                             editorView.setFrameSize(newSize)
                             editorView.sizeDidChange(newSize)
                         }
@@ -203,12 +152,16 @@ private struct TerminalPaneLeafView: View {
                 GeometryReader { geo in
                     GhosttySurfaceRepresentable(surfaceView: surfaceView)
                         .onAppear {
+                            #if DEBUG
                             LocalLogStore.shared.log("[TerminalPane] pane=\(id.uuidString) size=\(Int(geo.size.width))x\(Int(geo.size.height))")
+                            #endif
                             surfaceView.setFrameSize(geo.size)
                             surfaceView.sizeDidChange(geo.size)
                         }
                         .onChange(of: geo.size) { _, newSize in
+                            #if DEBUG
                             LocalLogStore.shared.log("[TerminalPane] pane=\(id.uuidString) size=\(Int(newSize.width))x\(Int(newSize.height))")
+                            #endif
                             surfaceView.setFrameSize(newSize)
                             surfaceView.sizeDidChange(newSize)
                         }

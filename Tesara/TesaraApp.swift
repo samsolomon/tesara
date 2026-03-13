@@ -3,6 +3,7 @@ import SwiftUI
 
 @main
 struct TesaraApp: App {
+    private let minimumWindowSize = CGSize(width: 480, height: 320)
     private let updaterController = SPUStandardUpdaterController(startingUpdater: false, updaterDelegate: nil, userDriverDelegate: nil)
 
     @StateObject private var settingsStore = SettingsStore()
@@ -15,7 +16,7 @@ struct TesaraApp: App {
                 .environmentObject(settingsStore)
                 .environmentObject(blockStore)
                 .environmentObject(workspaceManager)
-                .frame(minWidth: 960, minHeight: 640)
+                .frame(minWidth: minimumWindowSize.width, minHeight: minimumWindowSize.height)
                 .onAppear {
                     updaterController.updater.automaticallyChecksForUpdates = settingsStore.settings.updateChecksEnabled
                     blockStore.setHistoryCaptureEnabled(settingsStore.settings.historyCaptureEnabled)

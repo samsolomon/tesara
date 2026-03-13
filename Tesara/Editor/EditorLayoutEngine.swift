@@ -48,13 +48,13 @@ final class EditorLayoutEngine {
         private(set) var totalVisualLines: Int = 0
         private(set) var prefixSums: [Int] = []  // prefixSums[i] = sum of wrapCounts[0..<i]
 
-        mutating func recomputeAll(lineCount: Int, lineContent: (Int) -> String, font: CTFont, width: CGFloat) {
+        mutating func recomputeAll(lines: [String], font: CTFont, width: CGFloat) {
             let attributes: [NSAttributedString.Key: Any] = [.font: font]
             wrapCounts = []
-            wrapCounts.reserveCapacity(lineCount)
+            wrapCounts.reserveCapacity(lines.count)
 
-            for i in 0..<lineCount {
-                let count = countWraps(content: lineContent(i), attributes: attributes, width: width)
+            for content in lines {
+                let count = countWraps(content: content, attributes: attributes, width: width)
                 wrapCounts.append(count)
             }
 
@@ -136,9 +136,9 @@ final class EditorLayoutEngine {
     }
 
     func recomputeWrapCounts(storage: TextStorage, viewportWidth: CGFloat) {
+        let lines = (0..<storage.lineCount).map { storage.lineContent($0) }
         visualLineMap.recomputeAll(
-            lineCount: storage.lineCount,
-            lineContent: { storage.lineContent($0) },
+            lines: lines,
             font: font,
             width: viewportWidth
         )

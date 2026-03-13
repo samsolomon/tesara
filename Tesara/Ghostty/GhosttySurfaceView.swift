@@ -122,10 +122,12 @@ class GhosttySurfaceView: NSView, NSTextInputClient {
     private func setSurfaceSize(width: UInt32, height: UInt32) {
         guard let surface else { return }
         ghostty_surface_set_size(surface, width, height)
+        #if DEBUG
         let size = ghostty_surface_size(surface)
         LocalLogStore.shared.log(
             "[GhosttyResize] requestPx=\(width)x\(height) actualPx=\(size.width_px)x\(size.height_px) cols=\(size.columns) rows=\(size.rows)"
         )
+        #endif
     }
 
     override func viewDidChangeBackingProperties() {
