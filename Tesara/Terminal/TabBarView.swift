@@ -108,8 +108,14 @@ private struct TabCapsuleButton: View {
         reduceMotion ? .linear(duration: 0.01) : .snappy(duration: 0.18, extraBounce: 0)
     }
 
+    private var inactiveHoverFill: Color {
+        let base = isDarkBackground ? Color.white : Color.black
+        let opacity = windowIsActive ? (isDarkBackground ? 0.07 : 0.045) : (isDarkBackground ? 0.05 : 0.03)
+        return base.opacity(opacity)
+    }
+
     private var inactiveHoverStroke: Color {
-        primaryColor.opacity(isHovering ? 0.16 : 0.08)
+        primaryColor.opacity(windowIsActive ? 0.08 : 0.05)
     }
 
     private var closeButtonForeground: Color {
@@ -165,7 +171,11 @@ private struct TabCapsuleButton: View {
                         activeBackground
                     } else if isHovering {
                         Capsule()
-                            .strokeBorder(inactiveHoverStroke, lineWidth: 1)
+                            .fill(inactiveHoverFill)
+                            .overlay {
+                                Capsule()
+                                    .strokeBorder(inactiveHoverStroke, lineWidth: 0.5)
+                            }
                     }
                 }
         }
