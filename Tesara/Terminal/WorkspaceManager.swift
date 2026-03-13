@@ -14,9 +14,10 @@ final class WorkspaceManager: ObservableObject {
 
     var sessionFactory: () -> TerminalSession = { TerminalSession() }
 
-    func newTab(shellPath: String, workingDirectory: URL, blockStore: BlockStore) {
+    func newTab(shellPath: String, workingDirectory: URL, blockStore: BlockStore, useGhosttyRenderer: Bool = false) {
         let session = sessionFactory()
-        session.configure(blockStore: blockStore)
+        let mode: TerminalSession.Mode = useGhosttyRenderer ? .ghostty : .pty
+        session.configure(blockStore: blockStore, mode: mode)
         let paneID = UUID()
         let tab = Tab(rootPane: .leaf(id: paneID, session: session), title: "Shell")
         tabs.append(tab)
@@ -91,13 +92,14 @@ final class WorkspaceManager: ObservableObject {
 
     // MARK: - Split Panes
 
-    func splitActivePane(direction: PaneNode.SplitDirection, shellPath: String, workingDirectory: URL, blockStore: BlockStore) {
+    func splitActivePane(direction: PaneNode.SplitDirection, shellPath: String, workingDirectory: URL, blockStore: BlockStore, useGhosttyRenderer: Bool = false) {
         guard let activePaneID,
               let tabIndex = tabs.firstIndex(where: { $0.id == activeTabID }),
               let currentSession = tabs[tabIndex].rootPane.findSession(forPaneID: activePaneID) else { return }
 
         let newSession = sessionFactory()
-        newSession.configure(blockStore: blockStore)
+        let mode: TerminalSession.Mode = useGhosttyRenderer ? .ghostty : .pty
+        newSession.configure(blockStore: blockStore, mode: mode)
         let newPaneID = UUID()
         let newLeaf = PaneNode.leaf(id: newPaneID, session: newSession)
 
@@ -139,7 +141,23 @@ final class WorkspaceManager: ObservableObject {
     }
 
     func selectPane(id: UUID) {
+        guard id != activePaneID else { return }
+        let previousPaneID = activePaneID
         activePaneID = id
+
+        // Update ghostty surface focus state for the previous and new pane
+        if let activeTab {
+            if let previousPaneID,
+               let prevSession = activeTab.rootPane.findSession(forPaneID: previousPaneID) {
+                prevSession.surfaceView?.focusDidChange(false)
+            }
+            if let newSession = activeTab.rootPane.findSession(forPaneID: id) {
+                newSession.surfaceView?.focusDidChange(true)
+                if let surface = newSession.surfaceView?.surface {
+                    GhosttyApp.shared.setFocusedSurface(surface)
+                }
+            }
+        }
     }
 
     // MARK: - Helpers

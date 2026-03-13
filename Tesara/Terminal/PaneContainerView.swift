@@ -86,14 +86,26 @@ private struct TerminalPaneLeafView: View {
     let onSelectPane: (UUID) -> Void
 
     var body: some View {
-        TerminalWebView(
-            theme: theme,
-            fontFamily: fontFamily,
-            fontSize: fontSize,
-            transcriptLog: session.transcriptLog,
-            onInput: session.send(text:),
-            onResize: session.resize(cols:rows:)
-        )
+        Group {
+            if session.mode == .ghostty, let surfaceView = session.surfaceView {
+                GeometryReader { geo in
+                    GhosttySurfaceRepresentable(surfaceView: surfaceView)
+                        .onChange(of: geo.size) { _, newSize in
+                            surfaceView.sizeDidChange(newSize)
+                        }
+                }
+                .id(session.id)
+            } else {
+                TerminalWebView(
+                    theme: theme,
+                    fontFamily: fontFamily,
+                    fontSize: fontSize,
+                    transcriptLog: session.transcriptLog,
+                    onInput: session.send(text:),
+                    onResize: session.resize(cols:rows:)
+                )
+            }
+        }
         .border(showBorder && isActive ? Color.accentColor : Color.clear, width: showBorder ? 2 : 0)
         .contentShape(Rectangle())
         .onTapGesture {

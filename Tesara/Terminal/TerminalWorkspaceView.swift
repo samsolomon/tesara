@@ -13,7 +13,8 @@ struct TerminalWorkspaceView: View {
                     manager.newTab(
                         shellPath: settingsStore.settings.shellPath,
                         workingDirectory: settingsStore.settings.defaultWorkingDirectory,
-                        blockStore: blockStore
+                        blockStore: blockStore,
+                        useGhosttyRenderer: settingsStore.settings.useGhosttyRenderer
                     )
                 }
             }
@@ -22,6 +23,7 @@ struct TerminalWorkspaceView: View {
     private var terminalContent: some View {
         ZStack {
             ForEach(manager.tabs) { tab in
+                let isActive = tab.id == manager.activeTabID
                 PaneContainerView(
                     node: tab.rootPane,
                     theme: settingsStore.activeTheme,
@@ -35,9 +37,25 @@ struct TerminalWorkspaceView: View {
                         manager.updatePaneRatio(splitID: splitID, ratio: ratio)
                     }
                 )
-                .opacity(tab.id == manager.activeTabID ? 1 : 0)
-                .allowsHitTesting(tab.id == manager.activeTabID)
+                .opacity(isActive ? 1 : 0)
+                .allowsHitTesting(isActive)
+                .onChange(of: isActive) { _, nowActive in
+                    // Pause/resume Metal rendering for inactive/active tabs
+                    setOcclusion(for: tab.rootPane, occluded: !nowActive)
+                }
             }
+        }
+    }
+
+    private func setOcclusion(for node: PaneNode, occluded: Bool) {
+        switch node {
+        case .leaf(_, let session):
+            if let surface = session.surfaceView?.surface {
+                ghostty_surface_set_occlusion(surface, occluded)
+            }
+        case .split(_, _, let first, let second, _):
+            setOcclusion(for: first, occluded: occluded)
+            setOcclusion(for: second, occluded: occluded)
         }
     }
 }

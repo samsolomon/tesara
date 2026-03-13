@@ -35,6 +35,22 @@ final class SettingsStore: ObservableObject {
         availableThemes.first(where: { $0.id == settings.themeID }) ?? BuiltInTheme.oxide.theme
     }
 
+    /// Combined value for observing all settings that affect ghostty config.
+    /// Used by a single `.onChange` instead of three separate observers.
+    struct GhosttyConfigInputs: Equatable {
+        let themeID: String
+        let fontFamily: String
+        let fontSize: Double
+    }
+
+    var ghosttyConfigInputs: GhosttyConfigInputs {
+        GhosttyConfigInputs(
+            themeID: settings.themeID,
+            fontFamily: settings.fontFamily,
+            fontSize: settings.fontSize
+        )
+    }
+
     func setDefaultWorkingDirectory(_ url: URL) {
         let bookmark = try? url.bookmarkData(options: [.minimalBookmark], includingResourceValuesForKeys: nil, relativeTo: nil)
         settings.defaultWorkingDirectoryBookmark = bookmark

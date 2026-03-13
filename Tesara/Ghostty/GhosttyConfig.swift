@@ -48,7 +48,19 @@ enum GhosttyConfig {
     // MARK: - Config File Generation
 
     /// Writes the ghostty config file with current theme and settings values.
-    private static func writeConfigFile(theme: TerminalTheme, settings: AppSettings) {
+    /// Internal (not private) so tests can call this without requiring ghostty library init.
+    static func writeConfigFile(theme: TerminalTheme, settings: AppSettings) {
+        let content = buildConfigString(theme: theme, settings: settings)
+        do {
+            try content.write(toFile: configFilePath, atomically: true, encoding: .utf8)
+        } catch {
+            print("[GhosttyConfig] Failed to write config: \(error)")
+        }
+    }
+
+    /// Pure function that builds the ghostty config file content string.
+    /// Separated from file I/O for testability.
+    static func buildConfigString(theme: TerminalTheme, settings: AppSettings) -> String {
         var lines: [String] = []
 
         // Font
@@ -88,12 +100,7 @@ enum GhosttyConfig {
         lines.append("palette = 14=\(normalizeHex(theme.brightCyan))")
         lines.append("palette = 15=\(normalizeHex(theme.brightWhite))")
 
-        let content = lines.joined(separator: "\n") + "\n"
-        do {
-            try content.write(toFile: configFilePath, atomically: true, encoding: .utf8)
-        } catch {
-            print("[GhosttyConfig] Failed to write config: \(error)")
-        }
+        return lines.joined(separator: "\n") + "\n"
     }
 
     /// Ensures hex color has a # prefix for ghostty's config format.

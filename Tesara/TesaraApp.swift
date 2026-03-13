@@ -26,6 +26,12 @@ struct TesaraApp: App {
                 .onChange(of: settingsStore.settings.updateChecksEnabled) {
                     updaterController.updater.automaticallyChecksForUpdates = settingsStore.settings.updateChecksEnabled
                 }
+                .onChange(of: settingsStore.ghosttyConfigInputs) {
+                    GhosttyApp.shared.updateConfig(
+                        theme: settingsStore.activeTheme,
+                        settings: settingsStore.settings
+                    )
+                }
         }
         .windowToolbarStyle(.unifiedCompact)
         .commands {

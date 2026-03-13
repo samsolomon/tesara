@@ -18,6 +18,10 @@ __tesara_prompt_command() {
 
 __tesara_preexec() {
   printf '\033]133;C\a'
+  # Write command text for Tesara's command history capture
+  if [[ -n "${TESARA_SESSION_ID:-}" ]]; then
+    printf '%s' "$BASH_COMMAND" > "${TMPDIR:-/tmp}/tesara-cmd-${TESARA_SESSION_ID}.txt"
+  fi
 }
 
 __tesara_debug_trap() {

@@ -1,13 +1,18 @@
 import Foundation
 
 @MainActor
-final class TerminalSession: ObservableObject {
+final class TerminalSession: ObservableObject, Identifiable {
     enum Status: String {
         case idle
         case starting
         case running
         case failed
         case stopped
+    }
+
+    enum Mode {
+        case pty      // Current: PTYShellLauncher + TerminalWebView
+        case ghostty  // New: GhosttySurfaceView with libghostty
     }
 
     struct Line: Identifiable, Equatable {
@@ -23,6 +28,8 @@ final class TerminalSession: ObservableObject {
         }
     }
 
+    let id = UUID()
+
     @Published private(set) var status: Status = .idle
     @Published private(set) var lines: [Line] = []
     @Published private(set) var transcriptLog = TranscriptLog()
@@ -30,6 +37,9 @@ final class TerminalSession: ObservableObject {
     @Published private(set) var capturedBlockCount = 0
     @Published var tuiPassthroughEnabled = false
     @Published private(set) var currentWorkingDirectory: String?
+    @Published private(set) var surfaceView: GhosttySurfaceView?
+
+    private(set) var mode: Mode = .pty
 
     private let launcher: TerminalLaunching
     private let parser: OSC133Parsing
@@ -39,7 +49,13 @@ final class TerminalSession: ObservableObject {
     private var activeCapture: TerminalBlockCapture?
     private var blockOrderIndex = 0
 
-    // Render coalescing: buffer appends and flush on a timer
+    /// Temporary files created for shell integration, cleaned up on stop/deinit.
+    private var temporaryURLs: [URL] = []
+
+    /// Unique session identifier passed to shell integration scripts for command capture.
+    private(set) var shellSessionID: String = UUID().uuidString
+
+    // Render coalescing: buffer appends and flush on a timer (PTY mode only)
     private var pendingTranscriptText = ""
     private var pendingLines: [(Line.Kind, String)] = []
     private var flushTask: Task<Void, Never>?
@@ -50,26 +66,41 @@ final class TerminalSession: ObservableObject {
         self.parser = parser
     }
 
-    func configure(blockStore: BlockStore) {
+    func configure(blockStore: BlockStore, mode: Mode = .pty) {
         if self.blockStore == nil {
             self.blockStore = blockStore
         }
+        self.mode = mode
     }
 
-    func start(shellPath: String, workingDirectory: URL) {
-        guard processHandle == nil else {
-            return
-        }
+    // MARK: - Start
 
+    func start(shellPath: String, workingDirectory: URL) {
+        switch mode {
+        case .pty:
+            startPTY(shellPath: shellPath, workingDirectory: workingDirectory)
+        case .ghostty:
+            startGhostty(shellPath: shellPath, workingDirectory: workingDirectory)
+        }
+    }
+
+    /// Resets shared state for a new session start (used by both PTY and ghostty modes).
+    private func resetSessionState(shellPath: String, workingDirectory: URL) {
         status = .starting
-        lines.removeAll()
-        transcriptLog.reset()
         launchError = nil
         capturedBlockCount = 0
         blockOrderIndex = 0
-        parser.reset()
         activeCapture = nil
         activeSessionID = blockStore?.startSession(shellPath: shellPath, workingDirectory: workingDirectory)
+    }
+
+    private func startPTY(shellPath: String, workingDirectory: URL) {
+        guard processHandle == nil else { return }
+
+        resetSessionState(shellPath: shellPath, workingDirectory: workingDirectory)
+        lines.removeAll()
+        transcriptLog.reset()
+        parser.reset()
         append(.info, "Launching \(shellPath) in \(workingDirectory.path)")
 
         do {
@@ -91,43 +122,85 @@ final class TerminalSession: ObservableObject {
         }
     }
 
-    func send(command: String) {
-        let trimmed = command.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
+    private func startGhostty(shellPath: String, workingDirectory: URL) {
+        guard surfaceView == nil, let app = GhosttyApp.shared.app else {
+            status = .failed
+            launchError = "Ghostty app not initialized"
             return
         }
 
+        resetSessionState(shellPath: shellPath, workingDirectory: workingDirectory)
+
+        let config = GhosttySurfaceConfig.withShellIntegration(
+            shellPath: shellPath,
+            workingDirectory: workingDirectory,
+            sessionID: shellSessionID
+        )
+        temporaryURLs = config.temporaryURLs
+
+        let view = GhosttySurfaceView(app: app, config: config)
+        view.session = self
+        view.registerWithApp()
+        surfaceView = view
+
+        status = .running
+    }
+
+    // MARK: - Send
+
+    func send(command: String) {
+        let trimmed = command.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
         send(text: trimmed + "\n")
     }
 
     func send(text: String) {
-        guard !text.isEmpty else {
-            return
-        }
+        guard !text.isEmpty else { return }
 
-        do {
-            try processHandle?.send(text)
-        } catch {
-            append(.error, error.localizedDescription)
+        switch mode {
+        case .pty:
+            do {
+                try processHandle?.send(text)
+            } catch {
+                append(.error, error.localizedDescription)
+            }
+        case .ghostty:
+            guard let surface = surfaceView?.surface else { return }
+            text.withCString { ptr in
+                ghostty_surface_text(surface, ptr, UInt(text.utf8.count))
+            }
         }
     }
 
+    // MARK: - Stop
+
     func stop() {
-        flushPendingOutput()
-        processHandle?.stop()
-        processHandle = nil
+        switch mode {
+        case .pty:
+            flushPendingOutput()
+            processHandle?.stop()
+            processHandle = nil
+        case .ghostty:
+            if let surface = surfaceView?.surface {
+                ghostty_surface_request_close(surface)
+            }
+            surfaceView = nil
+            cleanupTemporaryFiles()
+        }
+
         if status != .failed {
             status = .stopped
         }
     }
 
-    func resize(cols: Int, rows: Int) {
-        guard cols > 0, rows > 0 else {
-            return
-        }
+    // MARK: - Resize (PTY mode only — ghostty handles resize via sizeDidChange)
 
+    func resize(cols: Int, rows: Int) {
+        guard mode == .pty, cols > 0, rows > 0 else { return }
         processHandle?.resize(cols: UInt16(cols), rows: UInt16(rows))
     }
+
+    // MARK: - PTY Event Handling
 
     private func handle(_ event: TerminalEvent) {
         switch event {
@@ -165,7 +238,6 @@ final class TerminalSession: ObservableObject {
     }
 
     private func extractOSC7(from text: String) {
-        // OSC 7 format: ESC ] 7 ; file://hostname/path BEL (or ST)
         guard let range = text.range(of: "\u{1B}]7;") else { return }
         let afterPrefix = text[range.upperBound...]
         let terminator = afterPrefix.firstIndex(of: "\u{07}") ?? afterPrefix.range(of: "\u{1B}\\")?.lowerBound
@@ -177,9 +249,7 @@ final class TerminalSession: ObservableObject {
     }
 
     private func handleVisibleTerminalText(_ text: String) {
-        guard !text.isEmpty, var activeCapture else {
-            return
-        }
+        guard !text.isEmpty, var activeCapture else { return }
 
         switch activeCapture.stage {
         case .command:
@@ -192,10 +262,7 @@ final class TerminalSession: ObservableObject {
     }
 
     private func appendToCaptureOutput(_ text: String) {
-        guard var activeCapture, activeCapture.stage == .output else {
-            return
-        }
-
+        guard var activeCapture, activeCapture.stage == .output else { return }
         activeCapture.outputText.append(text)
         self.activeCapture = activeCapture
     }
@@ -207,9 +274,7 @@ final class TerminalSession: ObservableObject {
         case .commandInputStart:
             activeCapture = TerminalBlockCapture(startedAt: Date(), finishedAt: Date(), stage: .command)
         case .commandExecuted:
-            guard var activeCapture else {
-                return
-            }
+            guard var activeCapture else { return }
             activeCapture.commandText = sanitizeCommand(activeCapture.commandText)
             activeCapture.stage = .output
             self.activeCapture = activeCapture
@@ -219,9 +284,7 @@ final class TerminalSession: ObservableObject {
     }
 
     private func finalizeActiveCaptureIfNeeded(exitCode: Int?) {
-        guard var activeCapture, let activeSessionID else {
-            return
-        }
+        guard var activeCapture, let activeSessionID else { return }
 
         activeCapture.finishedAt = Date()
         activeCapture.exitCode = exitCode
@@ -241,32 +304,63 @@ final class TerminalSession: ObservableObject {
         self.activeCapture = nil
     }
 
-    // MARK: - Ghostty Action Handlers (Phase 2 stubs, expanded in Phase 3)
+    // MARK: - Ghostty Action Handlers
 
     func updateWorkingDirectory(_ url: URL) {
         currentWorkingDirectory = url.path
     }
 
     func updateTitle(_ title: String) {
-        // Title display will be wired up in Phase 3
+        // Title display will be wired in future work
     }
 
     func handleCommandFinished(exitCode: Int16, durationNs: UInt64) {
         let code = exitCode == -1 ? nil : Int(exitCode)
-        // TODO: Phase 4 — store durationNs in TerminalBlockCapture
+
+        // In ghostty mode, read command text from the temp file written by preexec hooks
+        if mode == .ghostty {
+            let commandText = readAndCleanupCommandFile()
+            if let commandText, !commandText.isEmpty {
+                var capture = TerminalBlockCapture(
+                    startedAt: Date(timeIntervalSinceNow: -Double(durationNs) / 1_000_000_000),
+                    finishedAt: Date(),
+                    stage: .output
+                )
+                capture.commandText = commandText
+                capture.exitCode = code
+                activeCapture = capture
+            }
+        }
+
         finalizeActiveCaptureIfNeeded(exitCode: code)
     }
 
+    /// Reads and removes the shell-side command temp file for this session.
+    func readAndCleanupCommandFile() -> String? {
+        let path = NSTemporaryDirectory() + "tesara-cmd-\(shellSessionID).txt"
+        guard let data = FileManager.default.contents(atPath: path) else { return nil }
+        try? FileManager.default.removeItem(atPath: path)
+        return String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
     func handleChildExited(exitCode: UInt32) {
-        flushPendingOutput()
+        switch mode {
+        case .pty:
+            flushPendingOutput()
+            processHandle = nil
+        case .ghostty:
+            surfaceView = nil
+            cleanupTemporaryFiles()
+        }
         finalizeActiveCaptureIfNeeded(exitCode: Int(exitCode))
-        processHandle = nil
         status = .stopped
     }
 
     func handleSurfaceClosed() {
         stop()
     }
+
+    // MARK: - Helpers
 
     private func sanitizeCommand(_ command: String) -> String {
         command
@@ -275,16 +369,22 @@ final class TerminalSession: ObservableObject {
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    private func cleanupTemporaryFiles() {
+        for url in temporaryURLs {
+            try? FileManager.default.removeItem(at: url)
+        }
+        temporaryURLs.removeAll()
+    }
+
+    // MARK: - PTY Output Coalescing
+
     private func append(_ kind: Line.Kind, _ text: String) {
         let normalized = text.replacingOccurrences(of: "\r\n", with: "\n")
-
-        // Buffer the text instead of publishing immediately
         pendingTranscriptText.append(normalized)
         let splitLines = normalized.split(separator: "\n", omittingEmptySubsequences: false)
         for item in splitLines {
             pendingLines.append((kind, String(item)))
         }
-
         scheduleFlush()
     }
 
