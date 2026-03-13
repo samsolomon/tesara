@@ -5,6 +5,12 @@ struct TitleBarTabStrip: View {
     let isDarkBackground: Bool
     let onNewTab: () -> Void
 
+    @State private var isHoveringNewTab = false
+
+    private var strokeColor: Color {
+        (isDarkBackground ? Color.white : Color.black).opacity(0.2)
+    }
+
     var body: some View {
         HStack(spacing: 2) {
             ForEach(Array(manager.tabs.enumerated()), id: \.element.id) { index, tab in
@@ -16,10 +22,21 @@ struct TitleBarTabStrip: View {
                 Image(systemName: "plus")
                     .font(.system(size: 11, weight: .medium))
                     .frame(width: 24, height: 24)
-                    .contentShape(Rectangle())
+                    .contentShape(Circle())
             }
             .buttonStyle(.plain)
             .foregroundStyle(isDarkBackground ? .white.opacity(0.5) : .black.opacity(0.4))
+            .overlay {
+                if isHoveringNewTab {
+                    Circle()
+                        .strokeBorder(strokeColor, lineWidth: 1)
+                        .frame(width: 24, height: 24)
+                }
+            }
+            .animation(.snappy(duration: 0.2), value: isHoveringNewTab)
+            .onHover { hovering in
+                isHoveringNewTab = hovering
+            }
         }
         .padding(.horizontal, 4)
     }
@@ -39,6 +56,9 @@ struct TitleBarTabStrip: View {
 }
 
 private struct TabCapsuleButton: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.controlActiveState) private var controlActiveState
+
     let title: String
     let shortcutLabel: String?
     let isActive: Bool
@@ -47,66 +67,145 @@ private struct TabCapsuleButton: View {
     let onClose: () -> Void
 
     @State private var isHovering = false
+    @State private var isHoveringCloseButton = false
 
     private var primaryColor: Color {
-        isDarkBackground ? .white : .black
+        let base = isDarkBackground ? Color.white : Color.black
+        return base.opacity(windowIsActive ? 0.94 : 0.72)
     }
 
     private var secondaryColor: Color {
-        primaryColor.opacity(0.5)
+        primaryColor.opacity(windowIsActive ? 0.48 : 0.36)
+    }
+
+    private var windowIsActive: Bool {
+        controlActiveState == .key
+    }
+
+    private var trailingSlotWidth: CGFloat {
+        20
+    }
+
+    private var animation: Animation {
+        reduceMotion ? .linear(duration: 0.01) : .snappy(duration: 0.18, extraBounce: 0)
+    }
+
+    private var inactiveHoverStroke: Color {
+        primaryColor.opacity(isHovering ? 0.16 : 0.08)
+    }
+
+    private var closeButtonForeground: Color {
+        primaryColor.opacity(isHoveringCloseButton ? 0.92 : 0.78)
+    }
+
+    private var activeFillOpacity: Double {
+        windowIsActive ? 1 : 0.72
+    }
+
+    private var activeStrokeOpacity: Double {
+        windowIsActive ? 0.24 : 0.16
     }
 
     var body: some View {
-        HStack(spacing: 4) {
-            Text(title)
-                .font(.system(size: 12))
-                .foregroundStyle(primaryColor)
-                .lineLimit(1)
+        Button(action: onSelect) {
+            HStack(spacing: 6) {
+                HStack(spacing: 4) {
+                    Text(title)
+                        .font(.system(size: 12, weight: isActive ? .semibold : .medium))
+                        .foregroundStyle(primaryColor)
+                        .lineLimit(1)
 
-            if let shortcutLabel, !isHovering {
-                Text(shortcutLabel)
-                    .font(.system(size: 10))
-                    .foregroundStyle(secondaryColor)
-            }
-
-            Spacer(minLength: 0)
-
-            if isHovering {
-                Button(action: onClose) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 8, weight: .bold))
-                        .foregroundStyle(secondaryColor)
+                    if let shortcutLabel {
+                        Text(shortcutLabel)
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundStyle(secondaryColor)
+                            .opacity(isHovering ? 0 : 1)
+                    }
                 }
-                .buttonStyle(.plain)
+
+                Spacer(minLength: 0)
+
+                ZStack {
+                    closeButton
+                        .opacity(isHovering ? 1 : 0)
+                        .allowsHitTesting(isHovering)
+                }
+                .frame(width: trailingSlotWidth)
             }
+            .frame(maxWidth: .infinity)
+            .padding(.leading, 12)
+            .padding(.trailing, 8)
+            .padding(.vertical, 4)
+            .contentShape(Capsule())
         }
-        .frame(maxWidth: .infinity)
-        .padding(.horizontal, 12)
-        .padding(.vertical, 5)
+        .buttonStyle(.plain)
         .background {
-            if isActive {
-                if #available(macOS 26, *) {
-                    Capsule()
-                        .fill(.regularMaterial)
-                        .glassEffect(.regular.interactive(), in: .capsule)
-                } else {
-                    Capsule().fill(.ultraThinMaterial)
+            Capsule()
+                .fill(.clear)
+                .overlay {
+                    if isActive {
+                        activeBackground
+                    } else if isHovering {
+                        Capsule()
+                            .strokeBorder(inactiveHoverStroke, lineWidth: 1)
+                    }
                 }
-            }
-        }
-        .overlay {
-            if !isActive && isHovering {
-                Capsule()
-                    .strokeBorder(primaryColor.opacity(0.2), lineWidth: 1)
-            }
         }
         .clipShape(Capsule())
-        .contentShape(Capsule())
-        .animation(.snappy(duration: 0.2), value: isHovering)
-        .animation(.snappy(duration: 0.2), value: isActive)
-        .onTapGesture(perform: onSelect)
+        .animation(animation, value: isHovering)
+        .animation(animation, value: isActive)
+        .animation(animation, value: controlActiveState)
         .onHover { hovering in
             isHovering = hovering
         }
+        .accessibilityLabel(title)
+        .accessibilityHint("Select tab")
+    }
+
+    @ViewBuilder
+    private var activeBackground: some View {
+        if #available(macOS 26, *) {
+            Capsule()
+                .fill(.regularMaterial.opacity(activeFillOpacity))
+                .overlay {
+                    Capsule()
+                        .strokeBorder(.white.opacity(isDarkBackground ? activeStrokeOpacity : 0.12), lineWidth: 0.75)
+                }
+                .glassEffect(.regular, in: .capsule)
+        } else {
+            Capsule()
+                .fill(.ultraThinMaterial.opacity(activeFillOpacity))
+                .overlay {
+                    Capsule()
+                        .strokeBorder(primaryColor.opacity(activeStrokeOpacity), lineWidth: 0.75)
+                }
+        }
+    }
+
+    private var closeButton: some View {
+        Button(action: onClose) {
+            Image(systemName: "xmark")
+                .font(.system(size: 8, weight: .bold))
+                .foregroundStyle(closeButtonForeground)
+                .frame(width: 18, height: 18)
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .background {
+            if #available(macOS 26, *) {
+                Circle()
+                    .fill(.regularMaterial)
+                    .glassEffect(.regular.interactive(), in: .circle)
+                    .opacity(isHoveringCloseButton ? 1 : 0.84)
+            } else {
+                Circle()
+                    .fill(isDarkBackground ? Color.white.opacity(0.14) : Color.black.opacity(0.08))
+            }
+        }
+        .scaleEffect(isHoveringCloseButton ? 1 : 0.96)
+        .onHover { hovering in
+            isHoveringCloseButton = hovering
+        }
+        .accessibilityLabel("Close tab")
     }
 }
