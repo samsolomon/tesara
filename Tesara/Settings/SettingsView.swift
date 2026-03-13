@@ -7,6 +7,7 @@ struct SettingsView: View {
     @EnvironmentObject private var blockStore: BlockStore
     let updater: SPUUpdater
 
+    @State private var selectedPane: SettingsPane? = .appearance
     @State private var importedThemeDocument: ThemeDocument?
     @State private var isImporterPresented = false
     @State private var isExporterPresented = false
@@ -14,42 +15,22 @@ struct SettingsView: View {
     @State private var importErrorMessage: String?
 
     var body: some View {
-        TabView {
-            AppearanceSettingsPane(
-                settings: $settingsStore.settings,
-                themes: settingsStore.availableThemes,
-                activeTheme: settingsStore.activeTheme,
-                onImportTheme: { isImporterPresented = true },
-                onExportTheme: exportTheme
-            )
-            .tabItem {
-                Label("Appearance", systemImage: "paintpalette")
+        NavigationSplitView {
+            List(SettingsPane.allCases, selection: $selectedPane) { pane in
+                Label(pane.title, systemImage: pane.systemImage)
+                    .tag(pane)
             }
-
-            TerminalSettingsPane(
-                settings: $settingsStore.settings,
-                onChooseDirectory: { isDirectoryPickerPresented = true }
-            )
-            .tabItem {
-                Label("Terminal", systemImage: "terminal")
+            .navigationTitle("Settings")
+            .listStyle(.sidebar)
+            .navigationSplitViewColumnWidth(min: 180, ideal: 210)
+        } detail: {
+            SettingsDetailContainer(
+                title: activePane.title,
+                description: activePane.description
+            ) {
+                paneView(for: activePane)
             }
-
-            WorkspaceSettingsPane(settings: $settingsStore.settings)
-                .tabItem {
-                    Label("Workspace", systemImage: "square.split.2x1")
-                }
-
-            KeyboardSettingsPane(settings: $settingsStore.settings, onReset: settingsStore.resetKeyBindings)
-                .tabItem {
-                    Label("Keyboard", systemImage: "keyboard")
-                }
-
-            UpdatesPrivacySettingsPane(settings: $settingsStore.settings, updater: updater)
-                .tabItem {
-                    Label("Privacy", systemImage: "lock.shield")
-                }
         }
-        .padding(20)
         .fileImporter(
             isPresented: $isImporterPresented,
             allowedContentTypes: [.json],
@@ -85,6 +66,35 @@ struct SettingsView: View {
         })
     }
 
+    private var activePane: SettingsPane {
+        selectedPane ?? .appearance
+    }
+
+    @ViewBuilder
+    private func paneView(for pane: SettingsPane) -> some View {
+        switch pane {
+        case .appearance:
+            AppearanceSettingsPane(
+                settings: $settingsStore.settings,
+                themes: settingsStore.availableThemes,
+                activeTheme: settingsStore.activeTheme,
+                onImportTheme: { isImporterPresented = true },
+                onExportTheme: exportTheme
+            )
+        case .terminal:
+            TerminalSettingsPane(
+                settings: $settingsStore.settings,
+                onChooseDirectory: { isDirectoryPickerPresented = true }
+            )
+        case .workspace:
+            WorkspaceSettingsPane(settings: $settingsStore.settings)
+        case .keyboard:
+            KeyboardSettingsPane(settings: $settingsStore.settings, onReset: settingsStore.resetKeyBindings)
+        case .privacy:
+            UpdatesPrivacySettingsPane(settings: $settingsStore.settings, updater: updater)
+        }
+    }
+
     private func importTheme(_ result: Result<[URL], Error>) {
         do {
             let url = try result.get().first ?? { throw CocoaError(.fileNoSuchFile) }()
@@ -113,6 +123,95 @@ struct SettingsView: View {
         } catch {
             importErrorMessage = error.localizedDescription
         }
+    }
+}
+
+private enum SettingsPane: String, CaseIterable, Identifiable {
+    case appearance
+    case terminal
+    case workspace
+    case keyboard
+    case privacy
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .appearance:
+            "Appearance"
+        case .terminal:
+            "Terminal"
+        case .workspace:
+            "Workspace"
+        case .keyboard:
+            "Keyboard"
+        case .privacy:
+            "Privacy & Data"
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .appearance:
+            "Theme, font, and visual presentation for terminal and editor panes."
+        case .terminal:
+            "Default shell, startup directory, and session safety controls."
+        case .workspace:
+            "How tabs and split panes behave throughout the workspace."
+        case .keyboard:
+            "Customize shortcuts for common Tesara actions."
+        case .privacy:
+            "Update behavior, history capture, logging, and local data controls."
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .appearance:
+            "paintpalette"
+        case .terminal:
+            "terminal"
+        case .workspace:
+            "square.split.2x1"
+        case .keyboard:
+            "keyboard"
+        case .privacy:
+            "lock.shield"
+        }
+    }
+}
+
+private struct SettingsDetailContainer<Content: View>: View {
+    let title: String
+    let description: String
+    let content: Content
+
+    init(
+        title: String,
+        description: String,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.title = title
+        self.description = description
+        self.content = content()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(title)
+                    .font(.title2.weight(.semibold))
+                Text(description)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            content
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .padding(.horizontal, 24)
+        .padding(.vertical, 20)
+        .background(Color(nsColor: .windowBackgroundColor))
     }
 }
 

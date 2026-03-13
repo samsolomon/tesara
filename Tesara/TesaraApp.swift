@@ -69,7 +69,7 @@ struct TesaraApp: App {
             SettingsView(updater: updaterController.updater)
                 .environmentObject(settingsStore)
                 .environmentObject(blockStore)
-                .frame(width: 720, height: 520)
+                .frame(minWidth: 840, minHeight: 560)
         }
     }
 }
