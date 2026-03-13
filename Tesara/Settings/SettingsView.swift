@@ -4,6 +4,7 @@ import UniformTypeIdentifiers
 
 struct SettingsView: View {
     @EnvironmentObject private var settingsStore: SettingsStore
+    @EnvironmentObject private var blockStore: BlockStore
     let updater: SPUUpdater
 
     @State private var importedThemeDocument: ThemeDocument?
@@ -25,13 +26,18 @@ struct SettingsView: View {
                 Label("Appearance", systemImage: "paintpalette")
             }
 
-            ShellSettingsPane(
+            TerminalSettingsPane(
                 settings: $settingsStore.settings,
                 onChooseDirectory: { isDirectoryPickerPresented = true }
             )
             .tabItem {
-                Label("Shell", systemImage: "terminal")
+                Label("Terminal", systemImage: "terminal")
             }
+
+            WorkspaceSettingsPane(settings: $settingsStore.settings)
+                .tabItem {
+                    Label("Workspace", systemImage: "square.split.2x1")
+                }
 
             KeyboardSettingsPane(settings: $settingsStore.settings, onReset: settingsStore.resetKeyBindings)
                 .tabItem {
@@ -40,7 +46,7 @@ struct SettingsView: View {
 
             UpdatesPrivacySettingsPane(settings: $settingsStore.settings, updater: updater)
                 .tabItem {
-                    Label("Updates", systemImage: "arrow.triangle.2.circlepath")
+                    Label("Privacy", systemImage: "lock.shield")
                 }
         }
         .padding(20)
@@ -163,24 +169,37 @@ private struct AppearanceSettingsPane: View {
     }
 }
 
-private struct ShellSettingsPane: View {
+private struct TerminalSettingsPane: View {
     @Binding var settings: AppSettings
     let onChooseDirectory: () -> Void
 
     var body: some View {
         Form {
-            TextField("Shell Path", text: $settings.shellPath)
+            Section("Startup") {
+                TextField("Shell Path", text: $settings.shellPath)
 
-            LabeledContent("Default Working Directory") {
-                Text(settings.defaultWorkingDirectory.path)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
+                LabeledContent("Default Working Directory") {
+                    Text(settings.defaultWorkingDirectory.path)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
+
+                Button("Choose Directory", action: onChooseDirectory)
             }
 
-            Button("Choose Directory", action: onChooseDirectory)
+            Section {
+                Picker("Paste Protection", selection: $settings.pasteProtectionMode) {
+                    ForEach(PasteProtectionMode.allCases) { mode in
+                        Text(mode.title).tag(mode)
+                    }
+                }
 
-            Text("Shell and working directory changes apply to new tabs and windows.")
-                .foregroundStyle(.secondary)
+                Toggle("Confirm before closing a running session", isOn: $settings.confirmOnCloseRunningSession)
+            } header: {
+                Text("Safety")
+            } footer: {
+                Text("Shell and working directory changes apply to new tabs and windows. Paste protection warns before multiline paste, and close confirmation prevents accidentally stopping a live session.")
+            }
         }
         .formStyle(.grouped)
     }
@@ -209,7 +228,48 @@ private struct KeyboardSettingsPane: View {
     }
 }
 
+private struct WorkspaceSettingsPane: View {
+    @Binding var settings: AppSettings
+
+    var body: some View {
+        Form {
+            Section {
+                Picker("Tab Title", selection: $settings.tabTitleMode) {
+                    ForEach(TabTitleMode.allCases) { mode in
+                        Text(mode.title).tag(mode)
+                    }
+                }
+            } header: {
+                Text("Tabs")
+            } footer: {
+                Text("Choose whether tabs should prefer the shell-provided title or the current working directory when both are available.")
+            }
+
+            Section {
+                Toggle("Dim inactive splits", isOn: $settings.dimInactiveSplits)
+
+                HStack {
+                    Slider(value: $settings.inactiveSplitDimAmount, in: 0.04...0.22, step: 0.01)
+                        .disabled(!settings.dimInactiveSplits)
+
+                    Text("\(Int(settings.inactiveSplitDimAmount * 100))%")
+                        .monospacedDigit()
+                        .foregroundStyle(settings.dimInactiveSplits ? .secondary : .tertiary)
+                        .frame(width: 40, alignment: .trailing)
+                }
+            } header: {
+                Text("Splits")
+            } footer: {
+                Text("Inactive split dimming helps the active pane read as the current context without adding heavy borders.")
+            }
+        }
+        .formStyle(.grouped)
+    }
+}
+
 private struct UpdatesPrivacySettingsPane: View {
+    @EnvironmentObject private var blockStore: BlockStore
+
     @Binding var settings: AppSettings
     let updater: SPUUpdater
 
@@ -219,11 +279,27 @@ private struct UpdatesPrivacySettingsPane: View {
 
             CheckForUpdatesView(updater: updater)
 
+            Toggle("Capture command history locally", isOn: $settings.historyCaptureEnabled)
+
             Toggle("Enable local logging", isOn: $settings.localLoggingEnabled)
 
             Section {
+                Button("Clear History", role: .destructive) {
+                    blockStore.clearHistory()
+                }
+
+                Button("Clear Local Logs", role: .destructive) {
+                    LocalLogStore.shared.clearLogs()
+                }
+            } header: {
+                Text("Local Data")
+            } footer: {
+                Text("Turning off history capture stops new commands from being stored. Existing history remains until you clear it. Tesara writes its own local diagnostics to \(LocalLogStore.shared.displayPath) when logging is enabled.")
+            }
+
+            Section {
                 Text("Tesara should make no network requests except Sparkle update checks and update downloads, and those remain user-controllable.")
-                Text("Crash reporting stays disabled by default. Local logs remain on this Mac in ~/Library/Logs.")
+                Text("Crash reporting stays disabled by default. Local logs stay on this Mac and are never uploaded.")
             } header: {
                 Text("Network Policy")
             }

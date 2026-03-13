@@ -41,7 +41,7 @@ enum GhosttyConfig {
             for i in 0..<diagCount {
                 let diag = ghostty_config_get_diagnostic(config, i)
                 if let msg = diag.message {
-                    print("[GhosttyConfig] diagnostic: \(String(cString: msg))")
+                    LocalLogStore.shared.log("[GhosttyConfig] diagnostic: \(String(cString: msg))")
                 }
             }
         }
@@ -58,7 +58,7 @@ enum GhosttyConfig {
         do {
             try content.write(toFile: configFilePath, atomically: true, encoding: .utf8)
         } catch {
-            print("[GhosttyConfig] Failed to write config: \(error)")
+            LocalLogStore.shared.log("[GhosttyConfig] Failed to write config: \(error)")
         }
     }
 

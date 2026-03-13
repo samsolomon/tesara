@@ -3,6 +3,7 @@ import CoreText
 import Foundation
 
 /// Rasterizes glyphs via CTFont into a GlyphAtlas, caching results.
+/// Supports dual atlases: grayscale for text, BGRA for color emoji.
 final class GlyphCache {
 
     struct GlyphKey: Hashable {
@@ -17,16 +18,19 @@ final class GlyphCache {
         let bearingY: Int16
         let advance: Float
         let isPlaceholder: Bool
+        let isColor: Bool
     }
 
     private var cache: [GlyphKey: CachedGlyph] = [:]
-    private let atlas: GlyphAtlas
+    private let monoAtlas: GlyphAtlas
+    private let colorAtlas: GlyphAtlas
 
-    /// Placeholder region for color glyphs (emoji).
-    private var placeholderRegion: GlyphAtlas.Region?
+    /// Cache per-font color glyph detection (font hash → has color tables)
+    private var fontColorCache: [Int: Bool] = [:]
 
-    init(atlas: GlyphAtlas) {
-        self.atlas = atlas
+    init(atlas: GlyphAtlas, colorAtlas: GlyphAtlas) {
+        self.monoAtlas = atlas
+        self.colorAtlas = colorAtlas
     }
 
     func lookup(glyph: CGGlyph, font: CTFont, subpixelOffset: CGFloat = 0) -> CachedGlyph? {
@@ -39,10 +43,10 @@ final class GlyphCache {
         if let cached = cache[key] { return cached }
 
         // Check for color glyph (emoji)
-        if isColorGlyph(glyph: glyph, font: font) {
-            let placeholder = makePlaceholder(font: font, glyph: glyph)
-            cache[key] = placeholder
-            return placeholder
+        if isColorGlyph(font: font) {
+            let colorResult = rasterizeColorGlyph(glyph: glyph, font: font, key: key)
+            cache[key] = colorResult
+            return colorResult
         }
 
         // Get glyph metrics
@@ -65,17 +69,18 @@ final class GlyphCache {
                 bearingX: 0,
                 bearingY: 0,
                 advance: Float(advance.width),
-                isPlaceholder: false
+                isPlaceholder: false,
+                isColor: false
             )
             cache[key] = empty
             return empty
         }
 
-        // Allocate in atlas, growing if needed
-        var region = atlas.allocate(width: width, height: height)
+        // Allocate in mono atlas, growing if needed
+        var region = monoAtlas.allocate(width: width, height: height)
         if region == nil {
-            atlas.grow()
-            region = atlas.allocate(width: width, height: height)
+            monoAtlas.grow()
+            region = monoAtlas.allocate(width: width, height: height)
         }
 
         guard let region else {
@@ -85,14 +90,15 @@ final class GlyphCache {
                 bearingX: 0,
                 bearingY: 0,
                 advance: Float(advance.width),
-                isPlaceholder: false
+                isPlaceholder: false,
+                isColor: false
             )
             cache[key] = empty
             return empty
         }
 
         // Rasterize glyph into grayscale bitmap
-        let bitmapData = rasterizeGlyph(
+        let bitmapData = rasterizeGrayscaleGlyph(
             glyph: glyph,
             font: font,
             width: width,
@@ -103,32 +109,35 @@ final class GlyphCache {
             padding: padding
         )
 
-        atlas.write(data: bitmapData, to: region)
+        monoAtlas.write(data: bitmapData, to: region)
 
         let cached = CachedGlyph(
             region: region,
             bearingX: Int16(floor(boundingRect.origin.x)) - Int16(padding),
             bearingY: Int16(ceil(boundingRect.origin.y + boundingRect.height)) + Int16(padding),
             advance: Float(advance.width),
-            isPlaceholder: false
+            isPlaceholder: false,
+            isColor: false
         )
         cache[key] = cached
         return cached
     }
 
-    func isColorGlyph(glyph: CGGlyph, font: CTFont) -> Bool {
-        // Check if the font has sbix or COLR tables (color glyph tables)
+    func isColorGlyph(font: CTFont) -> Bool {
+        let fontHash = Int(bitPattern: ObjectIdentifier(font))
+        if let cached = fontColorCache[fontHash] { return cached }
         let sbix = CTFontCopyTable(font, CTFontTableTag(kCTFontTableSbix), [])
-        if sbix != nil { return true }
         let colr = CTFontCopyTable(font, CTFontTableTag(kCTFontTableCOLR), [])
-        if colr != nil { return true }
-        return false
+        let isColor = sbix != nil || colr != nil
+        fontColorCache[fontHash] = isColor
+        return isColor
     }
 
     func invalidateAll() {
         cache.removeAll()
-        placeholderRegion = nil
-        atlas.reset()
+        fontColorCache.removeAll()
+        monoAtlas.reset()
+        colorAtlas.reset()
     }
 
     // MARK: - Private
@@ -140,56 +149,77 @@ final class GlyphCache {
         return GlyphKey(glyph: glyph, fontHash: fontHash, subpixelBin: bin)
     }
 
-    private func makePlaceholder(font: CTFont, glyph: CGGlyph) -> CachedGlyph {
+    private func rasterizeColorGlyph(glyph: CGGlyph, font: CTFont, key: GlyphKey) -> CachedGlyph {
         var glyphRef = glyph
+        var boundingRect = CGRect.zero
+        CTFontGetBoundingRectsForGlyphs(font, .default, &glyphRef, &boundingRect, 1)
+
         var advance = CGSize.zero
         CTFontGetAdvancesForGlyphs(font, .default, &glyphRef, &advance, 1)
 
-        // Use a small filled rect as placeholder
-        let w = max(Int(advance.width), 8)
-        let h = Int(CTFontGetAscent(font) + CTFontGetDescent(font))
+        let padding: Int = 1
+        let width = max(Int(ceil(boundingRect.width)) + padding * 2, 1)
+        let height = max(Int(ceil(boundingRect.height)) + padding * 2, 1)
 
-        if let existing = placeholderRegion, existing.width == UInt16(w), existing.height == UInt16(h) {
-            return CachedGlyph(
-                region: existing,
-                bearingX: 0,
-                bearingY: Int16(CTFontGetAscent(font)),
-                advance: Float(advance.width),
-                isPlaceholder: true
-            )
-        }
-
-        var region = atlas.allocate(width: w, height: h)
+        // Allocate in color atlas
+        var region = colorAtlas.allocate(width: width, height: height)
         if region == nil {
-            atlas.grow()
-            region = atlas.allocate(width: w, height: h)
+            colorAtlas.grow()
+            region = colorAtlas.allocate(width: width, height: height)
         }
 
-        if let region {
-            // Fill with a light gray box (tofu placeholder)
-            let data = [UInt8](repeating: 80, count: w * h)
-            atlas.write(data: data, to: region)
-            placeholderRegion = region
-
+        guard let region else {
             return CachedGlyph(
-                region: region,
+                region: GlyphAtlas.Region(x: 0, y: 0, width: 0, height: 0),
                 bearingX: 0,
-                bearingY: Int16(CTFontGetAscent(font)),
+                bearingY: 0,
                 advance: Float(advance.width),
-                isPlaceholder: true
+                isPlaceholder: true,
+                isColor: true
             )
         }
+
+        // Rasterize into BGRA bitmap
+        let bytesPerRow = width * 4
+        var pixelData = [UInt8](repeating: 0, count: width * height * 4)
+
+        pixelData.withUnsafeMutableBufferPointer { buffer in
+            guard let context = CGContext(
+                data: buffer.baseAddress,
+                width: width,
+                height: height,
+                bitsPerComponent: 8,
+                bytesPerRow: bytesPerRow,
+                space: CGColorSpaceCreateDeviceRGB(),
+                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+            ) else { return }
+
+            context.setAllowsFontSmoothing(true)
+            context.setShouldSmoothFonts(true)
+            context.setAllowsAntialiasing(true)
+            context.setShouldAntialias(true)
+
+            let drawX = -boundingRect.origin.x + CGFloat(padding)
+            let drawY = -boundingRect.origin.y + CGFloat(padding)
+
+            var position = CGPoint(x: drawX, y: drawY)
+            var glyphRef = glyph
+            CTFontDrawGlyphs(font, &glyphRef, &position, 1, context)
+        }
+
+        colorAtlas.write(data: pixelData, to: region)
 
         return CachedGlyph(
-            region: GlyphAtlas.Region(x: 0, y: 0, width: 0, height: 0),
-            bearingX: 0,
-            bearingY: 0,
+            region: region,
+            bearingX: Int16(floor(boundingRect.origin.x)) - Int16(padding),
+            bearingY: Int16(ceil(boundingRect.origin.y + boundingRect.height)) + Int16(padding),
             advance: Float(advance.width),
-            isPlaceholder: true
+            isPlaceholder: false,
+            isColor: true
         )
     }
 
-    private func rasterizeGlyph(
+    private func rasterizeGrayscaleGlyph(
         glyph: CGGlyph,
         font: CTFont,
         width: Int,

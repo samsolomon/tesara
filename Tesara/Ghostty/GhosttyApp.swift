@@ -9,6 +9,10 @@ import os
 final class GhosttyApp: @unchecked Sendable {
     static let shared = GhosttyApp()
 
+    struct TerminalBehavior {
+        var pasteProtectionMode: PasteProtectionMode = .multiline
+    }
+
     private static var didGlobalInit = false
 
     private(set) var app: ghostty_app_t?
@@ -21,6 +25,10 @@ final class GhosttyApp: @unchecked Sendable {
 
     /// The currently focused surface. Only accessed from the main thread.
     private var focusedSurface: ghostty_surface_t?
+
+    /// Lightweight terminal interaction settings read by AppKit event handlers.
+    /// Mutated on the main thread through initialize/updateConfig.
+    private(set) var terminalBehavior = TerminalBehavior()
 
     private init() {}
 
@@ -39,15 +47,17 @@ final class GhosttyApp: @unchecked Sendable {
         if !Self.didGlobalInit {
             let initResult = ghostty_init(0, nil)
             guard initResult == GHOSTTY_SUCCESS else {
-                print("[GhosttyApp] ghostty_init failed with code \(initResult)")
+                LocalLogStore.shared.log("[GhosttyApp] ghostty_init failed with code \(initResult)")
                 return
             }
             Self.didGlobalInit = true
         }
 
+        terminalBehavior.pasteProtectionMode = settings.pasteProtectionMode
+
         let config = GhosttyConfig.makeConfig(theme: theme, settings: settings)
         guard config != nil else {
-            print("[GhosttyApp] Failed to create config")
+            LocalLogStore.shared.log("[GhosttyApp] Failed to create config")
             return
         }
 
@@ -65,7 +75,7 @@ final class GhosttyApp: @unchecked Sendable {
         // ghostty_app_new copies config data — always free the config after use
         ghostty_config_free(config)
         if app == nil {
-            print("[GhosttyApp] Failed to create ghostty app")
+            LocalLogStore.shared.log("[GhosttyApp] Failed to create ghostty app")
         }
     }
 
@@ -116,6 +126,8 @@ final class GhosttyApp: @unchecked Sendable {
     @MainActor
     func updateConfig(theme: TerminalTheme, settings: AppSettings) {
         guard let app else { return }
+
+        terminalBehavior.pasteProtectionMode = settings.pasteProtectionMode
 
         let config = GhosttyConfig.makeConfig(theme: theme, settings: settings)
         guard config != nil else { return }

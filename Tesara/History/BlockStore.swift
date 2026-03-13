@@ -20,6 +20,7 @@ final class BlockStore: ObservableObject {
 
     private let dbQueue: DatabaseQueue?
     private let migrator: DatabaseMigrator
+    private var historyCaptureEnabled = true
 
     init() {
         migrator = BlockStore.makeMigrator()
@@ -44,7 +45,7 @@ final class BlockStore: ObservableObject {
 
     func startSession(shellPath: String, workingDirectory: URL) -> UUID {
         let sessionID = UUID()
-        guard let dbQueue else {
+        guard historyCaptureEnabled, let dbQueue else {
             return sessionID
         }
 
@@ -63,6 +64,10 @@ final class BlockStore: ObservableObject {
 
     @discardableResult
     func recordBlock(sessionID: UUID, block: TerminalBlockCapture, orderIndex: Int) -> Bool {
+        guard historyCaptureEnabled else {
+            return false
+        }
+
         guard !block.commandText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             return false
         }
@@ -98,6 +103,24 @@ final class BlockStore: ObservableObject {
         }
 
         return didInsert
+    }
+
+    func setHistoryCaptureEnabled(_ enabled: Bool) {
+        historyCaptureEnabled = enabled
+    }
+
+    func clearHistory() {
+        guard let dbQueue else {
+            recentBlocks = []
+            return
+        }
+
+        try? dbQueue.write { db in
+            try db.execute(sql: "DELETE FROM terminal_blocks")
+            try db.execute(sql: "DELETE FROM terminal_sessions")
+        }
+
+        reloadRecentBlocks()
     }
 
     func reloadRecentBlocks(limit: Int = 100) {

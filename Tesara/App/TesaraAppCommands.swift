@@ -38,6 +38,27 @@ struct TesaraAppCommands: Commands {
             .keyboardShortcut("w", modifiers: [.command, .shift])
         }
 
+        CommandGroup(replacing: .saveItem) {
+            Button("Save") {
+                manager.saveActiveEditor()
+            }
+            .keyboardShortcut("s")
+            .disabled(manager.activeEditorSession == nil)
+
+            Button("Save As...") {
+                manager.saveActiveEditorAs()
+            }
+            .keyboardShortcut("s", modifiers: [.command, .shift])
+            .disabled(manager.activeEditorSession == nil)
+
+            Divider()
+
+            Button("Open in Editor") {
+                manager.showOpenPanel = true
+            }
+            .keyboardShortcut("o", modifiers: [.command, .shift])
+        }
+
         CommandMenu("Shell") {
             Button("Restart Shell") {
                 guard let session = manager.activeSession else { return }

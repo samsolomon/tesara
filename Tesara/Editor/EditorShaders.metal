@@ -98,3 +98,13 @@ fragment float4 glyph_fragment(
     float alpha = atlas.sample(linearSampler, in.texCoord).r;
     return float4(in.color.rgb, in.color.a * alpha);
 }
+
+// MARK: - Color Glyph Pipeline (for emoji)
+
+fragment float4 color_glyph_fragment(
+    GlyphVertexOut in [[stage_in]],
+    texture2d<float> colorAtlas [[texture(0)]]
+) {
+    constexpr sampler linearSampler(mag_filter::linear, min_filter::linear);
+    return colorAtlas.sample(linearSampler, in.texCoord);
+}

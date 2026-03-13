@@ -2,7 +2,7 @@ import Metal
 import QuartzCore
 import simd
 
-/// GPU renderer for the editor: draws colored rectangles and text glyphs via instanced quads.
+/// GPU renderer for the editor: draws colored rectangles, text glyphs, and color emoji via instanced quads.
 final class EditorRenderer {
 
     // MARK: - Instance Types (matched to Metal structs)
@@ -33,19 +33,26 @@ final class EditorRenderer {
     private let commandQueue: MTLCommandQueue
     private let rectPipeline: MTLRenderPipelineState
     private let glyphPipeline: MTLRenderPipelineState
+    private let colorGlyphPipeline: MTLRenderPipelineState
 
     // Double-buffered
     private let maxInstances = 65536
     private var rectBuffers: [MTLBuffer]
     private var glyphBuffers: [MTLBuffer]
+    private var colorGlyphBuffers: [MTLBuffer]
     private var uniformBuffers: [MTLBuffer]
+    private var overlayRectBuffers: [MTLBuffer]
     private var bufferIndex = 0
     private let frameSemaphore = DispatchSemaphore(value: 2)
 
-    // Atlas texture
+    // Atlas textures
     private var atlasTexture: MTLTexture?
     private var lastAtlasModified: UInt64 = 0
     private var lastAtlasSize: Int = 0
+
+    private var colorAtlasTexture: MTLTexture?
+    private var lastColorAtlasModified: UInt64 = 0
+    private var lastColorAtlasSize: Int = 0
 
     init?(device: MTLDevice) {
         self.device = device
@@ -83,9 +90,23 @@ final class EditorRenderer {
         glyphDesc.colorAttachments[0].sourceAlphaBlendFactor = .one
         glyphDesc.colorAttachments[0].destinationAlphaBlendFactor = .oneMinusSourceAlpha
 
+        // Build color glyph pipeline (for emoji)
+        guard let colorGlyphFragmentFn = library.makeFunction(name: "color_glyph_fragment") else { return nil }
+
+        let colorGlyphDesc = MTLRenderPipelineDescriptor()
+        colorGlyphDesc.vertexFunction = glyphVertexFn  // reuse glyph vertex shader
+        colorGlyphDesc.fragmentFunction = colorGlyphFragmentFn
+        colorGlyphDesc.colorAttachments[0].pixelFormat = .bgra8Unorm
+        colorGlyphDesc.colorAttachments[0].isBlendingEnabled = true
+        colorGlyphDesc.colorAttachments[0].sourceRGBBlendFactor = .sourceAlpha
+        colorGlyphDesc.colorAttachments[0].destinationRGBBlendFactor = .oneMinusSourceAlpha
+        colorGlyphDesc.colorAttachments[0].sourceAlphaBlendFactor = .one
+        colorGlyphDesc.colorAttachments[0].destinationAlphaBlendFactor = .oneMinusSourceAlpha
+
         do {
             self.rectPipeline = try device.makeRenderPipelineState(descriptor: rectDesc)
             self.glyphPipeline = try device.makeRenderPipelineState(descriptor: glyphDesc)
+            self.colorGlyphPipeline = try device.makeRenderPipelineState(descriptor: colorGlyphDesc)
         } catch {
             return nil
         }
@@ -100,12 +121,18 @@ final class EditorRenderer {
               let rb1 = device.makeBuffer(length: rectStride * maxInst, options: .storageModeShared),
               let gb0 = device.makeBuffer(length: glyphStride * maxInst, options: .storageModeShared),
               let gb1 = device.makeBuffer(length: glyphStride * maxInst, options: .storageModeShared),
-              let ub0 = device.makeBuffer(length: uniformSize, options: .storageModeShared),
-              let ub1 = device.makeBuffer(length: uniformSize, options: .storageModeShared) else { return nil }
+              let cgb0 = device.makeBuffer(length: glyphStride * maxInst, options: .storageModeShared),
+              let cgb1 = device.makeBuffer(length: glyphStride * maxInst, options: .storageModeShared),
+              let ub0 = device.makeBuffer(length: uniformSize * 2, options: .storageModeShared),
+              let ub1 = device.makeBuffer(length: uniformSize * 2, options: .storageModeShared),
+              let orb0 = device.makeBuffer(length: rectStride * 16, options: .storageModeShared),
+              let orb1 = device.makeBuffer(length: rectStride * 16, options: .storageModeShared) else { return nil }
 
         self.rectBuffers = [rb0, rb1]
         self.glyphBuffers = [gb0, gb1]
+        self.colorGlyphBuffers = [cgb0, cgb1]
         self.uniformBuffers = [ub0, ub1]
+        self.overlayRectBuffers = [orb0, orb1]
     }
 
     // MARK: - Render
@@ -117,8 +144,11 @@ final class EditorRenderer {
         scrollOffset: CGPoint,
         rects: [RectInstance],
         glyphs: [GlyphInstance],
+        colorGlyphs: [GlyphInstance],
         backgroundColor: SIMD4<Float>,
-        atlas: GlyphAtlas
+        atlas: GlyphAtlas,
+        colorAtlas: GlyphAtlas,
+        overlayRects: [RectInstance]
     ) {
         frameSemaphore.wait()
 
@@ -134,6 +164,14 @@ final class EditorRenderer {
             scrollOffset: SIMD2<Float>(Float(scrollOffset.x * scale), Float(scrollOffset.y * scale))
         )
         memcpy(uniformBuffers[idx].contents(), &uniforms, MemoryLayout<Uniforms>.stride)
+
+        // Overlay uniforms (zero scroll) at offset
+        var overlayUniforms = Uniforms(
+            projectionMatrix: orthographicProjection(width: scaledWidth, height: scaledHeight),
+            viewportSize: SIMD2<Float>(scaledWidth, scaledHeight),
+            scrollOffset: SIMD2<Float>(0, 0)
+        )
+        memcpy(uniformBuffers[idx].contents().advanced(by: MemoryLayout<Uniforms>.stride), &overlayUniforms, MemoryLayout<Uniforms>.stride)
 
         // Copy rect instances
         let rectCount = min(rects.count, maxInstances)
@@ -151,8 +189,25 @@ final class EditorRenderer {
             }
         }
 
-        // Update atlas texture if changed
+        // Copy color glyph instances
+        let colorGlyphCount = min(colorGlyphs.count, maxInstances)
+        if colorGlyphCount > 0 {
+            _ = colorGlyphs.withUnsafeBufferPointer { ptr in
+                memcpy(colorGlyphBuffers[idx].contents(), ptr.baseAddress!, colorGlyphCount * MemoryLayout<GlyphInstance>.stride)
+            }
+        }
+
+        // Copy overlay rect instances
+        let overlayCount = min(overlayRects.count, 16)
+        if overlayCount > 0 {
+            _ = overlayRects.withUnsafeBufferPointer { ptr in
+                memcpy(overlayRectBuffers[idx].contents(), ptr.baseAddress!, overlayCount * MemoryLayout<RectInstance>.stride)
+            }
+        }
+
+        // Update atlas textures if changed
         updateAtlasTexture(atlas: atlas)
+        updateColorAtlasTexture(atlas: colorAtlas)
 
         // Build command buffer
         guard let commandBuffer = commandQueue.makeCommandBuffer() else {
@@ -176,7 +231,7 @@ final class EditorRenderer {
             return
         }
 
-        // Draw rects
+        // Draw rects (selection, cursor)
         if rectCount > 0 {
             encoder.setRenderPipelineState(rectPipeline)
             encoder.setVertexBuffer(rectBuffers[idx], offset: 0, index: 0)
@@ -184,18 +239,38 @@ final class EditorRenderer {
             encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6, instanceCount: rectCount)
         }
 
-        // Draw glyphs
+        // Draw monochrome glyphs
         if glyphCount > 0, let atlasTexture {
             encoder.setRenderPipelineState(glyphPipeline)
             encoder.setVertexBuffer(glyphBuffers[idx], offset: 0, index: 0)
             encoder.setVertexBuffer(uniformBuffers[idx], offset: 0, index: 1)
 
-            // Pass atlas size as float2
             var atlasSizeVec = SIMD2<Float>(Float(atlas.size), Float(atlas.size))
             encoder.setVertexBytes(&atlasSizeVec, length: MemoryLayout<SIMD2<Float>>.stride, index: 2)
 
             encoder.setFragmentTexture(atlasTexture, index: 0)
             encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6, instanceCount: glyphCount)
+        }
+
+        // Draw color glyphs (emoji)
+        if colorGlyphCount > 0, let colorAtlasTexture {
+            encoder.setRenderPipelineState(colorGlyphPipeline)
+            encoder.setVertexBuffer(colorGlyphBuffers[idx], offset: 0, index: 0)
+            encoder.setVertexBuffer(uniformBuffers[idx], offset: 0, index: 1)
+
+            var colorAtlasSizeVec = SIMD2<Float>(Float(colorAtlas.size), Float(colorAtlas.size))
+            encoder.setVertexBytes(&colorAtlasSizeVec, length: MemoryLayout<SIMD2<Float>>.stride, index: 2)
+
+            encoder.setFragmentTexture(colorAtlasTexture, index: 0)
+            encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6, instanceCount: colorGlyphCount)
+        }
+
+        // Draw overlay rects (scrollbar) — with zero scroll offset
+        if overlayCount > 0 {
+            encoder.setRenderPipelineState(rectPipeline)
+            encoder.setVertexBuffer(overlayRectBuffers[idx], offset: 0, index: 0)
+            encoder.setVertexBuffer(uniformBuffers[idx], offset: MemoryLayout<Uniforms>.stride, index: 1)
+            encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6, instanceCount: overlayCount)
         }
 
         encoder.endEncoding()
@@ -237,6 +312,36 @@ final class EditorRenderer {
                 )
             }
             lastAtlasModified = atlas.modifiedCount
+        }
+    }
+
+    private func updateColorAtlasTexture(atlas: GlyphAtlas) {
+        let needsRecreate = colorAtlasTexture == nil || atlas.size != lastColorAtlasSize
+        let needsUpdate = atlas.modifiedCount != lastColorAtlasModified
+
+        if needsRecreate {
+            let desc = MTLTextureDescriptor.texture2DDescriptor(
+                pixelFormat: .rgba8Unorm,
+                width: atlas.size,
+                height: atlas.size,
+                mipmapped: false
+            )
+            desc.usage = [.shaderRead]
+            colorAtlasTexture = device.makeTexture(descriptor: desc)
+            lastColorAtlasSize = atlas.size
+        }
+
+        if needsRecreate || needsUpdate, let colorAtlasTexture {
+            atlas.textureData.withUnsafeBufferPointer { ptr in
+                colorAtlasTexture.replace(
+                    region: MTLRegion(origin: MTLOrigin(x: 0, y: 0, z: 0),
+                                     size: MTLSize(width: atlas.size, height: atlas.size, depth: 1)),
+                    mipmapLevel: 0,
+                    withBytes: ptr.baseAddress!,
+                    bytesPerRow: atlas.size * 4
+                )
+            }
+            lastColorAtlasModified = atlas.modifiedCount
         }
     }
 

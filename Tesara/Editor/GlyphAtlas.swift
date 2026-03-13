@@ -1,7 +1,7 @@
 import Foundation
 
 /// Guillotine bin-packing texture atlas for glyph rasterization.
-/// Single-channel (grayscale) — color emoji renders as placeholder boxes.
+/// Supports both single-channel (grayscale) and BGRA (color emoji) modes.
 final class GlyphAtlas {
 
     struct Region: Equatable {
@@ -12,15 +12,17 @@ final class GlyphAtlas {
     }
 
     private(set) var size: Int
+    let bytesPerPixel: Int
     private(set) var textureData: [UInt8]
     private(set) var modifiedCount: UInt64 = 0
 
     /// Free rectangles available for allocation (guillotine algorithm).
     private var freeRects: [Region]
 
-    init(size: Int = 512) {
+    init(size: Int = 512, bytesPerPixel: Int = 1) {
         self.size = size
-        self.textureData = [UInt8](repeating: 0, count: size * size)
+        self.bytesPerPixel = bytesPerPixel
+        self.textureData = [UInt8](repeating: 0, count: size * size * bytesPerPixel)
         self.freeRects = [Region(x: 0, y: 0, width: UInt16(size), height: UInt16(size))]
     }
 
@@ -78,13 +80,14 @@ final class GlyphAtlas {
     func write(data: [UInt8], to region: Region) {
         let w = Int(region.width)
         let h = Int(region.height)
-        guard data.count >= w * h else { return }
+        guard data.count >= w * h * bytesPerPixel else { return }
 
+        let rowBytes = w * bytesPerPixel
         for row in 0..<h {
             let dstY = Int(region.y) + row
-            let dstOffset = dstY * size + Int(region.x)
-            let srcOffset = row * w
-            textureData.replaceSubrange(dstOffset..<(dstOffset + w), with: data[srcOffset..<(srcOffset + w)])
+            let dstOffset = (dstY * size + Int(region.x)) * bytesPerPixel
+            let srcOffset = row * rowBytes
+            textureData.replaceSubrange(dstOffset..<(dstOffset + rowBytes), with: data[srcOffset..<(srcOffset + rowBytes)])
         }
 
         modifiedCount += 1
@@ -97,11 +100,13 @@ final class GlyphAtlas {
         let newSize = oldSize * 2
         guard newSize <= 8192 else { return false }
 
-        var newData = [UInt8](repeating: 0, count: newSize * newSize)
+        var newData = [UInt8](repeating: 0, count: newSize * newSize * bytesPerPixel)
+        let oldRowBytes = oldSize * bytesPerPixel
+        let newRowBytes = newSize * bytesPerPixel
         for row in 0..<oldSize {
-            let srcOffset = row * oldSize
-            let dstOffset = row * newSize
-            newData.replaceSubrange(dstOffset..<(dstOffset + oldSize), with: textureData[srcOffset..<(srcOffset + oldSize)])
+            let srcOffset = row * oldRowBytes
+            let dstOffset = row * newRowBytes
+            newData.replaceSubrange(dstOffset..<(dstOffset + oldRowBytes), with: textureData[srcOffset..<(srcOffset + oldRowBytes)])
         }
 
         // Add newly available space as free rects
@@ -128,7 +133,7 @@ final class GlyphAtlas {
 
     /// Clear all allocations and reset.
     func reset() {
-        textureData = [UInt8](repeating: 0, count: size * size)
+        textureData = [UInt8](repeating: 0, count: size * size * bytesPerPixel)
         freeRects = [Region(x: 0, y: 0, width: UInt16(size), height: UInt16(size))]
         modifiedCount += 1
     }

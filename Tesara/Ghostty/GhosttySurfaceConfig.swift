@@ -97,7 +97,7 @@ struct GhosttySurfaceConfig {
             config.envVars["ZDOTDIR"] = dotDirectory.path
             config.temporaryURLs.append(dotDirectory)
         } catch {
-            print("[GhosttySurfaceConfig] Failed to set up zsh integration: \(error)")
+            LocalLogStore.shared.log("[GhosttySurfaceConfig] Failed to set up zsh integration: \(error)")
         }
     }
 
@@ -149,7 +149,7 @@ struct GhosttySurfaceConfig {
             config.command = "\(shellPath) --rcfile '\(rcFileURL.path)' -i"
             config.temporaryURLs.append(rcFileURL)
         } catch {
-            print("[GhosttySurfaceConfig] Failed to set up bash integration: \(error)")
+            LocalLogStore.shared.log("[GhosttySurfaceConfig] Failed to set up bash integration: \(error)")
         }
     }
 
@@ -180,7 +180,7 @@ struct GhosttySurfaceConfig {
             }
             config.temporaryURLs.append(confDir)
         } catch {
-            print("[GhosttySurfaceConfig] Failed to set up fish integration: \(error)")
+            LocalLogStore.shared.log("[GhosttySurfaceConfig] Failed to set up fish integration: \(error)")
         }
     }
 

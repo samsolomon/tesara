@@ -61,7 +61,7 @@ class GhosttySurfaceView: NSView, NSTextInputClient {
             ghostty_surface_new(app, &cfg)
         }
         guard let surface else {
-            print("[GhosttySurfaceView] Failed to create ghostty surface")
+            LocalLogStore.shared.log("[GhosttySurfaceView] Failed to create ghostty surface")
             return
         }
         self.surface = surface
@@ -585,7 +585,33 @@ class GhosttySurfaceView: NSView, NSTextInputClient {
     }
 
     @IBAction func paste(_ sender: Any?) {
+        guard confirmPasteIfNeeded() else { return }
         performBindingAction("paste_from_clipboard")
+    }
+
+    private func confirmPasteIfNeeded() -> Bool {
+        switch GhosttyApp.shared.terminalBehavior.pasteProtectionMode {
+        case .never:
+            return true
+        case .multiline:
+            guard let pastedText = NSPasteboard.general.string(forType: .string) else {
+                return true
+            }
+
+            let lineCount = pastedText
+                .split(omittingEmptySubsequences: false, whereSeparator: \.isNewline)
+                .count
+
+            guard lineCount > 1 else { return true }
+
+            let alert = NSAlert()
+            alert.alertStyle = .warning
+            alert.messageText = "Paste \(lineCount) lines into the terminal?"
+            alert.informativeText = "This paste contains multiple lines and may execute more than one command."
+            alert.addButton(withTitle: "Paste")
+            alert.addButton(withTitle: "Cancel")
+            return alert.runModal() == .alertFirstButtonReturn
+        }
     }
 
     private func performBindingAction(_ action: String) {

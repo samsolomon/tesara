@@ -11,6 +11,7 @@ final class WorkspaceManagerTests: XCTestCase {
         try await super.setUp()
         manager = WorkspaceManager()
         manager.sessionFactory = { TerminalSession() }
+        manager.setConfirmOnCloseRunningSessionEnabled(false)
         blockStore = try BlockStore(dbQueue: DatabaseQueue())
     }
 
@@ -20,6 +21,14 @@ final class WorkspaceManagerTests: XCTestCase {
             workingDirectory: URL(fileURLWithPath: "/tmp"),
             blockStore: blockStore
         )
+    }
+
+    private func waitForWorkspaceRefresh() {
+        let expectation = XCTestExpectation(description: "workspace refresh")
+        DispatchQueue.main.async {
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: 1)
     }
 
     // MARK: Tab Creation
@@ -36,6 +45,32 @@ final class WorkspaceManagerTests: XCTestCase {
         addTab()
         XCTAssertEqual(manager.tabs.count, 3)
         XCTAssertEqual(manager.activeTabID, manager.tabs[2].id)
+    }
+
+    func testNewTabUsesWorkingDirectoryTitle() {
+        addTab()
+        XCTAssertEqual(manager.tabs.first?.title, "tmp")
+    }
+
+    func testTabTitleUsesWorkingDirectoryWhenAvailable() throws {
+        addTab()
+
+        let session = try XCTUnwrap(manager.activeSession)
+        session.updateWorkingDirectory(URL(fileURLWithPath: "/Users/tester/Documents/playground"))
+        waitForWorkspaceRefresh()
+
+        XCTAssertEqual(manager.tabs.first?.title, "playground")
+    }
+
+    func testTabTitleUsesShellTitleOverWorkingDirectory() throws {
+        addTab()
+
+        let session = try XCTUnwrap(manager.activeSession)
+        session.updateWorkingDirectory(URL(fileURLWithPath: "/Users/tester/Documents/playground"))
+        session.updateTitle("Deploy logs")
+        waitForWorkspaceRefresh()
+
+        XCTAssertEqual(manager.tabs.first?.title, "Deploy logs")
     }
 
     // MARK: Tab Closing
@@ -82,6 +117,79 @@ final class WorkspaceManagerTests: XCTestCase {
         let count = manager.tabs.count
         manager.closeTab(id: UUID())
         XCTAssertEqual(manager.tabs.count, count)
+    }
+
+    func testCloseRunningPaneRequiresConfirmationWhenEnabled() throws {
+        manager.setConfirmOnCloseRunningSessionEnabled(true)
+        addTab()
+
+        let paneID = try XCTUnwrap(manager.activePaneID)
+        let session = try XCTUnwrap(manager.activeSession)
+        session.setStatusForTesting(.running)
+
+        manager.closePane(id: paneID)
+
+        XCTAssertEqual(manager.pendingCloseConfirmation, .runningPane(paneID))
+        XCTAssertEqual(manager.tabs.count, 1)
+    }
+
+    func testResolveRunningPaneConfirmationClosesPane() throws {
+        manager.setConfirmOnCloseRunningSessionEnabled(true)
+        addTab()
+
+        let paneID = try XCTUnwrap(manager.activePaneID)
+        let session = try XCTUnwrap(manager.activeSession)
+        session.setStatusForTesting(.running)
+
+        manager.closePane(id: paneID)
+        manager.resolvePendingClose(.discard)
+
+        XCTAssertTrue(manager.tabs.isEmpty)
+        XCTAssertNil(manager.pendingCloseConfirmation)
+        XCTAssertNil(manager.activeTabID)
+        XCTAssertNil(manager.activePaneID)
+    }
+
+    func testCloseRunningTabRequiresConfirmationWhenEnabled() throws {
+        manager.setConfirmOnCloseRunningSessionEnabled(true)
+        addTab()
+
+        let tabID = try XCTUnwrap(manager.activeTabID)
+        let session = try XCTUnwrap(manager.activeSession)
+        session.setStatusForTesting(.running)
+
+        manager.closeTab(id: tabID)
+
+        XCTAssertEqual(manager.pendingCloseConfirmation, .runningTab(tabID))
+        XCTAssertEqual(manager.tabs.count, 1)
+    }
+
+    func testCloseRunningPaneBypassesConfirmationWhenDisabled() throws {
+        addTab()
+
+        let paneID = try XCTUnwrap(manager.activePaneID)
+        let session = try XCTUnwrap(manager.activeSession)
+        session.setStatusForTesting(.running)
+
+        manager.closePane(id: paneID)
+
+        XCTAssertTrue(manager.tabs.isEmpty)
+        XCTAssertNil(manager.pendingCloseConfirmation)
+    }
+
+    func testSelectingTabRestoresItsSelectedPane() {
+        addTab()
+        let firstTabID = manager.tabs[0].id
+        let firstTabPaneID = manager.tabs[0].selectedPaneID
+
+        addTab()
+        let secondTabID = manager.tabs[1].id
+
+        manager.selectTab(id: firstTabID)
+        XCTAssertEqual(manager.activePaneID, firstTabPaneID)
+
+        manager.selectTab(id: secondTabID)
+        XCTAssertEqual(manager.activePaneID, manager.tabs[1].selectedPaneID)
     }
 
     // MARK: Tab Switching

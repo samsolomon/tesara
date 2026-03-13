@@ -18,6 +18,10 @@ struct TesaraApp: App {
                 .frame(minWidth: 960, minHeight: 640)
                 .onAppear {
                     updaterController.updater.automaticallyChecksForUpdates = settingsStore.settings.updateChecksEnabled
+                    blockStore.setHistoryCaptureEnabled(settingsStore.settings.historyCaptureEnabled)
+                    LocalLogStore.shared.setEnabled(settingsStore.settings.localLoggingEnabled)
+                    workspaceManager.setConfirmOnCloseRunningSessionEnabled(settingsStore.settings.confirmOnCloseRunningSession)
+                    workspaceManager.setTabTitleMode(settingsStore.settings.tabTitleMode)
                     GhosttyApp.shared.initialize(
                         theme: settingsStore.activeTheme,
                         settings: settingsStore.settings
@@ -26,6 +30,24 @@ struct TesaraApp: App {
                 .onChange(of: settingsStore.settings.updateChecksEnabled) {
                     updaterController.updater.automaticallyChecksForUpdates = settingsStore.settings.updateChecksEnabled
                 }
+                .onChange(of: settingsStore.settings.historyCaptureEnabled) {
+                    blockStore.setHistoryCaptureEnabled(settingsStore.settings.historyCaptureEnabled)
+                }
+                .onChange(of: settingsStore.settings.localLoggingEnabled) {
+                    LocalLogStore.shared.setEnabled(settingsStore.settings.localLoggingEnabled)
+                }
+                .onChange(of: settingsStore.settings.confirmOnCloseRunningSession) {
+                    workspaceManager.setConfirmOnCloseRunningSessionEnabled(settingsStore.settings.confirmOnCloseRunningSession)
+                }
+                .onChange(of: settingsStore.settings.tabTitleMode) {
+                    workspaceManager.setTabTitleMode(settingsStore.settings.tabTitleMode)
+                }
+                .onChange(of: settingsStore.settings.pasteProtectionMode) {
+                    GhosttyApp.shared.updateConfig(
+                        theme: settingsStore.activeTheme,
+                        settings: settingsStore.settings
+                    )
+                }
                 .onChange(of: settingsStore.ghosttyConfigInputs) {
                     GhosttyApp.shared.updateConfig(
                         theme: settingsStore.activeTheme,
@@ -33,7 +55,7 @@ struct TesaraApp: App {
                     )
                 }
         }
-        .windowToolbarStyle(.unifiedCompact)
+        .windowToolbarStyle(.unifiedCompact(showsTitle: false))
         .commands {
             TesaraAppCommands(manager: workspaceManager, settingsStore: settingsStore, blockStore: blockStore, updater: updaterController.updater)
         }

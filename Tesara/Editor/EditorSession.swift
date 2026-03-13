@@ -1,4 +1,5 @@
 import AppKit
+import UniformTypeIdentifiers
 
 @MainActor
 final class EditorSession: ObservableObject, Identifiable {
@@ -22,6 +23,33 @@ final class EditorSession: ObservableObject, Identifiable {
 
     /// Called after any mutation to signal the view needs redraw. Set by EditorView.
     var needsRenderCallback: (() -> Void)?
+
+    // MARK: - File I/O
+
+    @Published var filePath: URL?
+    @Published var fileModificationDate: Date?
+
+    private var mutationGeneration: UInt64 = 0
+    private var savedAtGeneration: UInt64 = 0
+
+    var isDirty: Bool { mutationGeneration != savedAtGeneration }
+
+    var displayTitle: String {
+        let name = filePath?.lastPathComponent ?? "Untitled"
+        return isDirty ? "● \(name)" : name
+    }
+
+    /// Word wrap toggle (view/layout concern, but stored here for persistence).
+    var wordWrapEnabled: Bool = true
+
+    // MARK: - Syntax Highlighting
+
+    private(set) var syntaxHighlighter: SyntaxHighlighter?
+
+    private func incrementGeneration() {
+        mutationGeneration += 1
+        objectWillChange.send()
+    }
 
     // MARK: - Cursor Movement
 
@@ -130,6 +158,7 @@ final class EditorSession: ObservableObject, Identifiable {
                 cursorPosition = storage.insert(text, at: cursorPosition, undoManager: undoManager)
             }
         }
+        incrementGeneration()
         needsRenderCallback?()
     }
 
@@ -153,6 +182,7 @@ final class EditorSession: ObservableObject, Identifiable {
                 cursorPosition = deleteStart
             }
         }
+        incrementGeneration()
         needsRenderCallback?()
     }
 
@@ -176,6 +206,7 @@ final class EditorSession: ObservableObject, Identifiable {
                 storage.delete(range: TextStorage.Range(start: cursorPosition, end: deleteEnd), undoManager: undoManager)
             }
         }
+        incrementGeneration()
         needsRenderCallback?()
     }
 
@@ -228,6 +259,7 @@ final class EditorSession: ObservableObject, Identifiable {
                 cursorPosition = norm.start
                 selection = nil
             }
+            incrementGeneration()
             needsRenderCallback?()
         }
     }
@@ -237,13 +269,72 @@ final class EditorSession: ObservableObject, Identifiable {
     func undo() {
         guard undoManager.canUndo else { return }
         undoManager.undo()
+        incrementGeneration()
         needsRenderCallback?()
     }
 
     func redo() {
         guard undoManager.canRedo else { return }
         undoManager.redo()
+        incrementGeneration()
         needsRenderCallback?()
+    }
+
+    // MARK: - File I/O
+
+    static let maxFileSize = 5 * 1024 * 1024  // 5 MB
+
+    func loadFile(url: URL) throws {
+        let resourceValues = try url.resourceValues(forKeys: [.fileSizeKey])
+        if let fileSize = resourceValues.fileSize, fileSize > Self.maxFileSize {
+            throw EditorFileError.fileTooLarge(fileSize)
+        }
+
+        let raw: String
+        do {
+            raw = try String(contentsOf: url, encoding: .utf8)
+        } catch {
+            throw EditorFileError.encodingError
+        }
+
+        let normalized = raw.replacingOccurrences(of: "\r\n", with: "\n")
+        storage.loadString(normalized)
+        filePath = url
+        fileModificationDate = try? FileManager.default.attributesOfItem(atPath: url.path)[.modificationDate] as? Date
+        undoManager.removeAllActions()
+        mutationGeneration = 0
+        savedAtGeneration = 0
+        cursorPosition = TextStorage.Position(line: 0, column: 0)
+        selection = nil
+
+        // Setup syntax highlighting based on file extension
+        syntaxHighlighter = SyntaxHighlighter(fileExtension: url.pathExtension)
+        syntaxHighlighter?.fullTokenize(storage: storage)
+
+        objectWillChange.send()
+        needsRenderCallback?()
+    }
+
+    func save() throws {
+        guard let filePath else { throw EditorFileError.noFilePath }
+        try storage.entireString().write(to: filePath, atomically: true, encoding: .utf8)
+        fileModificationDate = try? FileManager.default.attributesOfItem(atPath: filePath.path)[.modificationDate] as? Date
+        savedAtGeneration = mutationGeneration
+        objectWillChange.send()
+    }
+
+    func saveAs(url: URL) throws {
+        filePath = url
+        syntaxHighlighter = SyntaxHighlighter(fileExtension: url.pathExtension)
+        syntaxHighlighter?.fullTokenize(storage: storage)
+        try save()
+    }
+
+    func checkFileStale() -> Bool {
+        guard let filePath, let savedDate = fileModificationDate else { return false }
+        guard let attrs = try? FileManager.default.attributesOfItem(atPath: filePath.path),
+              let currentDate = attrs[.modificationDate] as? Date else { return false }
+        return currentDate > savedDate
     }
 
     // MARK: - View Lifecycle
@@ -260,5 +351,25 @@ final class EditorSession: ObservableObject, Identifiable {
 
     func updateFont(family: String, size: Double) {
         (editorView as? EditorView)?.updateFont(family: family, size: CGFloat(size))
+    }
+}
+
+// MARK: - File Error
+
+enum EditorFileError: LocalizedError {
+    case fileTooLarge(Int)
+    case encodingError
+    case noFilePath
+
+    var errorDescription: String? {
+        switch self {
+        case .fileTooLarge(let bytes):
+            let mb = Double(bytes) / (1024 * 1024)
+            return String(format: "File is too large (%.1f MB). Maximum supported size is 5 MB.", mb)
+        case .encodingError:
+            return "File could not be read as UTF-8 text."
+        case .noFilePath:
+            return "No file path set. Use Save As to choose a location."
+        }
     }
 }

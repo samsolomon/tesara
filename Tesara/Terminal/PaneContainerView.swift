@@ -4,6 +4,8 @@ struct PaneContainerView: View {
     let node: PaneNode
     let theme: TerminalTheme
     let activePaneID: UUID?
+    let dimInactiveSplits: Bool
+    let inactiveSplitDimAmount: Double
     let onSelectPane: (UUID) -> Void
     let onUpdateRatio: (UUID, CGFloat) -> Void
     var isSplit: Bool = false
@@ -16,6 +18,9 @@ struct PaneContainerView: View {
                 session: session,
                 isActive: id == activePaneID,
                 showBorder: isSplit,
+                theme: theme,
+                dimInactiveSplit: dimInactiveSplits,
+                inactiveSplitDimAmount: inactiveSplitDimAmount,
                 onSelectPane: onSelectPane
             )
 
@@ -25,6 +30,9 @@ struct PaneContainerView: View {
                 session: editorSession,
                 isActive: id == activePaneID,
                 showBorder: isSplit,
+                theme: theme,
+                dimInactiveSplit: dimInactiveSplits,
+                inactiveSplitDimAmount: inactiveSplitDimAmount,
                 onSelectPane: onSelectPane
             )
 
@@ -47,12 +55,16 @@ struct PaneContainerView: View {
         let firstChild = PaneContainerView(
             node: first, theme: theme,
             activePaneID: activePaneID,
+            dimInactiveSplits: dimInactiveSplits,
+            inactiveSplitDimAmount: inactiveSplitDimAmount,
             onSelectPane: onSelectPane, onUpdateRatio: onUpdateRatio,
             isSplit: true
         )
         let secondChild = PaneContainerView(
             node: second, theme: theme,
             activePaneID: activePaneID,
+            dimInactiveSplits: dimInactiveSplits,
+            inactiveSplitDimAmount: inactiveSplitDimAmount,
             onSelectPane: onSelectPane, onUpdateRatio: onUpdateRatio,
             isSplit: true
         )
@@ -84,6 +96,9 @@ private struct EditorPaneLeafView: View {
     @ObservedObject var session: EditorSession
     let isActive: Bool
     let showBorder: Bool
+    let theme: TerminalTheme
+    let dimInactiveSplit: Bool
+    let inactiveSplitDimAmount: Double
     let onSelectPane: (UUID) -> Void
 
     var body: some View {
@@ -101,6 +116,13 @@ private struct EditorPaneLeafView: View {
             }
         }
         .border(showBorder && isActive ? Color.accentColor : Color.clear, width: showBorder ? 2 : 0)
+        .overlay {
+            if showBorder, dimInactiveSplit, !isActive {
+                Rectangle()
+                    .fill(theme.swiftUIColor(from: theme.background).opacity(inactiveSplitDimAmount))
+                    .allowsHitTesting(false)
+            }
+        }
         .contentShape(Rectangle())
         .onTapGesture {
             onSelectPane(id)
@@ -113,6 +135,9 @@ private struct TerminalPaneLeafView: View {
     @ObservedObject var session: TerminalSession
     let isActive: Bool
     let showBorder: Bool
+    let theme: TerminalTheme
+    let dimInactiveSplit: Bool
+    let inactiveSplitDimAmount: Double
     let onSelectPane: (UUID) -> Void
 
     var body: some View {
@@ -130,6 +155,13 @@ private struct TerminalPaneLeafView: View {
             }
         }
         .border(showBorder && isActive ? Color.accentColor : Color.clear, width: showBorder ? 2 : 0)
+        .overlay {
+            if showBorder, dimInactiveSplit, !isActive {
+                Rectangle()
+                    .fill(theme.swiftUIColor(from: theme.background).opacity(inactiveSplitDimAmount))
+                    .allowsHitTesting(false)
+            }
+        }
         .contentShape(Rectangle())
         .onTapGesture {
             onSelectPane(id)

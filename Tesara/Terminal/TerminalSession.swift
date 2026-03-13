@@ -16,6 +16,7 @@ final class TerminalSession: ObservableObject, Identifiable {
     @Published private(set) var launchError: String?
     @Published private(set) var capturedBlockCount = 0
     @Published private(set) var currentWorkingDirectory: String?
+    @Published private(set) var shellTitle: String?
     @Published private(set) var surfaceView: GhosttySurfaceView?
 
     private var blockStore: BlockStore?
@@ -30,6 +31,12 @@ final class TerminalSession: ObservableObject, Identifiable {
     private(set) var shellSessionID: String = UUID().uuidString
 
     init() {}
+
+#if DEBUG
+    func setStatusForTesting(_ status: Status) {
+        self.status = status
+    }
+#endif
 
     func configure(blockStore: BlockStore) {
         if self.blockStore == nil {
@@ -47,6 +54,8 @@ final class TerminalSession: ObservableObject, Identifiable {
         capturedBlockCount = 0
         blockOrderIndex = 0
         activeCapture = nil
+        currentWorkingDirectory = workingDirectory.path
+        shellTitle = nil
         activeSessionID = blockStore?.startSession(shellPath: shellPath, workingDirectory: workingDirectory)
 
         guard let app = GhosttyApp.shared.app else {
@@ -109,7 +118,10 @@ final class TerminalSession: ObservableObject, Identifiable {
     }
 
     func updateTitle(_ title: String) {
-        // Title display will be wired in future work
+        let normalized = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let nextTitle = normalized.isEmpty ? nil : normalized
+        guard shellTitle != nextTitle else { return }
+        shellTitle = nextTitle
     }
 
     func handleCommandFinished(exitCode: Int16, durationNs: UInt64) {

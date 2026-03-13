@@ -91,6 +91,47 @@ final class BlockStoreTests: XCTestCase {
         XCTAssertNil(store.startupErrorMessage)
     }
 
+    func testHistoryCaptureDisabledPreventsPersistence() throws {
+        let store = try makeStore()
+        store.setHistoryCaptureEnabled(false)
+
+        let sessionID = store.startSession(shellPath: "/bin/zsh", workingDirectory: URL(fileURLWithPath: "/tmp"))
+        let block = TerminalBlockCapture(
+            commandText: "echo hello",
+            outputText: "hello",
+            exitCode: 0,
+            startedAt: Date(),
+            finishedAt: Date(),
+            stage: .output
+        )
+
+        let didPersist = store.recordBlock(sessionID: sessionID, block: block, orderIndex: 0)
+        XCTAssertFalse(didPersist)
+
+        store.reloadRecentBlocks()
+        XCTAssertTrue(store.recentBlocks.isEmpty)
+    }
+
+    func testClearHistoryRemovesSessionsAndBlocks() throws {
+        let store = try makeStore()
+        let sessionID = store.startSession(shellPath: "/bin/zsh", workingDirectory: URL(fileURLWithPath: "/tmp"))
+
+        let block = TerminalBlockCapture(
+            commandText: "echo hello",
+            outputText: "hello",
+            exitCode: 0,
+            startedAt: Date(),
+            finishedAt: Date(),
+            stage: .output
+        )
+
+        XCTAssertTrue(store.recordBlock(sessionID: sessionID, block: block, orderIndex: 0))
+        XCTAssertEqual(store.recentBlocks.count, 1)
+
+        store.clearHistory()
+        XCTAssertTrue(store.recentBlocks.isEmpty)
+    }
+
     func testReloadRecentBlocksLimit() throws {
         let store = try makeStore()
         let sessionID = store.startSession(shellPath: "/bin/zsh", workingDirectory: URL(fileURLWithPath: "/tmp"))

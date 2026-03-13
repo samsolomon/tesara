@@ -1,9 +1,14 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct TerminalWorkspaceView: View {
     @EnvironmentObject private var settingsStore: SettingsStore
     @EnvironmentObject private var blockStore: BlockStore
     @ObservedObject var manager: WorkspaceManager
+
+    @State private var showFileError = false
+    @State private var showCloseConfirmation = false
+    @State private var showStaleReload = false
 
     var body: some View {
         terminalContent
@@ -20,6 +25,26 @@ struct TerminalWorkspaceView: View {
             .onChange(of: settingsStore.activeTheme) { _, newTheme in
                 propagateThemeToEditors(theme: newTheme)
             }
+            .fileImporter(
+                isPresented: $manager.showOpenPanel,
+                allowedContentTypes: [.plainText, .sourceCode, .data]
+            ) { result in
+                if case .success(let url) = result {
+                    manager.openFileInEditor(
+                        url: url,
+                        theme: settingsStore.activeTheme,
+                        fontFamily: settingsStore.settings.fontFamily,
+                        fontSize: settingsStore.settings.fontSize
+                    )
+                }
+            }
+            .onChange(of: manager.pendingSavePanel) { _, sessionID in
+                guard let sessionID else { return }
+                presentSavePanel(for: sessionID)
+            }
+            .modifier(FileErrorAlert(showAlert: $showFileError, manager: manager))
+            .modifier(CloseConfirmationAlert(showAlert: $showCloseConfirmation, manager: manager))
+            .modifier(StaleReloadAlert(showAlert: $showStaleReload, manager: manager))
     }
 
     private var terminalContent: some View {
@@ -30,6 +55,8 @@ struct TerminalWorkspaceView: View {
                     node: tab.rootPane,
                     theme: settingsStore.activeTheme,
                     activePaneID: manager.activePaneID,
+                    dimInactiveSplits: settingsStore.settings.dimInactiveSplits,
+                    inactiveSplitDimAmount: settingsStore.settings.inactiveSplitDimAmount,
                     onSelectPane: { paneID in
                         manager.selectPane(id: paneID)
                     },
@@ -45,6 +72,48 @@ struct TerminalWorkspaceView: View {
             }
         }
     }
+
+    // MARK: - File Panels
+
+    private func presentSavePanel(for sessionID: UUID) {
+        var targetSession: EditorSession?
+        for tab in manager.tabs {
+            for (_, session) in tab.rootPane.allEditorSessions() {
+                if session.id == sessionID {
+                    targetSession = session
+                    break
+                }
+            }
+            if targetSession != nil { break }
+        }
+        guard let session = targetSession else {
+            manager.pendingSavePanel = nil
+            return
+        }
+
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.plainText]
+        if let existing = session.filePath {
+            panel.nameFieldStringValue = existing.lastPathComponent
+            panel.directoryURL = existing.deletingLastPathComponent()
+        }
+        panel.begin { response in
+            DispatchQueue.main.async {
+                guard response == .OK, let url = panel.url else {
+                    manager.pendingSavePanel = nil
+                    return
+                }
+                do {
+                    try session.saveAs(url: url)
+                } catch {
+                    manager.lastFileError = error
+                }
+                manager.pendingSavePanel = nil
+            }
+        }
+    }
+
+    // MARK: - Occlusion
 
     private func setOcclusion(for node: PaneNode, occluded: Bool) {
         switch node {
@@ -66,6 +135,8 @@ struct TerminalWorkspaceView: View {
         }
     }
 
+    // MARK: - Theme
+
     private func propagateThemeToEditors(theme: TerminalTheme) {
         guard let activeTab = manager.activeTab else { return }
         propagateThemeToEditors(in: activeTab.rootPane, theme: theme)
@@ -81,5 +152,115 @@ struct TerminalWorkspaceView: View {
             propagateThemeToEditors(in: first, theme: theme)
             propagateThemeToEditors(in: second, theme: theme)
         }
+    }
+}
+
+// MARK: - Alert Modifiers (broken out to reduce type-checker complexity)
+
+private struct FileErrorAlert: ViewModifier {
+    @Binding var showAlert: Bool
+    @ObservedObject var manager: WorkspaceManager
+
+    func body(content: Content) -> some View {
+        content
+            .onChange(of: manager.lastFileError != nil) { _, hasError in
+                showAlert = hasError
+            }
+            .alert("File Error", isPresented: $showAlert) {
+                Button("OK") { manager.lastFileError = nil }
+            } message: {
+                Text(manager.lastFileError?.localizedDescription ?? "An unknown error occurred.")
+            }
+    }
+}
+
+private struct CloseConfirmationAlert: ViewModifier {
+    @Binding var showAlert: Bool
+    @ObservedObject var manager: WorkspaceManager
+
+    func body(content: Content) -> some View {
+        content
+            .onChange(of: manager.pendingCloseConfirmation) { _, request in
+                showAlert = request != nil
+            }
+            .onChange(of: showAlert) { _, isPresented in
+                if !isPresented {
+                    manager.pendingCloseConfirmation = nil
+                }
+            }
+            .alert(alertTitle, isPresented: $showAlert) {
+                switch manager.pendingCloseConfirmation {
+                case .dirtyPane:
+                    Button("Save") {
+                        manager.resolvePendingClose(.save)
+                    }
+                    Button("Don't Save", role: .destructive) {
+                        manager.resolvePendingClose(.discard)
+                    }
+                case .runningPane, .runningTab:
+                    Button("Close", role: .destructive) {
+                        manager.resolvePendingClose(.discard)
+                    }
+                case nil:
+                    EmptyView()
+                }
+                Button("Cancel", role: .cancel) {
+                    manager.resolvePendingClose(.cancel)
+                }
+            } message: {
+                Text(alertMessage)
+            }
+    }
+
+    private var alertTitle: String {
+        switch manager.pendingCloseConfirmation {
+        case .dirtyPane:
+            return "Unsaved Changes"
+        case .runningPane, .runningTab:
+            return "Close Running Session?"
+        case nil:
+            return ""
+        }
+    }
+
+    private var alertMessage: String {
+        switch manager.pendingCloseConfirmation {
+        case .dirtyPane:
+            return "Do you want to save changes before closing?"
+        case .runningPane:
+            return "This pane still has a running terminal session. Closing it will stop that session."
+        case .runningTab:
+            return "This tab still has a running terminal session. Closing it will stop that session."
+        case nil:
+            return ""
+        }
+    }
+}
+
+private struct StaleReloadAlert: ViewModifier {
+    @Binding var showAlert: Bool
+    @ObservedObject var manager: WorkspaceManager
+
+    func body(content: Content) -> some View {
+        content
+            .onChange(of: manager.pendingStaleReload) { _, paneID in
+                showAlert = paneID != nil
+            }
+            .alert("File Changed on Disk", isPresented: $showAlert) {
+                Button("Reload") {
+                    if let paneID = manager.pendingStaleReload,
+                       let tab = manager.activeTab,
+                       let session = tab.rootPane.findEditorSession(forPaneID: paneID),
+                       let url = session.filePath {
+                        try? session.loadFile(url: url)
+                    }
+                    manager.pendingStaleReload = nil
+                }
+                Button("Keep Current", role: .cancel) {
+                    manager.pendingStaleReload = nil
+                }
+            } message: {
+                Text("The file has been modified outside the editor. Reload?")
+            }
     }
 }

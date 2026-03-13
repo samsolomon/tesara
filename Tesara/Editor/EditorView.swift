@@ -16,6 +16,7 @@ class EditorView: NSView, NSTextInputClient {
     private var metalLayer: CAMetalLayer!
     private var renderer: EditorRenderer?
     private let glyphAtlas = GlyphAtlas()
+    private let colorGlyphAtlas: GlyphAtlas
     private let glyphCache: GlyphCache
     private var layoutEngine: EditorLayoutEngine
 
@@ -24,9 +25,7 @@ class EditorView: NSView, NSTextInputClient {
 
     // MARK: - Scroll
 
-    private var scrollOffsetLine: Int = 0
-    private var scrollOffsetPixel: CGFloat = 0
-    private var scrollMomentum: CGFloat = 0
+    private var scrollOffsetVisualLine: Int = 0
 
     // MARK: - Cursor Blink
 
@@ -42,6 +41,7 @@ class EditorView: NSView, NSTextInputClient {
         selection: SIMD4<UInt8>(60, 90, 150, 128)
     )
     private var backgroundColor: SIMD4<Float> = SIMD4<Float>(30.0/255, 30.0/255, 30.0/255, 1.0)
+    private var syntaxColors: SyntaxColorMap?
 
     // MARK: - Event Monitor
 
@@ -56,12 +56,22 @@ class EditorView: NSView, NSTextInputClient {
 
     private var contentSize: CGSize = .zero
 
+    // MARK: - Scrollbar
+
+    private var scrollbarOpacity: Float = 0.0
+    private var scrollbarFadeTimer: Timer?
+
+    // MARK: - Word Wrap State
+
+    private var lastLayoutWidth: CGFloat = 0
+
     override var acceptsFirstResponder: Bool { true }
 
     // MARK: - Init
 
     init(session: EditorSession, theme: TerminalTheme, fontFamily: String, fontSize: CGFloat) {
-        self.glyphCache = GlyphCache(atlas: glyphAtlas)
+        self.colorGlyphAtlas = GlyphAtlas(size: 512, bytesPerPixel: 4)
+        self.glyphCache = GlyphCache(atlas: glyphAtlas, colorAtlas: colorGlyphAtlas)
         self.layoutEngine = EditorLayoutEngine(fontFamily: fontFamily, fontSize: fontSize)
 
         super.init(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
@@ -106,6 +116,7 @@ class EditorView: NSView, NSTextInputClient {
     deinit {
         renderTimer?.invalidate()
         cursorBlinkTimer?.invalidate()
+        scrollbarFadeTimer?.invalidate()
         if let eventMonitor {
             NSEvent.removeMonitor(eventMonitor)
         }
@@ -120,6 +131,17 @@ class EditorView: NSView, NSTextInputClient {
     }
 
     private func renderTimerFired() {
+        // Handle scrollbar fade animation
+        if scrollbarOpacity > 0 && scrollbarFadeTimer == nil {
+            // Fade is in progress
+            scrollbarOpacity -= 0.05
+            if scrollbarOpacity <= 0 {
+                scrollbarOpacity = 0
+            } else {
+                needsRender = true
+            }
+        }
+
         guard needsRender else { return }
         needsRender = false
         renderFrame()
@@ -158,6 +180,31 @@ class EditorView: NSView, NSTextInputClient {
         startCursorBlink()
     }
 
+    // MARK: - Ensure Cursor Visible
+
+    func ensureCursorVisible() {
+        guard let session else { return }
+        let cursorLine = session.cursorPosition.line
+        let viewportHeight = contentSize.height > 0 ? contentSize.height : bounds.height
+        let visibleLines = Int(max(1, viewportHeight / layoutEngine.lineHeight))
+
+        if session.wordWrapEnabled {
+            let visualLine = layoutEngine.visualLineMap.visualLine(fromStorageLine: cursorLine)
+            if visualLine < scrollOffsetVisualLine {
+                scrollOffsetVisualLine = visualLine
+            } else if visualLine >= scrollOffsetVisualLine + visibleLines {
+                scrollOffsetVisualLine = visualLine - visibleLines + 1
+            }
+        } else {
+            if cursorLine < scrollOffsetVisualLine {
+                scrollOffsetVisualLine = cursorLine
+            } else if cursorLine >= scrollOffsetVisualLine + visibleLines {
+                scrollOffsetVisualLine = cursorLine - visibleLines + 1
+            }
+        }
+        needsRender = true
+    }
+
     // MARK: - Render
 
     private func renderFrame() {
@@ -166,19 +213,42 @@ class EditorView: NSView, NSTextInputClient {
 
         let scale = metalLayer.contentsScale
         let viewport = contentSize.width > 0 ? contentSize : bounds.size
+        let viewportWidth = viewport.width
 
         let layoutLines = layoutEngine.layoutVisibleLines(
             storage: session.storage,
-            firstVisibleLine: scrollOffsetLine,
+            scrollVisualLine: scrollOffsetVisualLine,
+            viewportWidth: viewportWidth,
             viewportHeight: viewport.height,
-            scale: scale
+            scale: scale,
+            wordWrap: session.wordWrapEnabled
         )
 
-        let glyphs = layoutEngine.buildGlyphInstances(
+        // Ensure syntax tokens cover visible lines
+        if let highlighter = session.syntaxHighlighter, highlighter.isActive {
+            let lastVisible = layoutLines.last?.lineIndex ?? 0
+            highlighter.ensureTokenized(throughLine: lastVisible, storage: session.storage)
+        }
+
+        // Collect syntax tokens for visible lines
+        var syntaxTokensByLine: [Int: [SyntaxToken]]?
+        if let highlighter = session.syntaxHighlighter, highlighter.isActive {
+            var tokenMap: [Int: [SyntaxToken]] = [:]
+            for ll in layoutLines {
+                if tokenMap[ll.lineIndex] == nil {
+                    tokenMap[ll.lineIndex] = highlighter.tokens(forLine: ll.lineIndex)
+                }
+            }
+            syntaxTokensByLine = tokenMap
+        }
+
+        let glyphResult = layoutEngine.buildGlyphInstances(
             from: layoutLines,
             cache: glyphCache,
             scale: scale,
-            colors: themeColors
+            colors: themeColors,
+            syntaxTokens: syntaxTokensByLine,
+            syntaxColors: syntaxColors
         )
 
         // Build marked text info for IME underline
@@ -201,20 +271,51 @@ class EditorView: NSView, NSTextInputClient {
             layoutLines: layoutLines,
             viewportWidth: viewport.width,
             scale: scale,
-            colors: themeColors
+            colors: themeColors,
+            storage: session.storage
         )
 
-        let scrollPixels = CGPoint(x: 0, y: scrollOffsetPixel)
+        // Scrollbar overlay
+        var overlayRects: [EditorRenderer.RectInstance] = []
+        if scrollbarOpacity > 0 {
+            let totalLines: Int
+            if session.wordWrapEnabled {
+                totalLines = max(1, layoutEngine.visualLineMap.totalVisualLines)
+            } else {
+                totalLines = max(1, session.storage.lineCount)
+            }
+            let visibleLines = Int(max(1, viewport.height / layoutEngine.lineHeight))
+            let viewportPx = Float(viewport.height * scale)
+
+            let thumbRatio = Float(visibleLines) / Float(totalLines)
+            let thumbHeight = max(20 * Float(scale), thumbRatio * viewportPx)
+            let scrollRatio = Float(scrollOffsetVisualLine) / Float(max(1, totalLines - visibleLines))
+            let thumbY = scrollRatio * (viewportPx - thumbHeight)
+
+            let scrollbarWidth: Float = 6 * Float(scale)
+            let scrollbarInset: Float = 2 * Float(scale)
+            let scrollbarX = Float(viewport.width * scale) - scrollbarWidth - scrollbarInset
+
+            let alphaU8 = UInt8(min(255, Float(255) * scrollbarOpacity * 0.5))
+            overlayRects.append(EditorRenderer.RectInstance(
+                position: SIMD2<Float>(scrollbarX, thumbY),
+                size: SIMD2<Float>(scrollbarWidth, thumbHeight),
+                color: SIMD4<UInt8>(200, 200, 200, alphaU8)
+            ))
+        }
 
         renderer.render(
             to: drawable,
             viewport: viewport,
             scale: scale,
-            scrollOffset: scrollPixels,
+            scrollOffset: .zero,
             rects: rects,
-            glyphs: glyphs,
+            glyphs: glyphResult.monochrome,
+            colorGlyphs: glyphResult.color,
             backgroundColor: backgroundColor,
-            atlas: glyphAtlas
+            atlas: glyphAtlas,
+            colorAtlas: colorGlyphAtlas,
+            overlayRects: overlayRects
         )
     }
 
@@ -232,6 +333,12 @@ class EditorView: NSView, NSTextInputClient {
         )
         metalLayer.drawableSize = scaledSize
         CATransaction.commit()
+
+        // Recompute wrap counts on resize
+        if let session, session.wordWrapEnabled {
+            layoutEngine.recomputeWrapCounts(storage: session.storage, viewportWidth: size.width)
+            lastLayoutWidth = size.width
+        }
 
         needsRender = true
     }
@@ -308,6 +415,7 @@ class EditorView: NSView, NSTextInputClient {
         // Regular character input
         if let chars = event.characters, !chars.isEmpty, !mods.contains(.command), !mods.contains(.control) {
             session.insertText(chars)
+            ensureCursorVisible()
             return
         }
 
@@ -328,15 +436,18 @@ class EditorView: NSView, NSTextInputClient {
             } else {
                 session.undo()
             }
+            ensureCursorVisible()
             return true
         case "c":
             session.copy()
             return true
         case "v":
             session.paste()
+            ensureCursorVisible()
             return true
         case "x":
             session.cut()
+            ensureCursorVisible()
             return true
         default:
             return false
@@ -408,6 +519,7 @@ class EditorView: NSView, NSTextInputClient {
         }
 
         needsRender = true
+        ensureCursorVisible()
     }
 
     // MARK: - Mouse
@@ -416,15 +528,18 @@ class EditorView: NSView, NSTextInputClient {
         guard let session else { return }
         let location = convert(event.locationInWindow, from: nil)
         let scale = metalLayer?.contentsScale ?? 1.0
+        let viewportHeight = contentSize.height > 0 ? contentSize.height : bounds.height
 
         let layoutLines = layoutEngine.layoutVisibleLines(
             storage: session.storage,
-            firstVisibleLine: scrollOffsetLine,
-            viewportHeight: contentSize.height > 0 ? contentSize.height : bounds.height,
-            scale: scale
+            scrollVisualLine: scrollOffsetVisualLine,
+            viewportWidth: contentSize.width > 0 ? contentSize.width : bounds.width,
+            viewportHeight: viewportHeight,
+            scale: scale,
+            wordWrap: session.wordWrapEnabled
         )
 
-        let pos = layoutEngine.hitTest(point: CGPoint(x: location.x * scale, y: (contentSize.height - location.y) * scale), in: layoutLines, scale: scale)
+        let pos = layoutEngine.hitTest(point: CGPoint(x: location.x * scale, y: (viewportHeight - location.y) * scale), in: layoutLines, scale: scale)
         session.cursorPosition = pos
 
         if event.clickCount == 2 {
@@ -442,15 +557,18 @@ class EditorView: NSView, NSTextInputClient {
         guard let session else { return }
         let location = convert(event.locationInWindow, from: nil)
         let scale = metalLayer?.contentsScale ?? 1.0
+        let viewportHeight = contentSize.height > 0 ? contentSize.height : bounds.height
 
         let layoutLines = layoutEngine.layoutVisibleLines(
             storage: session.storage,
-            firstVisibleLine: scrollOffsetLine,
-            viewportHeight: contentSize.height > 0 ? contentSize.height : bounds.height,
-            scale: scale
+            scrollVisualLine: scrollOffsetVisualLine,
+            viewportWidth: contentSize.width > 0 ? contentSize.width : bounds.width,
+            viewportHeight: viewportHeight,
+            scale: scale,
+            wordWrap: session.wordWrapEnabled
         )
 
-        let pos = layoutEngine.hitTest(point: CGPoint(x: location.x * scale, y: (contentSize.height - location.y) * scale), in: layoutLines, scale: scale)
+        let pos = layoutEngine.hitTest(point: CGPoint(x: location.x * scale, y: (viewportHeight - location.y) * scale), in: layoutLines, scale: scale)
         let anchor = session.selection?.start ?? session.cursorPosition
         session.selection = TextStorage.Range(start: anchor, end: pos)
         session.cursorPosition = pos
@@ -461,27 +579,51 @@ class EditorView: NSView, NSTextInputClient {
 
     override func scrollWheel(with event: NSEvent) {
         let deltaLines = -event.scrollingDeltaY / layoutEngine.lineHeight
-        scrollOffsetPixel += event.scrollingDeltaY
 
         if abs(deltaLines) >= 1 {
             let lineDelta = Int(deltaLines)
-            scrollOffsetLine = max(0, scrollOffsetLine + lineDelta)
-            scrollOffsetPixel = 0
+            scrollOffsetVisualLine = max(0, scrollOffsetVisualLine + lineDelta)
         }
 
+        onScrollActivity()
         needsRender = true
     }
 
     private func scrollPageUp() {
         let visibleLines = Int(max(1, (contentSize.height > 0 ? contentSize.height : bounds.height) / layoutEngine.lineHeight))
-        scrollOffsetLine = max(0, scrollOffsetLine - visibleLines)
+        scrollOffsetVisualLine = max(0, scrollOffsetVisualLine - visibleLines)
+        onScrollActivity()
         needsRender = true
     }
 
     private func scrollPageDown() {
         guard let session else { return }
         let visibleLines = Int(max(1, (contentSize.height > 0 ? contentSize.height : bounds.height) / layoutEngine.lineHeight))
-        scrollOffsetLine = min(session.storage.lineCount - 1, scrollOffsetLine + visibleLines)
+        let totalLines: Int
+        if session.wordWrapEnabled {
+            totalLines = layoutEngine.visualLineMap.totalVisualLines
+        } else {
+            totalLines = session.storage.lineCount
+        }
+        scrollOffsetVisualLine = min(max(0, totalLines - 1), scrollOffsetVisualLine + visibleLines)
+        onScrollActivity()
+        needsRender = true
+    }
+
+    // MARK: - Scrollbar
+
+    private func onScrollActivity() {
+        scrollbarOpacity = 1.0
+        scrollbarFadeTimer?.invalidate()
+        scrollbarFadeTimer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: false) { [weak self] _ in
+            self?.beginScrollbarFade()
+        }
+        needsRender = true
+    }
+
+    private func beginScrollbarFade() {
+        scrollbarFadeTimer = nil
+        // Fade handled in renderTimerFired
         needsRender = true
     }
 
@@ -517,35 +659,22 @@ class EditorView: NSView, NSTextInputClient {
     func updateFont(family: String, size: CGFloat) {
         layoutEngine.updateFont(family: family, size: size)
         glyphCache.invalidateAll()
+        if let session, session.wordWrapEnabled {
+            layoutEngine.recomputeWrapCounts(storage: session.storage, viewportWidth: contentSize.width > 0 ? contentSize.width : bounds.width)
+        }
         needsRender = true
     }
 
     private func applyTheme(_ theme: TerminalTheme) {
         themeColors = EditorLayoutEngine.ThemeColors(
-            foreground: hexToColor(theme.foreground),
-            background: hexToColor(theme.background),
-            cursor: hexToColor(theme.cursor),
-            selection: hexToColor(theme.selectionBackground, alpha: 128)
+            foreground: hexToColorU8(theme.foreground),
+            background: hexToColorU8(theme.background),
+            cursor: hexToColorU8(theme.cursor),
+            selection: hexToColorU8(theme.selectionBackground, alpha: 128)
         )
-        backgroundColor = hexToFloat4(theme.background)
-    }
-
-    private func hexToColor(_ hex: String, alpha: UInt8 = 255) -> SIMD4<UInt8> {
-        let sanitized = hex.replacingOccurrences(of: "#", with: "")
-        guard sanitized.count == 6, let value = UInt32(sanitized, radix: 16) else {
-            return SIMD4<UInt8>(204, 204, 204, alpha)
-        }
-        return SIMD4<UInt8>(
-            UInt8((value >> 16) & 0xFF),
-            UInt8((value >> 8) & 0xFF),
-            UInt8(value & 0xFF),
-            alpha
-        )
-    }
-
-    private func hexToFloat4(_ hex: String) -> SIMD4<Float> {
-        let c = hexToColor(hex)
-        return SIMD4<Float>(Float(c.x) / 255, Float(c.y) / 255, Float(c.z) / 255, 1.0)
+        let bg = hexToColorU8(theme.background)
+        backgroundColor = SIMD4<Float>(Float(bg.x) / 255, Float(bg.y) / 255, Float(bg.z) / 255, 1.0)
+        syntaxColors = SyntaxColorMap(theme: theme)
     }
 
     // MARK: - IBActions (responder chain for Edit menu)
@@ -583,6 +712,7 @@ class EditorView: NSView, NSTextInputClient {
         }
 
         session.insertText(text)
+        ensureCursorVisible()
     }
 
     func setMarkedText(_ string: Any, selectedRange: NSRange, replacementRange: NSRange) {

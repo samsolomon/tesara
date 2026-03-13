@@ -118,6 +118,28 @@ indirect enum PaneNode: Identifiable {
         }
     }
 
+    func allEditorSessions() -> [(paneID: UUID, session: EditorSession)] {
+        switch self {
+        case .leaf:
+            return []
+        case .editor(let id, let session):
+            return [(id, session)]
+        case .split(_, _, let first, let second, _):
+            return first.allEditorSessions() + second.allEditorSessions()
+        }
+    }
+
+    func allTerminalSessions() -> [(paneID: UUID, session: TerminalSession)] {
+        switch self {
+        case .leaf(let id, let session):
+            return [(id, session)]
+        case .editor:
+            return []
+        case .split(_, _, let first, let second, _):
+            return first.allTerminalSessions() + second.allTerminalSessions()
+        }
+    }
+
     func updatingRatio(splitID: UUID, ratio: CGFloat) -> PaneNode {
         let clamped = min(max(ratio, 0.1), 0.9)
         switch self {
