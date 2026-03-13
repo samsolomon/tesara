@@ -57,9 +57,17 @@ run_throughput_bench() {
       launch_terminal "$bundle_id"
       sleep 1
 
-      # Inject timed cat command — records elapsed time to sentinel
-      local cmd="T0=\$(python3 -c 'import time;print(time.time())'); cat ${payload_file} > /dev/null; T1=\$(python3 -c 'import time;print(time.time())'); python3 -c \"print(\$T1 - \$T0)\" > ${sentinel}"
-      send_command "$cmd"
+      # Write a temp script to avoid AppleScript escaping issues
+      local bench_script="/tmp/tesara-bench-tp-$$.sh"
+      cat > "$bench_script" << BENCHEOF
+#!/bin/bash
+T0=\$(python3 -c 'import time;print(time.time())')
+cat ${payload_file} > /dev/null
+T1=\$(python3 -c 'import time;print(time.time())')
+python3 -c "print(\$T1 - \$T0)" > ${sentinel}
+BENCHEOF
+      chmod +x "$bench_script"
+      send_command "bash ${bench_script}"
 
       # Poll for sentinel
       local timeout=120

@@ -12,7 +12,7 @@ echo "==> Generating throughput payloads..."
 PAYLOAD_ASCII="${PAYLOAD_DIR}/.payload-ascii"
 if [[ ! -f "$PAYLOAD_ASCII" ]]; then
   echo "  Generating 10MB ASCII payload..."
-  base64 /dev/urandom | head -c 10485760 > "$PAYLOAD_ASCII"
+  cat /dev/urandom | base64 | head -c 10485760 > "$PAYLOAD_ASCII"
   echo "  Done: ${PAYLOAD_ASCII} ($(wc -c < "$PAYLOAD_ASCII") bytes)"
 else
   echo "  ASCII payload exists, skipping."

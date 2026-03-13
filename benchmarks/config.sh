@@ -9,7 +9,7 @@ TERMINAL_NAMES="Tesara Terminal iTerm2 Ghostty Alacritty Kitty Warp"
 # ── Terminal bundle ID lookup ────────────────────────────────────────
 get_bundle_id() {
   case "$1" in
-    Tesara)    echo "com.samsolomon.Tesara" ;;
+    Tesara)    echo "com.samsolomon.tesara" ;;
     Terminal)  echo "com.apple.Terminal" ;;
     iTerm2)    echo "com.googlecode.iterm2" ;;
     Ghostty)   echo "com.mitchellh.ghostty" ;;
