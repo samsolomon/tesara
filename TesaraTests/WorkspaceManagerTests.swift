@@ -265,4 +265,32 @@ final class WorkspaceManagerTests: XCTestCase {
         manager.selectPane(id: secondPaneID)
         XCTAssertEqual(manager.activePaneID, secondPaneID)
     }
+
+    func testSelectPaneSameIDIsNoOp() {
+        addTab()
+        let paneID = manager.activePaneID!
+        // Calling selectPane with the already-active pane should be a no-op
+        manager.selectPane(id: paneID)
+        XCTAssertEqual(manager.activePaneID, paneID)
+    }
+
+    func testSelectPaneUpdatesActivePaneAfterSplit() {
+        addTab()
+        let firstPaneID = manager.activePaneID!
+        manager.splitActivePane(
+            direction: .vertical,
+            shellPath: "/bin/zsh",
+            workingDirectory: URL(fileURLWithPath: "/tmp"),
+            blockStore: blockStore
+        )
+        let secondPaneID = manager.activePaneID!
+        XCTAssertNotEqual(firstPaneID, secondPaneID)
+
+        // Switch back to first pane
+        manager.selectPane(id: firstPaneID)
+        XCTAssertEqual(manager.activePaneID, firstPaneID)
+
+        // Verify active session corresponds to the selected pane
+        XCTAssertNotNil(manager.activeSession)
+    }
 }

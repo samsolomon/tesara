@@ -35,6 +35,8 @@ struct GhosttySurfaceConfig {
         config.envVars["TERM_PROGRAM"] = "Tesara"
         config.envVars["COLORTERM"] = "truecolor"
         config.envVars["TESARA_SESSION_ID"] = sessionID
+        // Ensure shell scripts write temp files to the same directory Swift reads from
+        config.envVars["TESARA_TMPDIR"] = NSTemporaryDirectory()
 
         let shellName = URL(fileURLWithPath: shellPath).lastPathComponent
 
@@ -77,12 +79,13 @@ struct GhosttySurfaceConfig {
               source \"$HOME/.zprofile\"
             fi
             """)
+            // Use single quotes around the integration path to prevent $, backtick expansion
             try writeFile(named: ".zshrc", in: dotDirectory, contents: """
             if [ -f \"$HOME/.zshrc\" ]; then
               source \"$HOME/.zshrc\"
             fi
-            if [ -f \"\(integrationURL.path)\" ]; then
-              source \"\(integrationURL.path)\"
+            if [ -f '\(integrationURL.path)' ]; then
+              source '\(integrationURL.path)'
             fi
             """)
             try writeFile(named: ".zlogin", in: dotDirectory, contents: """
@@ -123,8 +126,8 @@ struct GhosttySurfaceConfig {
             if [ -f "$HOME/.bashrc" ]; then
               source "$HOME/.bashrc"
             fi
-            if [ -f "\(integrationURL.path)" ]; then
-              source "\(integrationURL.path)"
+            if [ -f '\(integrationURL.path)' ]; then
+              source '\(integrationURL.path)'
             fi
             __tesara_existing_exit_trap=$(trap -p EXIT)
             __tesara_run_logout() {
@@ -142,7 +145,8 @@ struct GhosttySurfaceConfig {
             """.write(to: rcFileURL, atomically: true, encoding: .utf8)
 
             // ghostty's `command` field is used to launch the shell with --rcfile
-            config.command = "\(shellPath) --rcfile \(rcFileURL.path) -i"
+            // Quote the path to handle spaces in temp directory paths
+            config.command = "\(shellPath) --rcfile '\(rcFileURL.path)' -i"
             config.temporaryURLs.append(rcFileURL)
         } catch {
             print("[GhosttySurfaceConfig] Failed to set up bash integration: \(error)")

@@ -144,6 +144,43 @@ final class GhosttyConfigTests: XCTestCase {
         XCTAssertTrue(content.contains("background = #112233"))
     }
 
+    // MARK: - Config Sanitization
+
+    func testFontFamilyWithNewlineIsStripped() {
+        let content = GhosttyConfig.buildConfigString(
+            theme: makeTestTheme(),
+            settings: makeTestSettings(fontFamily: "Menlo\ncommand = /bin/evil")
+        )
+        // Newline should be stripped — no extra config line injected
+        XCTAssertTrue(content.contains("font-family = Menlocommand = /bin/evil"))
+        // The injected directive should NOT appear as a separate config line
+        let lines = content.components(separatedBy: "\n")
+        XCTAssertFalse(lines.contains("command = /bin/evil"))
+    }
+
+    func testHexColorWithNewlineIsStripped() {
+        let theme = TerminalTheme(
+            id: "inject", name: "Inject",
+            foreground: "#AABB\ncommand = /bin/evil", background: "#112233",
+            cursor: "#FFFFFF", cursorText: "#000000",
+            selectionBackground: "#445566",
+            black: "#000000", red: "#FF0000", green: "#00FF00",
+            yellow: "#FFFF00", blue: "#0000FF", magenta: "#FF00FF",
+            cyan: "#00FFFF", white: "#FFFFFF",
+            brightBlack: "#808080", brightRed: "#FF8080",
+            brightGreen: "#80FF80", brightYellow: "#FFFF80",
+            brightBlue: "#8080FF", brightMagenta: "#FF80FF",
+            brightCyan: "#80FFFF", brightWhite: "#FFFFFF"
+        )
+
+        let content = GhosttyConfig.buildConfigString(
+            theme: theme,
+            settings: makeTestSettings()
+        )
+        let lines = content.components(separatedBy: "\n")
+        XCTAssertFalse(lines.contains("command = /bin/evil"))
+    }
+
     // MARK: - Config File Overwrite (requires file I/O)
 
     func testMakeConfigOverwritesPreviousFile() {

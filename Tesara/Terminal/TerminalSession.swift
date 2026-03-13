@@ -103,7 +103,9 @@ final class TerminalSession: ObservableObject, Identifiable {
     // MARK: - Action Handlers
 
     func updateWorkingDirectory(_ url: URL) {
-        currentWorkingDirectory = url.path
+        let path = url.path
+        guard path != currentWorkingDirectory else { return }
+        currentWorkingDirectory = path
     }
 
     func updateTitle(_ title: String) {

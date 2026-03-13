@@ -130,7 +130,8 @@ class GhosttySurfaceView: NSView, NSTextInputClient {
 
         guard let surface else { return }
 
-        // Detect per-axis scale factor
+        // Detect per-axis scale factor — guard against zero frame (before layout)
+        guard self.frame.size.width > 0, self.frame.size.height > 0 else { return }
         let fbFrame = self.convertToBacking(self.frame)
         let xScale = fbFrame.size.width / self.frame.size.width
         let yScale = fbFrame.size.height / self.frame.size.height

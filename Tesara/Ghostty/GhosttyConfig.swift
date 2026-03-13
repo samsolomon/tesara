@@ -9,10 +9,14 @@ enum GhosttyConfig {
 
     /// Path to the persistent ghostty config file managed by Tesara.
     static let configFilePath: String = {
-        let appSupport = FileManager.default.urls(
+        guard let baseURL = FileManager.default.urls(
             for: .applicationSupportDirectory,
             in: .userDomainMask
-        ).first!.appendingPathComponent("Tesara", isDirectory: true)
+        ).first else {
+            // Fallback to temp directory if Application Support is unavailable
+            return NSTemporaryDirectory() + "tesara-ghostty-theme.conf"
+        }
+        let appSupport = baseURL.appendingPathComponent("Tesara", isDirectory: true)
 
         try? FileManager.default.createDirectory(at: appSupport, withIntermediateDirectories: true)
 
@@ -63,8 +67,8 @@ enum GhosttyConfig {
     static func buildConfigString(theme: TerminalTheme, settings: AppSettings) -> String {
         var lines: [String] = []
 
-        // Font
-        lines.append("font-family = \(settings.fontFamily)")
+        // Font — sanitize to prevent config injection via newlines
+        lines.append("font-family = \(sanitize(settings.fontFamily))")
         lines.append("font-size = \(settings.fontSize)")
 
         // Shell integration — disabled because Tesara provides its own
@@ -103,9 +107,17 @@ enum GhosttyConfig {
         return lines.joined(separator: "\n") + "\n"
     }
 
+    /// Sanitizes a config value by removing newlines and carriage returns
+    /// to prevent injection of additional config directives.
+    private static func sanitize(_ value: String) -> String {
+        value.replacingOccurrences(of: "\n", with: "")
+             .replacingOccurrences(of: "\r", with: "")
+    }
+
     /// Ensures hex color has a # prefix for ghostty's config format.
     private static func normalizeHex(_ hex: String) -> String {
         let trimmed = hex.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.hasPrefix("#") ? trimmed : "#\(trimmed)"
+        let sanitized = sanitize(trimmed)
+        return sanitized.hasPrefix("#") ? sanitized : "#\(sanitized)"
     }
 }

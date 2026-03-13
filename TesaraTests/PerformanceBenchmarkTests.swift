@@ -30,30 +30,4 @@ final class PerformanceBenchmarkTests: XCTestCase {
             }
         }
     }
-
-    // MARK: - OSC133 Parser Throughput
-
-    /// Measures parser performance on interleaved text + escape sequences.
-    func testOSC133ParserThroughput() {
-        let parser = OSC133Parser()
-        let chunk = "\u{1b}]133;A\u{7}$ echo hello\u{1b}]133;B\u{7}hello\n\u{1b}]133;C\u{7}\u{1b}]133;D;0\u{7}"
-
-        measure {
-            for _ in 0..<10_000 {
-                _ = parser.feed(chunk)
-            }
-        }
-    }
-
-    /// Measures parser on plain text (no escape sequences) — common case.
-    func testOSC133ParserPlainTextThroughput() {
-        let parser = OSC133Parser()
-        let plain = String(repeating: "output line\n", count: 100) // ~1.2KB
-
-        measure {
-            for _ in 0..<10_000 {
-                _ = parser.feed(plain)
-            }
-        }
-    }
 }

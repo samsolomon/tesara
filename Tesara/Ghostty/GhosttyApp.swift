@@ -1,9 +1,11 @@
 import AppKit
+import os
 
 /// Singleton managing the ghostty_app_t lifecycle and routing actions to surfaces.
 ///
 /// Not `@MainActor` because C callbacks from libghostty need direct access.
-/// All mutable state is only modified on the main thread (via `tick()` or explicit dispatch).
+/// `surfaceRegistry` is protected by `lock` because `unregister` can be called from
+/// `GhosttySurfaceView.deinit` which may run off the main thread.
 final class GhosttyApp: @unchecked Sendable {
     static let shared = GhosttyApp()
 
@@ -11,12 +13,14 @@ final class GhosttyApp: @unchecked Sendable {
 
     private(set) var app: ghostty_app_t?
 
+    /// Protects surfaceRegistry from concurrent access (deinit can run off main thread).
+    private let lock = os.OSAllocatedUnfairLock()
+
     /// Maps surface userdata pointers back to their TerminalSession for action routing.
     private var surfaceRegistry: [UnsafeRawPointer: TerminalSession] = [:]
 
-    /// The currently focused surface, used for clipboard operations.
-    /// Set by the surface view in Phase 3 via `setFocusedSurface(_:)`.
-    private(set) var focusedSurface: ghostty_surface_t?
+    /// The currently focused surface. Only accessed from the main thread.
+    private var focusedSurface: ghostty_surface_t?
 
     private init() {}
 
@@ -58,9 +62,10 @@ final class GhosttyApp: @unchecked Sendable {
         runtime.close_surface_cb = ghosttyCloseSurfaceCallback
 
         app = ghostty_app_new(&runtime, config)
+        // ghostty_app_new copies config data — always free the config after use
+        ghostty_config_free(config)
         if app == nil {
             print("[GhosttyApp] Failed to create ghostty app")
-            ghostty_config_free(config)
         }
     }
 
@@ -69,30 +74,41 @@ final class GhosttyApp: @unchecked Sendable {
         ghostty_app_tick(app)
     }
 
+    @MainActor
     func deinitialize() {
         if let app {
             ghostty_app_free(app)
         }
         app = nil
-        surfaceRegistry.removeAll()
+        focusedSurface = nil
+        lock.withLock {
+            surfaceRegistry.removeAll()
+        }
     }
 
     // MARK: - Surface Registry
 
     func register(session: TerminalSession, for surfaceUserdata: UnsafeRawPointer) {
-        surfaceRegistry[surfaceUserdata] = session
+        lock.withLock {
+            surfaceRegistry[surfaceUserdata] = session
+        }
     }
 
     func unregister(surfaceUserdata: UnsafeRawPointer) {
-        surfaceRegistry.removeValue(forKey: surfaceUserdata)
+        lock.withLock {
+            surfaceRegistry.removeValue(forKey: surfaceUserdata)
+        }
     }
 
+    @MainActor
     func setFocusedSurface(_ surface: ghostty_surface_t?) {
         focusedSurface = surface
     }
 
     func session(for surfaceUserdata: UnsafeRawPointer) -> TerminalSession? {
-        surfaceRegistry[surfaceUserdata]
+        lock.withLock {
+            surfaceRegistry[surfaceUserdata]
+        }
     }
 
     // MARK: - Config Updates
@@ -105,6 +121,8 @@ final class GhosttyApp: @unchecked Sendable {
         guard config != nil else { return }
 
         ghostty_app_update_config(app, config)
+        // ghostty_app_update_config copies config data — always free after use
+        ghostty_config_free(config)
     }
 
     // MARK: - Action Routing
@@ -220,7 +238,7 @@ final class GhosttyApp: @unchecked Sendable {
 
         let userdata = ghostty_surface_userdata(surface)
         guard let userdata else { return nil }
-        return surfaceRegistry[UnsafeRawPointer(userdata)]
+        return lock.withLock { surfaceRegistry[UnsafeRawPointer(userdata)] }
     }
 }
 
@@ -250,7 +268,12 @@ private func ghosttyReadClipboardCallback(
     _ clipboard: ghostty_clipboard_e,
     _ state: UnsafeMutableRawPointer?
 ) -> Bool {
-    guard let state, let surface = GhosttyApp.shared.focusedSurface else { return false }
+    // userdata is the surface's userdata (GhosttySurfaceView pointer).
+    // This callback fires during tick() which runs on the main thread.
+    guard let userdata, let state else { return false }
+
+    let view = Unmanaged<GhosttySurfaceView>.fromOpaque(userdata).takeUnretainedValue()
+    guard let surface = view.surface else { return false }
 
     let pasteboard = NSPasteboard.general
     guard let content = pasteboard.string(forType: .string) else {
@@ -271,6 +294,7 @@ private func ghosttyWriteClipboardCallback(
     _ count: Int,
     _ confirm: Bool
 ) {
+    // This callback fires during tick() which runs on the main thread.
     guard let content, count > 0 else { return }
 
     let entry = content.pointee
@@ -286,6 +310,8 @@ private func ghosttyCloseSurfaceCallback(
     _ userdata: UnsafeMutableRawPointer?,
     _ processAlive: Bool
 ) {
+    // userdata is the surface's userdata (GhosttySurfaceView pointer).
+    // This may fire from a child process thread, so dispatch to main.
     guard let userdata else { return }
 
     DispatchQueue.main.async {
