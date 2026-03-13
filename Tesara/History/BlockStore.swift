@@ -21,6 +21,7 @@ final class BlockStore: ObservableObject {
     private let dbQueue: DatabaseQueue?
     private let migrator: DatabaseMigrator
     private var historyCaptureEnabled = true
+    private var pendingReloadWork: DispatchWorkItem?
 
     init() {
         migrator = BlockStore.makeMigrator()
@@ -49,60 +50,65 @@ final class BlockStore: ObservableObject {
             return sessionID
         }
 
-        try? dbQueue.write { db in
-            try db.execute(
-                sql: """
-                INSERT INTO terminal_sessions (id, shellPath, workingDirectory, startedAt)
-                VALUES (?, ?, ?, ?)
-                """,
-                arguments: [sessionID.uuidString, shellPath, workingDirectory.path, Date()]
-            )
+        let path = workingDirectory.path
+        let startedAt = Date()
+        DispatchQueue.global(qos: .utility).async {
+            try? dbQueue.write { db in
+                try db.execute(
+                    sql: """
+                    INSERT INTO terminal_sessions (id, shellPath, workingDirectory, startedAt)
+                    VALUES (?, ?, ?, ?)
+                    """,
+                    arguments: [sessionID.uuidString, shellPath, path, startedAt]
+                )
+            }
         }
 
         return sessionID
     }
 
-    @discardableResult
-    func recordBlock(sessionID: UUID, block: TerminalBlockCapture, orderIndex: Int) -> Bool {
-        guard historyCaptureEnabled else {
-            return false
-        }
+    func recordBlock(sessionID: UUID, block: TerminalBlockCapture, orderIndex: Int) {
+        guard historyCaptureEnabled else { return }
+        guard !block.commandText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        guard let dbQueue else { return }
 
-        guard !block.commandText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            return false
-        }
+        let blockID = UUID().uuidString
+        let sessionIDString = sessionID.uuidString
+        let commandText = block.commandText
+        let outputText = block.outputText
+        let exitCode = block.exitCode
+        let startedAt = block.startedAt
+        let finishedAt = block.finishedAt
 
-        guard let dbQueue else {
-            return false
-        }
-
-        let didInsert = (try? dbQueue.write { db in
-            try db.execute(
-                sql: """
-                INSERT INTO terminal_blocks (
-                    id, sessionID, orderIndex, commandText, outputText, exitCode, startedAt, finishedAt
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            let didInsert = (try? dbQueue.write { db in
+                try db.execute(
+                    sql: """
+                    INSERT INTO terminal_blocks (
+                        id, sessionID, orderIndex, commandText, outputText, exitCode, startedAt, finishedAt
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    arguments: [
+                        blockID,
+                        sessionIDString,
+                        orderIndex,
+                        commandText,
+                        outputText,
+                        exitCode,
+                        startedAt,
+                        finishedAt
+                    ]
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                arguments: [
-                    UUID().uuidString,
-                    sessionID.uuidString,
-                    orderIndex,
-                    block.commandText,
-                    block.outputText,
-                    block.exitCode,
-                    block.startedAt,
-                    block.finishedAt
-                ]
-            )
-            return true
-        }) ?? false
+                return true
+            }) ?? false
 
-        if didInsert {
-            reloadRecentBlocks()
+            if didInsert {
+                DispatchQueue.main.async {
+                    self?.scheduleReload()
+                }
+            }
         }
-
-        return didInsert
     }
 
     func setHistoryCaptureEnabled(_ enabled: Bool) {
@@ -121,6 +127,16 @@ final class BlockStore: ObservableObject {
         }
 
         reloadRecentBlocks()
+    }
+
+    /// Debounced reload — coalesces multiple rapid inserts into a single query.
+    private func scheduleReload() {
+        pendingReloadWork?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            self?.reloadRecentBlocks()
+        }
+        pendingReloadWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: work)
     }
 
     func reloadRecentBlocks(limit: Int = 100) {

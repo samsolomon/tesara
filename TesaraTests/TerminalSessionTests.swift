@@ -85,6 +85,66 @@ final class TerminalSessionTests: XCTestCase {
         XCTAssertNotEqual(session.shellSessionID, session2.shellSessionID)
     }
 
+    // MARK: - Stale Temp File Cleanup
+
+    func testCleanupStaleTempFilesRemovesOldFiles() throws {
+        let tmpDir = NSTemporaryDirectory()
+        let fm = FileManager.default
+        let testID = UUID().uuidString
+
+        // Create an old temp file (backdate modification time)
+        let staleFileName = "tesara-cmd-stale-\(testID).txt"
+        let stalePath = (tmpDir as NSString).appendingPathComponent(staleFileName)
+        try "stale".write(toFile: stalePath, atomically: true, encoding: .utf8)
+
+        // Backdate to 48 hours ago
+        let oldDate = Date().addingTimeInterval(-172800)
+        try fm.setAttributes([.modificationDate: oldDate], ofItemAtPath: stalePath)
+
+        TerminalSession.cleanupStaleTempFiles(olderThan: 86400)
+
+        XCTAssertFalse(fm.fileExists(atPath: stalePath))
+    }
+
+    func testCleanupStaleTempFilesLeavesRecentFiles() throws {
+        let tmpDir = NSTemporaryDirectory()
+        let fm = FileManager.default
+        let testID = UUID().uuidString
+
+        // Create a recent temp file
+        let recentFileName = "tesara-cmd-recent-\(testID).txt"
+        let recentPath = (tmpDir as NSString).appendingPathComponent(recentFileName)
+        try "recent".write(toFile: recentPath, atomically: true, encoding: .utf8)
+
+        TerminalSession.cleanupStaleTempFiles(olderThan: 86400)
+
+        XCTAssertTrue(fm.fileExists(atPath: recentPath))
+
+        // Cleanup
+        try? fm.removeItem(atPath: recentPath)
+    }
+
+    func testCleanupStaleTempFilesIgnoresNonTesaraFiles() throws {
+        let tmpDir = NSTemporaryDirectory()
+        let fm = FileManager.default
+        let testID = UUID().uuidString
+
+        // Create an old non-Tesara file
+        let otherFileName = "other-app-\(testID).txt"
+        let otherPath = (tmpDir as NSString).appendingPathComponent(otherFileName)
+        try "other".write(toFile: otherPath, atomically: true, encoding: .utf8)
+
+        let oldDate = Date().addingTimeInterval(-172800)
+        try fm.setAttributes([.modificationDate: oldDate], ofItemAtPath: otherPath)
+
+        TerminalSession.cleanupStaleTempFiles(olderThan: 86400)
+
+        XCTAssertTrue(fm.fileExists(atPath: otherPath))
+
+        // Cleanup
+        try? fm.removeItem(atPath: otherPath)
+    }
+
     // MARK: - Temp File Cleanup
 
     func testStopCleansUpTemporaryFiles() throws {

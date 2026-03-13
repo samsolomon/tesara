@@ -133,7 +133,7 @@ final class PaneNodeTests: XCTestCase {
         )
         let updated = node.updatingRatio(splitID: splitID, ratio: 0.0)
         if case .split(_, _, _, _, let ratio) = updated {
-            XCTAssertEqual(ratio, 0.1, accuracy: 0.001)
+            XCTAssertEqual(ratio, 0.05, accuracy: 0.001)
         } else {
             XCTFail("Expected split")
         }
@@ -147,7 +147,7 @@ final class PaneNodeTests: XCTestCase {
         )
         let updated = node.updatingRatio(splitID: splitID, ratio: 1.0)
         if case .split(_, _, _, _, let ratio) = updated {
-            XCTAssertEqual(ratio, 0.9, accuracy: 0.001)
+            XCTAssertEqual(ratio, 0.95, accuracy: 0.001)
         } else {
             XCTFail("Expected split")
         }

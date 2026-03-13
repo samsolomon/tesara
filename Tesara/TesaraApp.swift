@@ -23,10 +23,14 @@ struct TesaraApp: App {
                     LocalLogStore.shared.setEnabled(settingsStore.settings.localLoggingEnabled)
                     workspaceManager.setConfirmOnCloseRunningSessionEnabled(settingsStore.settings.confirmOnCloseRunningSession)
                     workspaceManager.setTabTitleMode(settingsStore.settings.tabTitleMode)
+                    TerminalSession.cleanupStaleTempFiles()
                     GhosttyApp.shared.initialize(
                         theme: settingsStore.activeTheme,
                         settings: settingsStore.settings
                     )
+                    workspaceManager.settingsStore = settingsStore
+                    workspaceManager.blockStore = blockStore
+                    GhosttyApp.shared.actionDelegate = workspaceManager
                 }
                 .onChange(of: settingsStore.settings.updateChecksEnabled) {
                     updaterController.updater.automaticallyChecksForUpdates = settingsStore.settings.updateChecksEnabled

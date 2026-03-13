@@ -21,7 +21,7 @@ __tesara_preexec() {
   # Write command text for Tesara's command history capture
   # Use `history 1` for the full command line — $BASH_COMMAND only has the last simple command in pipelines
   if [[ -n "${TESARA_SESSION_ID:-}" && -n "${TESARA_TMPDIR:-}" ]]; then
-    builtin history 1 | sed 's/^[ ]*[0-9]*[ ]*//' > "${TESARA_TMPDIR}/tesara-cmd-${TESARA_SESSION_ID}.txt"
+    builtin history 1 | sed 's/^[ ]*[0-9]*[ ]*//' > "${TESARA_TMPDIR}/tesara-cmd-${TESARA_SESSION_ID}.txt" 2>/dev/null || true
   fi
 }
 

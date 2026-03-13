@@ -20,6 +20,6 @@ function __tesara_fish_preexec --on-event fish_preexec
     __tesara_emit_osc133 "C"
     # Write command text for Tesara's command history capture
     if set -q TESARA_SESSION_ID; and set -q TESARA_TMPDIR
-        printf '%s' "$argv" > "$TESARA_TMPDIR/tesara-cmd-$TESARA_SESSION_ID.txt"
+        printf '%s' "$argv" > "$TESARA_TMPDIR/tesara-cmd-$TESARA_SESSION_ID.txt" 2>/dev/null; or true
     end
 end

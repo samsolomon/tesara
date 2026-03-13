@@ -1,5 +1,20 @@
+import AppKit
 import Combine
 import Foundation
+
+/// Protocol for routing Ghostty keybinding actions to workspace operations.
+/// Handlers take the originating session so they operate on the correct tab/pane,
+/// not just whatever happens to be "active."
+@MainActor protocol GhosttyActionDelegate: AnyObject {
+    func ghosttyNewTab(inheritingFrom session: TerminalSession?)
+    func ghosttyCloseTab(for session: TerminalSession)
+    func ghosttyCloseOtherTabs(for session: TerminalSession)
+    func ghosttyCloseTabsToRight(of session: TerminalSession)
+    func ghosttyClosePane(for session: TerminalSession)
+    func ghosttySplit(for session: TerminalSession, direction: PaneNode.SplitDirection, newPanePosition: PaneNode.PanePosition)
+    func ghosttyCloseWindow()
+    func ghosttyRequestQuit()
+}
 
 @MainActor
 final class WorkspaceManager: ObservableObject {
@@ -42,6 +57,8 @@ final class WorkspaceManager: ObservableObject {
     @Published var lastFileError: Error?
 
     var sessionFactory: () -> TerminalSession = { TerminalSession() }
+    weak var settingsStore: SettingsStore?
+    weak var blockStore: BlockStore?
     private var confirmOnCloseRunningSessionEnabled = true
     private var tabTitleMode: TabTitleMode = .shellTitle
     private var paneObservers: [UUID: AnyCancellable] = [:]
@@ -156,7 +173,17 @@ final class WorkspaceManager: ObservableObject {
 
     // MARK: - Split Panes
 
-    func splitActivePane(direction: PaneNode.SplitDirection, shellPath: String, workingDirectory: URL, blockStore: BlockStore) {
+    /// Find the tab and pane IDs for a given terminal session.
+    func tabAndPaneID(for session: TerminalSession) -> (tabID: UUID, paneID: UUID)? {
+        for tab in tabs {
+            for (paneID, s) in tab.rootPane.allTerminalSessions() {
+                if s === session { return (tab.id, paneID) }
+            }
+        }
+        return nil
+    }
+
+    func splitActivePane(direction: PaneNode.SplitDirection, position: PaneNode.PanePosition = .second, shellPath: String, workingDirectory: URL, blockStore: BlockStore) {
         guard let activePaneID,
               let tabIndex = tabs.firstIndex(where: { $0.id == activeTabID }) else { return }
 
@@ -170,6 +197,29 @@ final class WorkspaceManager: ObservableObject {
             return
         }
 
+        performSplit(
+            tabIndex: tabIndex, paneID: activePaneID, currentNode: currentNode,
+            direction: direction, position: position,
+            shellPath: shellPath, workingDirectory: workingDirectory, blockStore: blockStore
+        )
+    }
+
+    /// Split for a specific session (used by Ghostty action handlers).
+    func splitPane(for session: TerminalSession, direction: PaneNode.SplitDirection, position: PaneNode.PanePosition, shellPath: String, workingDirectory: URL, blockStore: BlockStore) {
+        guard let (tabID, paneID) = tabAndPaneID(for: session),
+              let tabIndex = tabs.firstIndex(where: { $0.id == tabID }),
+              let termSession = tabs[tabIndex].rootPane.findSession(forPaneID: paneID) else { return }
+
+        let currentNode = PaneNode.leaf(id: paneID, session: termSession)
+        activeTabID = tabs[tabIndex].id
+        performSplit(
+            tabIndex: tabIndex, paneID: paneID, currentNode: currentNode,
+            direction: direction, position: position,
+            shellPath: shellPath, workingDirectory: workingDirectory, blockStore: blockStore
+        )
+    }
+
+    private func performSplit(tabIndex: Int, paneID: UUID, currentNode: PaneNode, direction: PaneNode.SplitDirection, position: PaneNode.PanePosition, shellPath: String, workingDirectory: URL, blockStore: BlockStore) {
         let newSession = sessionFactory()
         newSession.configure(blockStore: blockStore)
         let newPaneID = UUID()
@@ -178,14 +228,14 @@ final class WorkspaceManager: ObservableObject {
         let splitNode = PaneNode.split(
             id: UUID(),
             direction: direction,
-            first: currentNode,
-            second: newLeaf,
+            first: position == .second ? currentNode : newLeaf,
+            second: position == .second ? newLeaf : currentNode,
             ratio: 0.5
         )
 
-        tabs[tabIndex].rootPane = tabs[tabIndex].rootPane.replacingPane(id: activePaneID, with: splitNode)
+        tabs[tabIndex].rootPane = tabs[tabIndex].rootPane.replacingPane(id: paneID, with: splitNode)
         tabs[tabIndex].selectedPaneID = newPaneID
-        self.activePaneID = newPaneID
+        activePaneID = newPaneID
         newSession.start(shellPath: shellPath, workingDirectory: workingDirectory)
         refreshWorkspaceMetadata()
     }
@@ -640,6 +690,13 @@ final class WorkspaceManager: ObservableObject {
         return url.path
     }
 
+    private func resolvedWorkingDirectory(from session: TerminalSession?) -> URL {
+        if let cwd = session?.currentWorkingDirectory {
+            return URL(fileURLWithPath: cwd)
+        }
+        return settingsStore?.settings.defaultWorkingDirectory ?? FileManager.default.homeDirectoryForCurrentUser
+    }
+
     private func paneContainsRunningTerminal(paneID: UUID) -> Bool {
         guard let tab = tabs.first(where: { $0.rootPane.contains(paneID: paneID) }),
               let session = tab.rootPane.findSession(forPaneID: paneID) else {
@@ -697,5 +754,83 @@ final class WorkspaceManager: ObservableObject {
             stopAllSessions(in: first)
             stopAllSessions(in: second)
         }
+    }
+}
+
+// MARK: - GhosttyActionDelegate
+
+extension WorkspaceManager: GhosttyActionDelegate {
+    func ghosttyNewTab(inheritingFrom session: TerminalSession?) {
+        guard let settingsStore, let blockStore else { return }
+        newTab(
+            shellPath: settingsStore.settings.shellPath,
+            workingDirectory: resolvedWorkingDirectory(from: session),
+            blockStore: blockStore
+        )
+    }
+
+    func ghosttyCloseTab(for session: TerminalSession) {
+        guard let (tabID, _) = tabAndPaneID(for: session) else { return }
+        closeTab(id: tabID)
+    }
+
+    func ghosttyCloseOtherTabs(for session: TerminalSession) {
+        guard let (tabID, _) = tabAndPaneID(for: session) else { return }
+        let otherTabIDs = tabs.map(\.id).filter { $0 != tabID }
+        for id in otherTabIDs {
+            closeTab(id: id)
+        }
+    }
+
+    func ghosttyCloseTabsToRight(of session: TerminalSession) {
+        guard let (tabID, _) = tabAndPaneID(for: session),
+              let tabIndex = tabs.firstIndex(where: { $0.id == tabID }) else { return }
+        let rightTabIDs = tabs[(tabIndex + 1)...].map(\.id)
+        for id in rightTabIDs {
+            closeTab(id: id)
+        }
+    }
+
+    func ghosttyClosePane(for session: TerminalSession) {
+        guard let (_, paneID) = tabAndPaneID(for: session) else { return }
+        closePane(id: paneID)
+    }
+
+    func ghosttySplit(for session: TerminalSession, direction: PaneNode.SplitDirection, newPanePosition: PaneNode.PanePosition) {
+        guard let settingsStore, let blockStore else { return }
+        splitPane(
+            for: session,
+            direction: direction,
+            position: newPanePosition,
+            shellPath: settingsStore.settings.shellPath,
+            workingDirectory: resolvedWorkingDirectory(from: session),
+            blockStore: blockStore
+        )
+    }
+
+    func ghosttyCloseWindow() {
+        guard confirmAllTabsClean() else { return }
+        NSApp.keyWindow?.close()
+    }
+
+    func ghosttyRequestQuit() {
+        guard confirmAllTabsClean() else { return }
+        NSApp.terminate(nil)
+    }
+
+    /// Checks all tabs for unsaved work. Returns true if all are clean.
+    /// If any tab has dirty editors or running terminals, sets `pendingCloseConfirmation` and returns false.
+    private func confirmAllTabsClean() -> Bool {
+        for tab in tabs {
+            if !dirtyEditorSessionIDs(inTabID: tab.id).isEmpty {
+                pendingCloseConfirmation = .dirtyTab(tab.id)
+                return false
+            }
+            if tabContainsRunningTerminal(tabID: tab.id) {
+                pendingCloseConfirmation = .runningTab(tab.id)
+                return false
+            }
+        }
+        return true
     }
 }

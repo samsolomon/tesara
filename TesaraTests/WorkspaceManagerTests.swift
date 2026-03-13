@@ -589,6 +589,225 @@ final class WorkspaceManagerTests: XCTestCase {
         XCTAssertNotNil(manager.activeEditorSession)
     }
 
+    // MARK: - Target-Aware Lookup
+
+    func testTabAndPaneIDFindsCorrectTab() throws {
+        addTab()
+        addTab()
+        let firstSession = try XCTUnwrap(manager.tabs[0].rootPane.session)
+        let secondSession = try XCTUnwrap(manager.tabs[1].rootPane.session)
+
+        let result1 = manager.tabAndPaneID(for: firstSession)
+        XCTAssertEqual(result1?.tabID, manager.tabs[0].id)
+        XCTAssertEqual(result1?.paneID, manager.tabs[0].rootPane.id)
+
+        let result2 = manager.tabAndPaneID(for: secondSession)
+        XCTAssertEqual(result2?.tabID, manager.tabs[1].id)
+        XCTAssertEqual(result2?.paneID, manager.tabs[1].rootPane.id)
+    }
+
+    func testTabAndPaneIDReturnsNilForUnknownSession() {
+        addTab()
+        let orphan = TerminalSession()
+        XCTAssertNil(manager.tabAndPaneID(for: orphan))
+    }
+
+    // MARK: - GhosttyActionDelegate
+
+    func testGhosttyNewTabInheritsWorkingDirectory() throws {
+        let settingsStore = SettingsStore(defaults: UserDefaults(suiteName: UUID().uuidString)!)
+        manager.settingsStore = settingsStore
+        manager.blockStore = blockStore
+        addTab()
+
+        let session = try XCTUnwrap(manager.activeSession)
+        session.updateWorkingDirectory(URL(fileURLWithPath: "/Users/tester/projects"))
+
+        manager.ghosttyNewTab(inheritingFrom: session)
+        XCTAssertEqual(manager.tabs.count, 2)
+    }
+
+    func testGhosttyNewTabFallsBackToDefault() throws {
+        let settingsStore = SettingsStore(defaults: UserDefaults(suiteName: UUID().uuidString)!)
+        manager.settingsStore = settingsStore
+        manager.blockStore = blockStore
+
+        manager.ghosttyNewTab(inheritingFrom: nil)
+        XCTAssertEqual(manager.tabs.count, 1)
+    }
+
+    func testGhosttyCloseTabClosesCorrectTab() throws {
+        let settingsStore = SettingsStore(defaults: UserDefaults(suiteName: UUID().uuidString)!)
+        manager.settingsStore = settingsStore
+        manager.blockStore = blockStore
+        addTab()
+        addTab()
+
+        let firstSession = try XCTUnwrap(manager.tabs[0].rootPane.session)
+        let secondTabID = manager.tabs[1].id
+
+        manager.ghosttyCloseTab(for: firstSession)
+        XCTAssertEqual(manager.tabs.count, 1)
+        XCTAssertEqual(manager.tabs[0].id, secondTabID)
+    }
+
+    func testGhosttyClosePaneClosesCorrectPane() throws {
+        let settingsStore = SettingsStore(defaults: UserDefaults(suiteName: UUID().uuidString)!)
+        manager.settingsStore = settingsStore
+        manager.blockStore = blockStore
+        addTab()
+
+        let firstPaneID = try XCTUnwrap(manager.activePaneID)
+        manager.splitActivePane(
+            direction: .horizontal,
+            shellPath: "/bin/zsh",
+            workingDirectory: URL(fileURLWithPath: "/tmp"),
+            blockStore: blockStore
+        )
+        let secondPaneID = try XCTUnwrap(manager.activePaneID)
+        let secondSession = try XCTUnwrap(manager.activeSession)
+
+        manager.ghosttyClosePane(for: secondSession)
+        XCTAssertEqual(manager.activePaneID, firstPaneID)
+        if case .leaf = manager.activeTab?.rootPane {
+            // success — split collapsed back to leaf
+        } else {
+            XCTFail("Expected leaf root pane after closing split pane")
+        }
+    }
+
+    func testGhosttyCloseOtherTabsKeepsOnlyTargetTab() throws {
+        let settingsStore = SettingsStore(defaults: UserDefaults(suiteName: UUID().uuidString)!)
+        manager.settingsStore = settingsStore
+        manager.blockStore = blockStore
+        addTab()
+        addTab()
+        addTab()
+
+        let middleSession = try XCTUnwrap(manager.tabs[1].rootPane.session)
+        let middleTabID = manager.tabs[1].id
+
+        manager.ghosttyCloseOtherTabs(for: middleSession)
+        XCTAssertEqual(manager.tabs.count, 1)
+        XCTAssertEqual(manager.tabs[0].id, middleTabID)
+    }
+
+    func testGhosttyCloseTabsToRightKeepsLeftTabs() throws {
+        let settingsStore = SettingsStore(defaults: UserDefaults(suiteName: UUID().uuidString)!)
+        manager.settingsStore = settingsStore
+        manager.blockStore = blockStore
+        addTab()
+        addTab()
+        addTab()
+        addTab()
+
+        let secondSession = try XCTUnwrap(manager.tabs[1].rootPane.session)
+        let firstTabID = manager.tabs[0].id
+        let secondTabID = manager.tabs[1].id
+
+        manager.ghosttyCloseTabsToRight(of: secondSession)
+        XCTAssertEqual(manager.tabs.count, 2)
+        XCTAssertEqual(manager.tabs[0].id, firstTabID)
+        XCTAssertEqual(manager.tabs[1].id, secondTabID)
+    }
+
+    func testGhosttySplitFirstPositionPutsNewPaneFirst() throws {
+        let settingsStore = SettingsStore(defaults: UserDefaults(suiteName: UUID().uuidString)!)
+        manager.settingsStore = settingsStore
+        manager.blockStore = blockStore
+        addTab()
+
+        let session = try XCTUnwrap(manager.activeSession)
+        let originalPaneID = try XCTUnwrap(manager.activePaneID)
+
+        manager.ghosttySplit(for: session, direction: .horizontal, newPanePosition: .first)
+
+        // Active pane should be the new pane (which is now `first` in the split)
+        XCTAssertNotEqual(manager.activePaneID, originalPaneID)
+
+        guard case .split(_, _, let first, let second, _) = manager.activeTab?.rootPane else {
+            XCTFail("Expected split root pane")
+            return
+        }
+        // The new pane is .first, the original is .second
+        XCTAssertEqual(second.id, originalPaneID)
+        XCTAssertNotEqual(first.id, originalPaneID)
+    }
+
+    func testGhosttyRequestQuitBlocksWhenDirtyEditors() throws {
+        let settingsStore = SettingsStore(defaults: UserDefaults(suiteName: UUID().uuidString)!)
+        manager.settingsStore = settingsStore
+        manager.blockStore = blockStore
+        addTab()
+
+        manager.splitActivePaneWithEditor(
+            direction: .horizontal,
+            theme: testTheme,
+            fontFamily: "SF Mono",
+            fontSize: 13
+        )
+
+        let editorSession = try XCTUnwrap(manager.activeEditorSession)
+        editorSession.insertText("unsaved work")
+
+        manager.ghosttyRequestQuit()
+        XCTAssertNotNil(manager.pendingCloseConfirmation)
+    }
+
+    func testGhosttyCloseWindowBlocksWhenRunningTerminal() throws {
+        let settingsStore = SettingsStore(defaults: UserDefaults(suiteName: UUID().uuidString)!)
+        manager.settingsStore = settingsStore
+        manager.blockStore = blockStore
+        manager.setConfirmOnCloseRunningSessionEnabled(true)
+        addTab()
+
+        let session = try XCTUnwrap(manager.activeSession)
+        session.setStatusForTesting(.running)
+
+        manager.ghosttyCloseWindow()
+        XCTAssertNotNil(manager.pendingCloseConfirmation)
+    }
+
+    // MARK: - Split Direction Fidelity
+
+    func testSplitActivePaneWithSecondPosition() {
+        addTab()
+        let originalPaneID = manager.activePaneID!
+        manager.splitActivePane(
+            direction: .horizontal,
+            position: .second,
+            shellPath: "/bin/zsh",
+            workingDirectory: URL(fileURLWithPath: "/tmp"),
+            blockStore: blockStore
+        )
+
+        guard case .split(_, _, let first, _, _) = manager.activeTab?.rootPane else {
+            XCTFail("Expected split root pane")
+            return
+        }
+        // Original pane should be first
+        XCTAssertEqual(first.id, originalPaneID)
+    }
+
+    func testSplitActivePaneWithFirstPosition() {
+        addTab()
+        let originalPaneID = manager.activePaneID!
+        manager.splitActivePane(
+            direction: .horizontal,
+            position: .first,
+            shellPath: "/bin/zsh",
+            workingDirectory: URL(fileURLWithPath: "/tmp"),
+            blockStore: blockStore
+        )
+
+        guard case .split(_, _, _, let second, _) = manager.activeTab?.rootPane else {
+            XCTFail("Expected split root pane")
+            return
+        }
+        // Original pane should be second when new pane is .first
+        XCTAssertEqual(second.id, originalPaneID)
+    }
+
     private var testTheme: TerminalTheme {
         TerminalTheme(
             id: "test", name: "Test",

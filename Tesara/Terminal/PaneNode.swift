@@ -10,6 +10,12 @@ indirect enum PaneNode: Identifiable {
         case vertical
     }
 
+    /// Whether the new pane goes before or after the existing one in a split.
+    enum PanePosition {
+        case first
+        case second
+    }
+
     var id: UUID {
         switch self {
         case .leaf(let id, _): return id

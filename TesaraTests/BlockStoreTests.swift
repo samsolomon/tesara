@@ -14,6 +14,23 @@ final class BlockStoreTests: XCTestCase {
         XCTAssertFalse(id.uuidString.isEmpty)
     }
 
+    /// Wait for background writes dispatched to .utility to complete and reload on main.
+    private func waitForAsyncWrites() {
+        // Enqueue a barrier on the same QoS tier to ensure prior dispatches complete,
+        // then hop back to main to process any scheduled reloads.
+        let expectation = XCTestExpectation(description: "async writes")
+        DispatchQueue.global(qos: .utility).async {
+            // By the time this runs, prior .utility dispatches have been submitted.
+            // But DatabaseQueue serializes, so wait once more to let DB writes finish.
+            DispatchQueue.global(qos: .utility).async {
+                DispatchQueue.main.async {
+                    expectation.fulfill()
+                }
+            }
+        }
+        wait(for: [expectation], timeout: 2)
+    }
+
     func testRoundTripRecordAndReload() throws {
         let store = try makeStore()
         let sessionID = store.startSession(shellPath: "/bin/zsh", workingDirectory: URL(fileURLWithPath: "/tmp"))
@@ -27,8 +44,8 @@ final class BlockStoreTests: XCTestCase {
             stage: .output
         )
 
-        let didPersist = store.recordBlock(sessionID: sessionID, block: block, orderIndex: 0)
-        XCTAssertTrue(didPersist)
+        store.recordBlock(sessionID: sessionID, block: block, orderIndex: 0)
+        waitForAsyncWrites()
 
         store.reloadRecentBlocks()
         XCTAssertEqual(store.recentBlocks.count, 1)
@@ -54,8 +71,8 @@ final class BlockStoreTests: XCTestCase {
             stage: .output
         )
 
-        let didPersist = store.recordBlock(sessionID: sessionID, block: block, orderIndex: 0)
-        XCTAssertFalse(didPersist)
+        store.recordBlock(sessionID: sessionID, block: block, orderIndex: 0)
+        waitForAsyncWrites()
 
         store.reloadRecentBlocks()
         XCTAssertTrue(store.recentBlocks.isEmpty)
@@ -78,6 +95,7 @@ final class BlockStoreTests: XCTestCase {
             store.recordBlock(sessionID: sessionID, block: block, orderIndex: i)
         }
 
+        waitForAsyncWrites()
         store.reloadRecentBlocks()
         XCTAssertEqual(store.recentBlocks.count, 3)
         // Most recent first (ORDER BY startedAt DESC)
@@ -105,8 +123,8 @@ final class BlockStoreTests: XCTestCase {
             stage: .output
         )
 
-        let didPersist = store.recordBlock(sessionID: sessionID, block: block, orderIndex: 0)
-        XCTAssertFalse(didPersist)
+        store.recordBlock(sessionID: sessionID, block: block, orderIndex: 0)
+        waitForAsyncWrites()
 
         store.reloadRecentBlocks()
         XCTAssertTrue(store.recentBlocks.isEmpty)
@@ -125,11 +143,40 @@ final class BlockStoreTests: XCTestCase {
             stage: .output
         )
 
-        XCTAssertTrue(store.recordBlock(sessionID: sessionID, block: block, orderIndex: 0))
+        store.recordBlock(sessionID: sessionID, block: block, orderIndex: 0)
+        waitForAsyncWrites()
+        store.reloadRecentBlocks()
         XCTAssertEqual(store.recentBlocks.count, 1)
 
         store.clearHistory()
         XCTAssertTrue(store.recentBlocks.isEmpty)
+    }
+
+    func testAsyncRecordBlockEventuallyReloads() throws {
+        let store = try makeStore()
+        let sessionID = store.startSession(shellPath: "/bin/zsh", workingDirectory: URL(fileURLWithPath: "/tmp"))
+
+        let block = TerminalBlockCapture(
+            commandText: "echo async",
+            outputText: "async",
+            exitCode: 0,
+            startedAt: Date(),
+            finishedAt: Date(),
+            stage: .output
+        )
+
+        store.recordBlock(sessionID: sessionID, block: block, orderIndex: 0)
+
+        // recordBlock is now async — wait for background write + main-thread reload
+        let expectation = XCTestExpectation(description: "async record and reload")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            store.reloadRecentBlocks()
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: 2)
+
+        XCTAssertEqual(store.recentBlocks.count, 1)
+        XCTAssertEqual(store.recentBlocks.first?.commandText, "echo async")
     }
 
     func testReloadRecentBlocksLimit() throws {
@@ -149,6 +196,7 @@ final class BlockStoreTests: XCTestCase {
             store.recordBlock(sessionID: sessionID, block: block, orderIndex: i)
         }
 
+        waitForAsyncWrites()
         store.reloadRecentBlocks(limit: 2)
         XCTAssertEqual(store.recentBlocks.count, 2)
     }

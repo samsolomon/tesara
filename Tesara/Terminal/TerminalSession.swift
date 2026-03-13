@@ -176,11 +176,9 @@ final class TerminalSession: ObservableObject, Identifiable {
             return
         }
 
-        let didPersist = blockStore?.recordBlock(sessionID: activeSessionID, block: activeCapture, orderIndex: blockOrderIndex) ?? false
-        if didPersist {
-            blockOrderIndex += 1
-            capturedBlockCount = blockOrderIndex
-        }
+        blockStore?.recordBlock(sessionID: activeSessionID, block: activeCapture, orderIndex: blockOrderIndex)
+        blockOrderIndex += 1
+        capturedBlockCount = blockOrderIndex
         self.activeCapture = nil
     }
 
@@ -196,5 +194,24 @@ final class TerminalSession: ObservableObject, Identifiable {
             try? FileManager.default.removeItem(at: url)
         }
         temporaryURLs.removeAll()
+    }
+
+    // MARK: - Stale Temp File Cleanup
+
+    /// Removes Tesara temp files older than the given threshold (default 24 hours).
+    /// Safe to call on launch — only deletes stale files, not those from running instances.
+    static func cleanupStaleTempFiles(olderThan threshold: TimeInterval = 86400) {
+        let tmpDir = NSTemporaryDirectory()
+        let fm = FileManager.default
+        let cutoff = Date().addingTimeInterval(-threshold)
+        guard let contents = try? fm.contentsOfDirectory(atPath: tmpDir) else { return }
+        let prefixes = ["tesara-cmd-", "tesara-zsh-", "tesara-bash-", "tesara-fish-"]
+        for entry in contents where prefixes.contains(where: { entry.hasPrefix($0) }) {
+            let path = (tmpDir as NSString).appendingPathComponent(entry)
+            guard let attrs = try? fm.attributesOfItem(atPath: path),
+                  let modified = attrs[.modificationDate] as? Date,
+                  modified < cutoff else { continue }
+            try? fm.removeItem(atPath: path)
+        }
     }
 }

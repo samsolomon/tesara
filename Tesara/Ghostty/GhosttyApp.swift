@@ -30,6 +30,14 @@ final class GhosttyApp: @unchecked Sendable {
     /// Mutated on the main thread through initialize/updateConfig.
     private(set) var terminalBehavior = TerminalBehavior()
 
+    /// Delegate for routing window management actions to the workspace.
+    /// Set in TesaraApp.onAppear after initialize().
+    @MainActor weak var actionDelegate: GhosttyActionDelegate?
+
+    /// Tracks whether we've already logged the "new window not supported" message.
+    /// Only accessed from @MainActor context (handleAction is @MainActor).
+    private var didLogNewWindowUnsupported = false
+
     private init() {}
 
     // MARK: - Lifecycle
@@ -166,14 +174,32 @@ final class GhosttyApp: @unchecked Sendable {
             // Render is handled by Metal/CAMetalLayer automatically
             return true
 
-        case GHOSTTY_ACTION_CLOSE_WINDOW,
-             GHOSTTY_ACTION_NEW_WINDOW,
-             GHOSTTY_ACTION_NEW_TAB,
-             GHOSTTY_ACTION_CLOSE_TAB,
-             GHOSTTY_ACTION_NEW_SPLIT,
-             GHOSTTY_ACTION_QUIT:
-            // Window management — will be handled in Phase 3
+        // Note: Standard shortcuts (Cmd+T, Cmd+W, Cmd+D) are handled by AppKit menu
+        // key equivalents in TesaraAppCommands before they reach GhosttySurfaceView.
+        // These handlers fire only for custom Ghostty keybindings that aren't also
+        // menu shortcuts.
+
+        case GHOSTTY_ACTION_NEW_TAB:
+            return handleNewTab(target: target)
+
+        case GHOSTTY_ACTION_NEW_SPLIT:
+            return handleNewSplit(target: target, direction: action.action.new_split)
+
+        case GHOSTTY_ACTION_CLOSE_TAB:
+            return handleCloseTab(target: target, mode: action.action.close_tab_mode)
+
+        case GHOSTTY_ACTION_CLOSE_WINDOW:
+            return handleCloseWindow()
+
+        case GHOSTTY_ACTION_NEW_WINDOW:
+            if !didLogNewWindowUnsupported {
+                LocalLogStore.shared.log("[GhosttyApp] NEW_WINDOW action not supported (single-window app)")
+                didLogNewWindowUnsupported = true
+            }
             return false
+
+        case GHOSTTY_ACTION_QUIT:
+            return handleQuit()
 
         default:
             return false
@@ -242,6 +268,93 @@ final class GhosttyApp: @unchecked Sendable {
         return true
     }
 
+    // MARK: - Window Management Action Handlers
+
+    @MainActor
+    private func handleNewTab(target: ghostty_target_s) -> Bool {
+        guard let delegate = actionDelegate else {
+            LocalLogStore.shared.log("[GhosttyApp] Action delegate not set, dropping NEW_TAB")
+            return false
+        }
+        let session = sessionFromTarget(target)
+        delegate.ghosttyNewTab(inheritingFrom: session)
+        return true
+    }
+
+    @MainActor
+    private func handleNewSplit(target: ghostty_target_s, direction: ghostty_action_split_direction_e) -> Bool {
+        guard let delegate = actionDelegate else {
+            LocalLogStore.shared.log("[GhosttyApp] Action delegate not set, dropping NEW_SPLIT")
+            return false
+        }
+        guard let session = sessionFromTarget(target) else { return false }
+
+        let splitDirection: PaneNode.SplitDirection
+        let panePosition: PaneNode.PanePosition
+
+        switch direction {
+        case GHOSTTY_SPLIT_DIRECTION_RIGHT:
+            splitDirection = .horizontal
+            panePosition = .second
+        case GHOSTTY_SPLIT_DIRECTION_LEFT:
+            splitDirection = .horizontal
+            panePosition = .first
+        case GHOSTTY_SPLIT_DIRECTION_DOWN:
+            splitDirection = .vertical
+            panePosition = .second
+        case GHOSTTY_SPLIT_DIRECTION_UP:
+            splitDirection = .vertical
+            panePosition = .first
+        default:
+            splitDirection = .horizontal
+            panePosition = .second
+        }
+
+        delegate.ghosttySplit(for: session, direction: splitDirection, newPanePosition: panePosition)
+        return true
+    }
+
+    @MainActor
+    private func handleCloseTab(target: ghostty_target_s, mode: ghostty_action_close_tab_mode_e) -> Bool {
+        guard let delegate = actionDelegate else {
+            LocalLogStore.shared.log("[GhosttyApp] Action delegate not set, dropping CLOSE_TAB")
+            return false
+        }
+        guard let session = sessionFromTarget(target) else { return false }
+
+        switch mode {
+        case GHOSTTY_ACTION_CLOSE_TAB_MODE_THIS:
+            delegate.ghosttyCloseTab(for: session)
+        case GHOSTTY_ACTION_CLOSE_TAB_MODE_OTHER:
+            delegate.ghosttyCloseOtherTabs(for: session)
+        case GHOSTTY_ACTION_CLOSE_TAB_MODE_RIGHT:
+            delegate.ghosttyCloseTabsToRight(of: session)
+        default:
+            delegate.ghosttyCloseTab(for: session)
+        }
+        return true
+    }
+
+    @MainActor
+    private func handleCloseWindow() -> Bool {
+        guard let delegate = actionDelegate else {
+            LocalLogStore.shared.log("[GhosttyApp] Action delegate not set, dropping CLOSE_WINDOW")
+            return false
+        }
+        delegate.ghosttyCloseWindow()
+        return true
+    }
+
+    @MainActor
+    private func handleQuit() -> Bool {
+        guard let delegate = actionDelegate else {
+            LocalLogStore.shared.log("[GhosttyApp] Action delegate not set, dropping QUIT")
+            return false
+        }
+        delegate.ghosttyRequestQuit()
+        return true
+    }
+
     // MARK: - Helpers
 
     private func sessionFromTarget(_ target: ghostty_target_s) -> TerminalSession? {
@@ -282,6 +395,7 @@ private func ghosttyReadClipboardCallback(
 ) -> Bool {
     // userdata is the surface's userdata (GhosttySurfaceView pointer).
     // This callback fires during tick() which runs on the main thread.
+    dispatchPrecondition(condition: .onQueue(.main))
     guard let userdata, let state else { return false }
 
     let view = Unmanaged<GhosttySurfaceView>.fromOpaque(userdata).takeUnretainedValue()
@@ -307,6 +421,7 @@ private func ghosttyWriteClipboardCallback(
     _ confirm: Bool
 ) {
     // This callback fires during tick() which runs on the main thread.
+    dispatchPrecondition(condition: .onQueue(.main))
     guard let content, count > 0 else { return }
 
     let entry = content.pointee
