@@ -19,12 +19,6 @@ struct TitleBarTabStrip: View {
         return base.opacity(opacity)
     }
 
-    private var containerStroke: Color {
-        let base = isDarkBackground ? Color.white : Color.black
-        let opacity = controlActiveState == .key ? (isDarkBackground ? 0.08 : 0.05) : (isDarkBackground ? 0.055 : 0.035)
-        return base.opacity(opacity)
-    }
-
     var body: some View {
         HStack(spacing: 2) {
             ForEach(Array(manager.tabs.enumerated()), id: \.element.id) { index, tab in
@@ -33,7 +27,7 @@ struct TitleBarTabStrip: View {
             }
 
             Rectangle()
-                .fill(containerStroke.opacity(0.8))
+                .fill((isDarkBackground ? Color.white : Color.black).opacity(controlActiveState == .key ? 0.06 : 0.04))
                 .frame(width: 1, height: 22)
                 .padding(.horizontal, 4)
 
@@ -57,15 +51,11 @@ struct TitleBarTabStrip: View {
                 isHoveringNewTab = hovering
             }
         }
-        .padding(.horizontal, 2)
-        .padding(.vertical, 2)
+        .padding(.horizontal, 1)
+        .padding(.vertical, 1)
         .background {
             RoundedRectangle(cornerRadius: 13, style: .continuous)
                 .fill(containerFill)
-                .overlay {
-                    RoundedRectangle(cornerRadius: 13, style: .continuous)
-                        .strokeBorder(containerStroke, lineWidth: 0.75)
-                }
         }
     }
 
