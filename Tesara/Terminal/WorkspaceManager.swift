@@ -266,6 +266,8 @@ final class WorkspaceManager: ObservableObject {
 
     func updatePaneRatio(splitID: UUID, ratio: CGFloat) {
         guard let tabIndex = tabs.firstIndex(where: { $0.id == activeTabID }) else { return }
+        let requestedRatio = String(format: "%.4f", Double(ratio))
+        LocalLogStore.shared.log("[SplitDrag] split=\(splitID.uuidString) requestedRatio=\(requestedRatio)")
         tabs[tabIndex].rootPane = tabs[tabIndex].rootPane.updatingRatio(splitID: splitID, ratio: ratio)
         refreshWorkspaceMetadata()
     }

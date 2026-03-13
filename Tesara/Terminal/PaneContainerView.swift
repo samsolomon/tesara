@@ -2,6 +2,7 @@ import SwiftUI
 
 struct PaneContainerView: View {
     private let dividerThickness: CGFloat = 4
+    private let dividerHitThickness: CGFloat = 18
 
     let node: PaneNode
     let theme: TerminalTheme
@@ -84,12 +85,7 @@ struct PaneContainerView: View {
             onSelectPane: onSelectPane, onUpdateRatio: onUpdateRatio,
             isSplit: true
         )
-        let divider = PaneDividerView(
-            direction: direction,
-            initialRatio: ratio,
-            totalSize: mainAxisSize,
-            onUpdateRatio: { newRatio in onUpdateRatio(splitID, newRatio) }
-        )
+        let divider = PaneDividerView(direction: direction)
         let firstPaneSize = max(0, min(mainAxisSize * ratio, mainAxisSize))
         let secondPaneSize = max(0, mainAxisSize - firstPaneSize)
 
@@ -98,13 +94,23 @@ struct PaneContainerView: View {
                 firstChild
                     .frame(width: firstPaneSize, height: containerSize.height, alignment: .topLeading)
                     .clipped()
-                divider
-                    .frame(width: dividerThickness, height: containerSize.height)
-                    .offset(x: firstPaneSize)
                 secondChild
                     .frame(width: secondPaneSize, height: containerSize.height, alignment: .topLeading)
                     .offset(x: firstPaneSize + dividerThickness)
                     .clipped()
+                divider
+                    .frame(width: dividerThickness, height: containerSize.height)
+                    .offset(x: firstPaneSize)
+                    .zIndex(10)
+                PaneDividerDragOverlay(
+                    direction: direction,
+                    initialRatio: ratio,
+                    totalSize: mainAxisSize,
+                    onUpdateRatio: { newRatio in onUpdateRatio(splitID, newRatio) }
+                )
+                .frame(width: dividerHitThickness, height: containerSize.height)
+                .offset(x: firstPaneSize - (dividerHitThickness - dividerThickness) / 2)
+                .zIndex(20)
             }
             .frame(width: containerSize.width, height: containerSize.height, alignment: .topLeading)
         } else {
@@ -112,13 +118,23 @@ struct PaneContainerView: View {
                 firstChild
                     .frame(width: containerSize.width, height: firstPaneSize, alignment: .topLeading)
                     .clipped()
-                divider
-                    .frame(width: containerSize.width, height: dividerThickness)
-                    .offset(y: firstPaneSize)
                 secondChild
                     .frame(width: containerSize.width, height: secondPaneSize, alignment: .topLeading)
                     .offset(y: firstPaneSize + dividerThickness)
                     .clipped()
+                divider
+                    .frame(width: containerSize.width, height: dividerThickness)
+                    .offset(y: firstPaneSize)
+                    .zIndex(10)
+                PaneDividerDragOverlay(
+                    direction: direction,
+                    initialRatio: ratio,
+                    totalSize: mainAxisSize,
+                    onUpdateRatio: { newRatio in onUpdateRatio(splitID, newRatio) }
+                )
+                .frame(width: containerSize.width, height: dividerHitThickness)
+                .offset(y: firstPaneSize - (dividerHitThickness - dividerThickness) / 2)
+                .zIndex(20)
             }
             .frame(width: containerSize.width, height: containerSize.height, alignment: .topLeading)
         }
@@ -140,7 +156,14 @@ private struct EditorPaneLeafView: View {
             if let editorView = session.editorView as? EditorView {
                 GeometryReader { geo in
                     EditorViewRepresentable(editorView: editorView)
+                        .onAppear {
+                            LocalLogStore.shared.log("[EditorPane] pane=\(id.uuidString) size=\(Int(geo.size.width))x\(Int(geo.size.height))")
+                            editorView.setFrameSize(geo.size)
+                            editorView.sizeDidChange(geo.size)
+                        }
                         .onChange(of: geo.size) { _, newSize in
+                            LocalLogStore.shared.log("[EditorPane] pane=\(id.uuidString) size=\(Int(newSize.width))x\(Int(newSize.height))")
+                            editorView.setFrameSize(newSize)
                             editorView.sizeDidChange(newSize)
                         }
                 }
@@ -179,7 +202,14 @@ private struct TerminalPaneLeafView: View {
             if let surfaceView = session.surfaceView {
                 GeometryReader { geo in
                     GhosttySurfaceRepresentable(surfaceView: surfaceView)
+                        .onAppear {
+                            LocalLogStore.shared.log("[TerminalPane] pane=\(id.uuidString) size=\(Int(geo.size.width))x\(Int(geo.size.height))")
+                            surfaceView.setFrameSize(geo.size)
+                            surfaceView.sizeDidChange(geo.size)
+                        }
                         .onChange(of: geo.size) { _, newSize in
+                            LocalLogStore.shared.log("[TerminalPane] pane=\(id.uuidString) size=\(Int(newSize.width))x\(Int(newSize.height))")
+                            surfaceView.setFrameSize(newSize)
                             surfaceView.sizeDidChange(newSize)
                         }
                 }

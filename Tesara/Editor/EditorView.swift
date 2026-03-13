@@ -5,6 +5,9 @@ import QuartzCore
 /// NSView hosting a Metal-rendered rich text editor.
 /// Counterpart to GhosttySurfaceView for the editor pane type.
 class EditorView: NSView, NSTextInputClient {
+    override var intrinsicContentSize: NSSize {
+        NSSize(width: NSView.noIntrinsicMetric, height: NSView.noIntrinsicMetric)
+    }
 
     // MARK: - Public State
 
@@ -78,6 +81,10 @@ class EditorView: NSView, NSTextInputClient {
 
         self.session = session
         self.wantsLayer = true
+        setContentHuggingPriority(.defaultLow, for: .horizontal)
+        setContentHuggingPriority(.defaultLow, for: .vertical)
+        setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        setContentCompressionResistancePriority(.defaultLow, for: .vertical)
 
         applyTheme(theme)
 

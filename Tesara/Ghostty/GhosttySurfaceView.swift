@@ -6,6 +6,9 @@ import Carbon
 /// Direct counterpart to Ghostty's `SurfaceView_AppKit.swift`. The session owns this view —
 /// SwiftUI never creates or destroys it (see `GhosttySurfaceRepresentable`).
 class GhosttySurfaceView: NSView, NSTextInputClient {
+    override var intrinsicContentSize: NSSize {
+        NSSize(width: NSView.noIntrinsicMetric, height: NSView.noIntrinsicMetric)
+    }
 
     // MARK: - Public State
 
@@ -40,6 +43,10 @@ class GhosttySurfaceView: NSView, NSTextInputClient {
     init(app: ghostty_app_t, config: GhosttySurfaceConfig) {
         super.init(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
         wantsLayer = true
+        setContentHuggingPriority(.defaultLow, for: .horizontal)
+        setContentHuggingPriority(.defaultLow, for: .vertical)
+        setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        setContentCompressionResistancePriority(.defaultLow, for: .vertical)
 
         // Register for screen-change notifications before surface creation
         NotificationCenter.default.addObserver(
@@ -115,6 +122,10 @@ class GhosttySurfaceView: NSView, NSTextInputClient {
     private func setSurfaceSize(width: UInt32, height: UInt32) {
         guard let surface else { return }
         ghostty_surface_set_size(surface, width, height)
+        let size = ghostty_surface_size(surface)
+        LocalLogStore.shared.log(
+            "[GhosttyResize] requestPx=\(width)x\(height) actualPx=\(size.width_px)x\(size.height_px) cols=\(size.columns) rows=\(size.rows)"
+        )
     }
 
     override func viewDidChangeBackingProperties() {
