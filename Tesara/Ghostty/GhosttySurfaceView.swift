@@ -554,13 +554,9 @@ class GhosttySurfaceView: NSView, NSTextInputClient {
         // Native scroll commands
         switch selector {
         case #selector(moveToBeginningOfDocument(_:)):
-            guard let surface else { return }
-            let action = "scroll_to_top"
-            ghostty_surface_binding_action(surface, action, UInt(action.count))
+            performBindingAction("scroll_to_top")
         case #selector(moveToEndOfDocument(_:)):
-            guard let surface else { return }
-            let action = "scroll_to_bottom"
-            ghostty_surface_binding_action(surface, action, UInt(action.count))
+            performBindingAction("scroll_to_bottom")
         default:
             break
         }
@@ -580,6 +576,21 @@ class GhosttySurfaceView: NSView, NSTextInputClient {
         } else if clearIfNeeded {
             ghostty_surface_preedit(surface, nil, 0)
         }
+    }
+
+    // MARK: - Edit Menu Actions
+
+    @IBAction func copy(_ sender: Any?) {
+        performBindingAction("copy_to_clipboard")
+    }
+
+    @IBAction func paste(_ sender: Any?) {
+        performBindingAction("paste_from_clipboard")
+    }
+
+    private func performBindingAction(_ action: String) {
+        guard let surface else { return }
+        ghostty_surface_binding_action(surface, action, UInt(action.utf8.count))
     }
 
     // MARK: - Mouse Input

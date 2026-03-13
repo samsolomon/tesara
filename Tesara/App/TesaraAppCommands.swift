@@ -28,12 +28,19 @@ struct TesaraAppCommands: Commands {
             }
             .keyboardShortcut("t")
 
+            Button("Close Pane") {
+                if let id = manager.activePaneID {
+                    manager.closePane(id: id)
+                }
+            }
+            .keyboardShortcut("w")
+
             Button("Close Tab") {
                 if let id = manager.activeTabID {
                     manager.closeTab(id: id)
                 }
             }
-            .keyboardShortcut("w")
+            .keyboardShortcut("w", modifiers: [.command, .shift])
         }
 
         CommandMenu("Shell") {
