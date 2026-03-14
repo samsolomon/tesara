@@ -231,32 +231,24 @@ private struct AppearanceSettingsPane: View {
     var body: some View {
         Form {
             Section {
-                Picker("Theme", selection: $settings.themeID) {
+                Picker("Color Mode", selection: $settings.colorMode) {
+                    ForEach(ColorMode.allCases) { mode in
+                        Text(mode.title).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+
+                Picker("Light Theme", selection: $settings.lightThemeID) {
                     themePickerOptions
                 }
-                .disabled(settings.autoThemeSwitching)
+
+                Picker("Dark Theme", selection: $settings.darkThemeID) {
+                    themePickerOptions
+                }
 
                 HStack {
                     Button("Import JSON", action: onImportTheme)
                     Button("Export Current", action: onExportTheme)
-                }
-
-                Toggle("Auto switch with system appearance", isOn: $settings.autoThemeSwitching)
-
-                if settings.autoThemeSwitching {
-                    Picker("Light Theme", selection: Binding(
-                        get: { settings.lightThemeID ?? settings.themeID },
-                        set: { settings.lightThemeID = $0 }
-                    )) {
-                        themePickerOptions
-                    }
-
-                    Picker("Dark Theme", selection: Binding(
-                        get: { settings.darkThemeID ?? settings.themeID },
-                        set: { settings.darkThemeID = $0 }
-                    )) {
-                        themePickerOptions
-                    }
                 }
             } header: {
                 Text("Theme")

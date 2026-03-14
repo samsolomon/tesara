@@ -5,7 +5,8 @@ final class TesaraTests: XCTestCase {
     func testDefaultSettingsUseOxideTheme() {
         let settings = AppSettings.default
 
-        XCTAssertEqual(settings.themeID, BuiltInTheme.oxide.id)
+        XCTAssertEqual(settings.colorMode, .system)
+        XCTAssertEqual(settings.darkThemeID, BuiltInTheme.oxide.id)
         XCTAssertEqual(settings.defaultWorkingDirectory.path, FileManager.default.homeDirectoryForCurrentUser.path)
     }
 

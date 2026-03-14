@@ -10,6 +10,8 @@ final class SettingsStore: ObservableObject {
         }
     }
 
+    @Published var isDark: Bool = true
+
     let configDirectory: URL
     private var watcher: ConfigFileWatcher?
     private var isSuppressingPersist = false
@@ -57,11 +59,19 @@ final class SettingsStore: ObservableObject {
     }
 
     var activeTheme: TerminalTheme {
-        availableThemes.first(where: { $0.id == settings.themeID }) ?? BuiltInTheme.oxide.theme
+        let id: String = switch settings.colorMode {
+        case .light: settings.lightThemeID
+        case .dark: settings.darkThemeID
+        case .system: isDark ? settings.darkThemeID : settings.lightThemeID
+        }
+        return availableThemes.first { $0.id == id } ?? BuiltInTheme.oxide.theme
     }
 
     struct GhosttyConfigInputs: Equatable {
-        let themeID: String
+        let colorMode: ColorMode
+        let lightThemeID: String
+        let darkThemeID: String
+        let isDark: Bool
         let fontFamily: String
         let fontSize: Double
         let cursorStyle: CursorStyle
@@ -79,7 +89,10 @@ final class SettingsStore: ObservableObject {
 
     var ghosttyConfigInputs: GhosttyConfigInputs {
         GhosttyConfigInputs(
-            themeID: settings.themeID,
+            colorMode: settings.colorMode,
+            lightThemeID: settings.lightThemeID,
+            darkThemeID: settings.darkThemeID,
+            isDark: isDark,
             fontFamily: settings.fontFamily,
             fontSize: settings.fontSize,
             cursorStyle: settings.cursorStyle,
@@ -145,19 +158,25 @@ final class SettingsStore: ObservableObject {
         } else {
             settings.importedThemes.append(importedTheme)
         }
-        settings.themeID = imported.id
+        // Apply imported theme to the currently active slot
+        switch settings.colorMode {
+        case .light:
+            settings.lightThemeID = imported.id
+        case .dark:
+            settings.darkThemeID = imported.id
+        case .system:
+            if isDark {
+                settings.darkThemeID = imported.id
+            } else {
+                settings.lightThemeID = imported.id
+            }
+        }
     }
 
     func exportActiveTheme() throws -> Data {
         try JSONEncoder().encode(activeTheme)
     }
 
-    func handleAppearanceChange(isDark: Bool) {
-        guard settings.autoThemeSwitching else { return }
-        let newID = isDark ? settings.darkThemeID : settings.lightThemeID
-        guard let newID, newID != settings.themeID else { return }
-        settings.themeID = newID
-    }
 
     private func persist() {
         pendingWriteCount += 1

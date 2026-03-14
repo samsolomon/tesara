@@ -8,7 +8,7 @@ struct AppSettings: Codable, Equatable {
     var schemaVersion: Int
     var fontFamily: String
     var fontSize: Double
-    var themeID: String
+    var colorMode: ColorMode
     var importedThemes: [ImportedTheme]
     var shellPath: String
     var defaultWorkingDirectoryBookmark: Data?
@@ -24,9 +24,8 @@ struct AppSettings: Codable, Equatable {
     var inputBarEnabled: Bool
     var cursorStyle: CursorStyle
     var cursorBlink: Bool
-    var autoThemeSwitching: Bool
-    var lightThemeID: String?
-    var darkThemeID: String?
+    var lightThemeID: String
+    var darkThemeID: String
     var windowOpacity: Double
     var windowBlur: Bool
     var windowPaddingX: Int
@@ -43,7 +42,7 @@ struct AppSettings: Codable, Equatable {
         schemaVersion: Int = currentSchemaVersion,
         fontFamily: String = "SF Mono",
         fontSize: Double = 13,
-        themeID: String = BuiltInTheme.oxide.id,
+        colorMode: ColorMode = .system,
         importedThemes: [ImportedTheme] = [],
         shellPath: String = AppSettings.defaultShellPath,
         defaultWorkingDirectoryBookmark: Data? = nil,
@@ -59,9 +58,8 @@ struct AppSettings: Codable, Equatable {
         inputBarEnabled: Bool = true,
         cursorStyle: CursorStyle = .bar,
         cursorBlink: Bool = true,
-        autoThemeSwitching: Bool = false,
-        lightThemeID: String? = nil,
-        darkThemeID: String? = nil,
+        lightThemeID: String = BuiltInTheme.paper.id,
+        darkThemeID: String = BuiltInTheme.oxide.id,
         windowOpacity: Double = 1.0,
         windowBlur: Bool = false,
         windowPaddingX: Int = 0,
@@ -77,7 +75,7 @@ struct AppSettings: Codable, Equatable {
         self.schemaVersion = schemaVersion
         self.fontFamily = fontFamily
         self.fontSize = fontSize
-        self.themeID = themeID
+        self.colorMode = colorMode
         self.importedThemes = importedThemes
         self.shellPath = shellPath
         self.defaultWorkingDirectoryBookmark = defaultWorkingDirectoryBookmark
@@ -93,7 +91,6 @@ struct AppSettings: Codable, Equatable {
         self.inputBarEnabled = inputBarEnabled
         self.cursorStyle = cursorStyle
         self.cursorBlink = cursorBlink
-        self.autoThemeSwitching = autoThemeSwitching
         self.lightThemeID = lightThemeID
         self.darkThemeID = darkThemeID
         self.windowOpacity = windowOpacity
@@ -139,7 +136,7 @@ struct AppSettings: Codable, Equatable {
         case schemaVersion
         case fontFamily
         case fontSize
-        case themeID
+        case colorMode
         case importedThemes
         case shellPath
         case defaultWorkingDirectoryBookmark
@@ -155,7 +152,7 @@ struct AppSettings: Codable, Equatable {
         case inputBarEnabled
         case cursorStyle
         case cursorBlink
-        case autoThemeSwitching
+        case autoThemeSwitching // legacy decode only
         case lightThemeID
         case darkThemeID
         case windowOpacity
@@ -177,7 +174,13 @@ struct AppSettings: Codable, Equatable {
         schemaVersion = try container.decodeIfPresent(Int.self, forKey: .schemaVersion) ?? 1
         fontFamily = try container.decodeIfPresent(String.self, forKey: .fontFamily) ?? "SF Mono"
         fontSize = try container.decodeIfPresent(Double.self, forKey: .fontSize) ?? 13
-        themeID = try container.decodeIfPresent(String.self, forKey: .themeID) ?? BuiltInTheme.oxide.id
+        if let decoded = try container.decodeIfPresent(ColorMode.self, forKey: .colorMode) {
+            colorMode = decoded
+        } else if let legacy = try container.decodeIfPresent(Bool.self, forKey: .autoThemeSwitching), legacy {
+            colorMode = .system
+        } else {
+            colorMode = .system
+        }
         importedThemes = try container.decodeIfPresent([ImportedTheme].self, forKey: .importedThemes) ?? []
         shellPath = try container.decodeIfPresent(String.self, forKey: .shellPath) ?? AppSettings.defaultShellPath
         defaultWorkingDirectoryBookmark = try container.decodeIfPresent(Data.self, forKey: .defaultWorkingDirectoryBookmark)
@@ -193,9 +196,8 @@ struct AppSettings: Codable, Equatable {
         inputBarEnabled = try container.decodeIfPresent(Bool.self, forKey: .inputBarEnabled) ?? true
         cursorStyle = try container.decodeIfPresent(CursorStyle.self, forKey: .cursorStyle) ?? .bar
         cursorBlink = try container.decodeIfPresent(Bool.self, forKey: .cursorBlink) ?? true
-        autoThemeSwitching = try container.decodeIfPresent(Bool.self, forKey: .autoThemeSwitching) ?? false
-        lightThemeID = try container.decodeIfPresent(String.self, forKey: .lightThemeID)
-        darkThemeID = try container.decodeIfPresent(String.self, forKey: .darkThemeID)
+        lightThemeID = try container.decodeIfPresent(String.self, forKey: .lightThemeID) ?? BuiltInTheme.paper.id
+        darkThemeID = try container.decodeIfPresent(String.self, forKey: .darkThemeID) ?? BuiltInTheme.oxide.id
         windowOpacity = try container.decodeIfPresent(Double.self, forKey: .windowOpacity) ?? 1.0
         windowBlur = try container.decodeIfPresent(Bool.self, forKey: .windowBlur) ?? false
         windowPaddingX = try container.decodeIfPresent(Int.self, forKey: .windowPaddingX) ?? 0
@@ -207,6 +209,42 @@ struct AppSettings: Codable, Equatable {
         copyOnSelect = try container.decodeIfPresent(Bool.self, forKey: .copyOnSelect) ?? false
         clipboardTrimTrailingSpaces = try container.decodeIfPresent(Bool.self, forKey: .clipboardTrimTrailingSpaces) ?? false
         bellMode = try container.decodeIfPresent(BellMode.self, forKey: .bellMode) ?? .system
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(schemaVersion, forKey: .schemaVersion)
+        try container.encode(fontFamily, forKey: .fontFamily)
+        try container.encode(fontSize, forKey: .fontSize)
+        try container.encode(colorMode, forKey: .colorMode)
+        try container.encode(importedThemes, forKey: .importedThemes)
+        try container.encode(shellPath, forKey: .shellPath)
+        try container.encodeIfPresent(defaultWorkingDirectoryBookmark, forKey: .defaultWorkingDirectoryBookmark)
+        try container.encode(keyBindingOverrides, forKey: .keyBindingOverrides)
+        try container.encode(updateChecksEnabled, forKey: .updateChecksEnabled)
+        try container.encode(localLoggingEnabled, forKey: .localLoggingEnabled)
+        try container.encode(historyCaptureEnabled, forKey: .historyCaptureEnabled)
+        try container.encode(pasteProtectionMode, forKey: .pasteProtectionMode)
+        try container.encode(confirmOnCloseRunningSession, forKey: .confirmOnCloseRunningSession)
+        try container.encode(tabTitleMode, forKey: .tabTitleMode)
+        try container.encode(dimInactiveSplits, forKey: .dimInactiveSplits)
+        try container.encode(inactiveSplitDimAmount, forKey: .inactiveSplitDimAmount)
+        try container.encode(inputBarEnabled, forKey: .inputBarEnabled)
+        try container.encode(cursorStyle, forKey: .cursorStyle)
+        try container.encode(cursorBlink, forKey: .cursorBlink)
+        try container.encode(lightThemeID, forKey: .lightThemeID)
+        try container.encode(darkThemeID, forKey: .darkThemeID)
+        try container.encode(windowOpacity, forKey: .windowOpacity)
+        try container.encode(windowBlur, forKey: .windowBlur)
+        try container.encode(windowPaddingX, forKey: .windowPaddingX)
+        try container.encode(windowPaddingY, forKey: .windowPaddingY)
+        try container.encode(fontLigatures, forKey: .fontLigatures)
+        try container.encode(fontThicken, forKey: .fontThicken)
+        try container.encode(optionAsAlt, forKey: .optionAsAlt)
+        try container.encode(scrollbackLines, forKey: .scrollbackLines)
+        try container.encode(copyOnSelect, forKey: .copyOnSelect)
+        try container.encode(clipboardTrimTrailingSpaces, forKey: .clipboardTrimTrailingSpaces)
+        try container.encode(bellMode, forKey: .bellMode)
     }
 }
 
@@ -326,6 +364,22 @@ enum BellMode: String, Codable, CaseIterable, Identifiable {
         case .none: "None"
         case .system: "System Sound"
         case .visual: "Visual Flash"
+        }
+    }
+}
+
+enum ColorMode: String, Codable, CaseIterable, Identifiable {
+    case light
+    case dark
+    case system
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .light: "Light"
+        case .dark: "Dark"
+        case .system: "System"
         }
     }
 }
@@ -487,7 +541,7 @@ struct KeyShortcut: Codable, Equatable {
 enum ConfigKey {
     static let fontFamily = "font-family"
     static let fontSize = "font-size"
-    static let theme = "theme"
+    static let colorMode = "color-mode"
     static let fontLigatures = "font-ligatures"
     static let fontThicken = "font-thicken"
     static let cursorStyle = "cursor-style"
@@ -496,7 +550,6 @@ enum ConfigKey {
     static let windowBlur = "window-blur"
     static let windowPaddingX = "window-padding-x"
     static let windowPaddingY = "window-padding-y"
-    static let autoThemeSwitching = "auto-theme-switching"
     static let lightTheme = "light-theme"
     static let darkTheme = "dark-theme"
     static let shellPath = "shell-path"

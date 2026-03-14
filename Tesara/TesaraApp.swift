@@ -22,6 +22,7 @@ struct TesaraApp: App {
                 .environmentObject(settingsOpenCoordinator)
                 .frame(minWidth: minimumWindowSize.width, minHeight: minimumWindowSize.height)
                 .onAppear {
+                    settingsStore.isDark = colorScheme == .dark
                     updaterController.updater.automaticallyChecksForUpdates = settingsStore.settings.updateChecksEnabled
                     blockStore.setHistoryCaptureEnabled(settingsStore.settings.historyCaptureEnabled)
                     LocalLogStore.shared.setEnabled(settingsStore.settings.localLoggingEnabled)
@@ -71,7 +72,7 @@ struct TesaraApp: App {
                     )
                 }
                 .onChange(of: colorScheme) {
-                    settingsStore.handleAppearanceChange(isDark: colorScheme == .dark)
+                    settingsStore.isDark = colorScheme == .dark
                 }
                 .onChange(of: settingsStore.settings.windowBlur) {
                     applyWindowBlur(settingsStore.settings.windowBlur)

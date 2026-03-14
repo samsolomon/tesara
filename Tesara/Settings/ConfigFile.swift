@@ -28,7 +28,9 @@ enum ConfigFile {
         lines.append("# Appearance")
         lines.append("\(K.fontFamily) = \(settings.fontFamily)")
         lines.append("\(K.fontSize) = \(fmt(settings.fontSize))")
-        lines.append("\(K.theme) = \(settings.themeID)")
+        lines.append("\(K.colorMode) = \(settings.colorMode.rawValue)")
+        lines.append("\(K.lightTheme) = \(settings.lightThemeID)")
+        lines.append("\(K.darkTheme) = \(settings.darkThemeID)")
         lines.append("\(K.fontLigatures) = \(settings.fontLigatures)")
         lines.append("\(K.fontThicken) = \(settings.fontThicken)")
         lines.append("")
@@ -41,11 +43,6 @@ enum ConfigFile {
         lines.append("\(K.windowBlur) = \(settings.windowBlur)")
         lines.append("\(K.windowPaddingX) = \(settings.windowPaddingX)")
         lines.append("\(K.windowPaddingY) = \(settings.windowPaddingY)")
-        lines.append("")
-        lines.append("# Theme switching")
-        lines.append("\(K.autoThemeSwitching) = \(settings.autoThemeSwitching)")
-        lines.append("\(K.lightTheme) = \(settings.lightThemeID ?? "")")
-        lines.append("\(K.darkTheme) = \(settings.darkThemeID ?? "")")
         lines.append("")
         lines.append("# Terminal")
         lines.append("\(K.shellPath) = \(settings.shellPath)")
@@ -117,7 +114,14 @@ enum ConfigFile {
 
         settings.fontFamily = nonEmpty(K.fontFamily) ?? d.fontFamily
         settings.fontSize = double(K.fontSize, d.fontSize)
-        settings.themeID = nonEmpty(K.theme) ?? d.themeID
+        // color-mode: try new key, fall back to legacy auto-theme-switching
+        if let modeStr = nonEmpty(K.colorMode), let mode = ColorMode(rawValue: modeStr) {
+            settings.colorMode = mode
+        } else if bool("auto-theme-switching", false) {
+            settings.colorMode = .system
+        } else {
+            settings.colorMode = d.colorMode
+        }
         settings.fontLigatures = bool(K.fontLigatures, d.fontLigatures)
         settings.fontThicken = bool(K.fontThicken, d.fontThicken)
 
@@ -129,9 +133,8 @@ enum ConfigFile {
         settings.windowPaddingX = int(K.windowPaddingX, d.windowPaddingX)
         settings.windowPaddingY = int(K.windowPaddingY, d.windowPaddingY)
 
-        settings.autoThemeSwitching = bool(K.autoThemeSwitching, d.autoThemeSwitching)
-        settings.lightThemeID = nonEmpty(K.lightTheme)
-        settings.darkThemeID = nonEmpty(K.darkTheme)
+        settings.lightThemeID = nonEmpty(K.lightTheme) ?? d.lightThemeID
+        settings.darkThemeID = nonEmpty(K.darkTheme) ?? d.darkThemeID
 
         settings.shellPath = nonEmpty(K.shellPath) ?? d.shellPath
         settings.optionAsAlt = enumVal(K.optionAsAlt, d.optionAsAlt)

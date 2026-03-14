@@ -13,7 +13,7 @@ final class SettingsStoreTests: XCTestCase {
 
     func testDefaultSettingsAreApplied() {
         let store = makeStore()
-        XCTAssertEqual(store.settings.themeID, BuiltInTheme.oxide.id)
+        XCTAssertEqual(store.settings.colorMode, .system)
         XCTAssertEqual(store.settings.fontFamily, "SF Mono")
         XCTAssertEqual(store.settings.fontSize, 13)
         XCTAssertTrue(store.settings.historyCaptureEnabled)
@@ -24,9 +24,8 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(store.settings.inactiveSplitDimAmount, 0.3, accuracy: 0.0001)
         XCTAssertTrue(store.settings.inputBarEnabled)
         XCTAssertEqual(store.settings.cursorStyle, .bar)
-        XCTAssertFalse(store.settings.autoThemeSwitching)
-        XCTAssertNil(store.settings.lightThemeID)
-        XCTAssertNil(store.settings.darkThemeID)
+        XCTAssertEqual(store.settings.lightThemeID, BuiltInTheme.paper.id)
+        XCTAssertEqual(store.settings.darkThemeID, BuiltInTheme.oxide.id)
         XCTAssertEqual(store.settings.windowOpacity, 1.0)
         XCTAssertFalse(store.settings.windowBlur)
         XCTAssertEqual(store.settings.windowPaddingX, 0)
@@ -47,7 +46,7 @@ final class SettingsStoreTests: XCTestCase {
         let defaults = UserDefaults(suiteName: suiteName)!
 
         let store1 = SettingsStore(configDirectory: tempDir, defaults: defaults)
-        store1.settings.themeID = BuiltInTheme.atlas.id
+        store1.settings.colorMode = .dark
         store1.settings.fontSize = 16
         store1.settings.historyCaptureEnabled = false
         store1.settings.pasteProtectionMode = .never
@@ -57,7 +56,6 @@ final class SettingsStoreTests: XCTestCase {
         store1.settings.inactiveSplitDimAmount = 0.16
         store1.settings.inputBarEnabled = false
         store1.settings.cursorStyle = .block
-        store1.settings.autoThemeSwitching = true
         store1.settings.lightThemeID = "light-theme"
         store1.settings.darkThemeID = "dark-theme"
         store1.settings.windowOpacity = 0.85
@@ -73,7 +71,7 @@ final class SettingsStoreTests: XCTestCase {
         store1.settings.bellMode = .visual
 
         let store2 = SettingsStore(configDirectory: tempDir, defaults: defaults)
-        XCTAssertEqual(store2.settings.themeID, BuiltInTheme.atlas.id)
+        XCTAssertEqual(store2.settings.colorMode, .dark)
         XCTAssertEqual(store2.settings.fontSize, 16)
         XCTAssertFalse(store2.settings.historyCaptureEnabled)
         XCTAssertEqual(store2.settings.pasteProtectionMode, .never)
@@ -83,7 +81,6 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(store2.settings.inactiveSplitDimAmount, 0.16, accuracy: 0.0001)
         XCTAssertFalse(store2.settings.inputBarEnabled)
         XCTAssertEqual(store2.settings.cursorStyle, .block)
-        XCTAssertTrue(store2.settings.autoThemeSwitching)
         XCTAssertEqual(store2.settings.lightThemeID, "light-theme")
         XCTAssertEqual(store2.settings.darkThemeID, "dark-theme")
         XCTAssertEqual(store2.settings.windowOpacity, 0.85, accuracy: 0.0001)
@@ -123,9 +120,9 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(settings.inactiveSplitDimAmount, 0.3, accuracy: 0.0001)
         XCTAssertTrue(settings.inputBarEnabled)
         XCTAssertEqual(settings.cursorStyle, .bar)
-        XCTAssertFalse(settings.autoThemeSwitching)
-        XCTAssertNil(settings.lightThemeID)
-        XCTAssertNil(settings.darkThemeID)
+        XCTAssertEqual(settings.colorMode, .system)
+        XCTAssertEqual(settings.lightThemeID, BuiltInTheme.paper.id)
+        XCTAssertEqual(settings.darkThemeID, BuiltInTheme.oxide.id)
         XCTAssertEqual(settings.windowOpacity, 1.0)
         XCTAssertFalse(settings.windowBlur)
         XCTAssertEqual(settings.windowPaddingX, 0)
@@ -147,20 +144,21 @@ final class SettingsStoreTests: XCTestCase {
 
         var legacySettings = AppSettings.default
         legacySettings.fontSize = 18
-        legacySettings.themeID = BuiltInTheme.atlas.id
+        legacySettings.darkThemeID = BuiltInTheme.atlas.id
         let data = try! JSONEncoder().encode(legacySettings)
         defaults.set(data, forKey: "tesara.app-settings")
 
         let store = SettingsStore(configDirectory: tempDir, defaults: defaults)
         XCTAssertEqual(store.settings.fontSize, 18)
-        XCTAssertEqual(store.settings.themeID, BuiltInTheme.atlas.id)
+        XCTAssertEqual(store.settings.darkThemeID, BuiltInTheme.atlas.id)
         XCTAssertNil(defaults.data(forKey: "tesara.app-settings"))
         XCTAssertNotNil(ConfigFile.readConfigFile(from: tempDir))
     }
 
     func testActiveThemeFallsBackToOxide() {
         let store = makeStore()
-        store.settings.themeID = "nonexistent-theme"
+        store.settings.darkThemeID = "nonexistent-theme"
+        store.settings.colorMode = .dark
         XCTAssertEqual(store.activeTheme.id, BuiltInTheme.oxide.id)
     }
 
@@ -186,8 +184,9 @@ final class SettingsStoreTests: XCTestCase {
             brightCyan: "#00FFFF", brightWhite: "#FFFFFF"
         )
 
+        store.settings.colorMode = .dark
         try store.importTheme(from: JSONEncoder().encode(customTheme))
-        XCTAssertEqual(store.settings.themeID, "test-custom")
+        XCTAssertEqual(store.settings.darkThemeID, "test-custom")
         XCTAssertEqual(store.activeTheme.name, "Test Custom")
         XCTAssertEqual(store.availableThemes.count, BuiltInTheme.allCases.count + 1)
 
