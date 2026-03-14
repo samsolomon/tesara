@@ -239,9 +239,41 @@ private struct AppearanceSettingsPane: View {
     let onImportTheme: () -> Void
     let onExportTheme: () -> Void
 
+    private var builtInThemes: [TerminalTheme] {
+        themes.filter { !$0.id.hasPrefix("ghostty-") && !importedIDs.contains($0.id) }
+    }
+
+    private var ghosttyThemes: [TerminalTheme] {
+        themes.filter { $0.id.hasPrefix("ghostty-") }
+    }
+
+    private var importedThemes: [TerminalTheme] {
+        themes.filter { importedIDs.contains($0.id) }
+    }
+
+    private var importedIDs: Set<String> {
+        Set(themes.filter { !$0.id.hasPrefix("ghostty-") && !BuiltInTheme.allCases.map(\.id).contains($0.id) }.map(\.id))
+    }
+
     private var themePickerOptions: some View {
-        ForEach(themes) { theme in
-            Text(theme.name).tag(theme.id)
+        Group {
+            Section("Tesara") {
+                ForEach(builtInThemes) { theme in
+                    Text(theme.name).tag(theme.id)
+                }
+            }
+            Section("Community") {
+                ForEach(ghosttyThemes) { theme in
+                    Text(theme.name).tag(theme.id)
+                }
+            }
+            if !importedThemes.isEmpty {
+                Section("Imported") {
+                    ForEach(importedThemes) { theme in
+                        Text(theme.name).tag(theme.id)
+                    }
+                }
+            }
         }
     }
 

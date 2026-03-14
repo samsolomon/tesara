@@ -92,6 +92,8 @@
 		F450422C045AE78E7D5486FA /* SettingsOpenCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52DF67F11D839C0249AC4321 /* SettingsOpenCoordinator.swift */; };
 		F75BBFA5351351FD98A4759A /* SyntaxHighlighter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 924C14E8FC639F5AB09E6153 /* SyntaxHighlighter.swift */; };
 		FA96111B4FCCEF18236CA364 /* TerminalIntegration in Resources */ = {isa = PBXBuildFile; fileRef = 2292F5BCC3AC767DAD9619D7 /* TerminalIntegration */; };
+		AABB001122334455GHOSTTY01 /* GhosttyThemeLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB001122334455GHOSTTY02 /* GhosttyThemeLoader.swift */; };
+		AABB001122334455GHOSTTY03 /* GhosttyThemes in Resources */ = {isa = PBXBuildFile; fileRef = AABB001122334455GHOSTTY04 /* GhosttyThemes */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -123,6 +125,8 @@
 		1EE22681A74E38D510DFCDA3 /* IOSurface.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOSurface.framework; path = System/Library/Frameworks/IOSurface.framework; sourceTree = SDKROOT; };
 		21107043389C2E4E7598644C /* TextStorageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextStorageTests.swift; sourceTree = "<group>"; };
 		2292F5BCC3AC767DAD9619D7 /* TerminalIntegration */ = {isa = PBXFileReference; lastKnownFileType = folder; name = TerminalIntegration; path = Tesara/Resources/TerminalIntegration; sourceTree = SOURCE_ROOT; };
+		AABB001122334455GHOSTTY02 /* GhosttyThemeLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhosttyThemeLoader.swift; sourceTree = "<group>"; };
+		AABB001122334455GHOSTTY04 /* GhosttyThemes */ = {isa = PBXFileReference; lastKnownFileType = folder; name = GhosttyThemes; path = Tesara/Resources/GhosttyThemes; sourceTree = SOURCE_ROOT; };
 		230B62F5C9074F2BEC567B40 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		26ECE9C4FFC5F7D34E633F8D /* EditorRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorRenderer.swift; sourceTree = "<group>"; };
 		2F5F36845B3552C4B30F0135 /* KeyBindingDispatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyBindingDispatcher.swift; sourceTree = "<group>"; };
@@ -219,6 +223,7 @@
 			isa = PBXGroup;
 			children = (
 				B8C0E5566A3C23FA6CFC0EB2 /* BuiltInTheme.swift */,
+				AABB001122334455GHOSTTY02 /* GhosttyThemeLoader.swift */,
 				9BB4D282162AFDF0A2DB5D51 /* TerminalTheme.swift */,
 			);
 			path = Theme;
@@ -310,6 +315,7 @@
 		D2FD19F036CF21642B166830 = {
 			isa = PBXGroup;
 			children = (
+				AABB001122334455GHOSTTY04 /* GhosttyThemes */,
 				2292F5BCC3AC767DAD9619D7 /* TerminalIntegration */,
 				C2D544A7AD3135CE00E10F2F /* Tesara */,
 				DD4AAB2F3096D1C59637D82F /* TesaraTests */,
@@ -487,6 +493,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AABB001122334455GHOSTTY03 /* GhosttyThemes in Resources */,
 				FA96111B4FCCEF18236CA364 /* TerminalIntegration in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -535,6 +542,7 @@
 				4D81B97C370955E3A0CEEBC5 /* FixedPitchFontPicker.swift in Sources */,
 				557CAC20FEDDC988A2A62617 /* GhosttyApp.swift in Sources */,
 				20E83390D91A14BBAFD615CC /* GhosttyConfig.swift in Sources */,
+				AABB001122334455GHOSTTY01 /* GhosttyThemeLoader.swift in Sources */,
 				04C5D01461574B2DC70B2976 /* GhosttyInput.swift in Sources */,
 				8BA932E6071B80EC1738CFF7 /* GhosttySurfaceConfig.swift in Sources */,
 				A5607FF9E3A43338204C259B /* GhosttySurfaceRepresentable.swift in Sources */,

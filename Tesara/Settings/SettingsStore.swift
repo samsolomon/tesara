@@ -55,7 +55,7 @@ final class SettingsStore: ObservableObject {
     }
 
     var availableThemes: [TerminalTheme] {
-        BuiltInTheme.allCases.map(\.theme) + settings.importedThemes.map(\.theme)
+        BuiltInTheme.allCases.map(\.theme) + GhosttyThemeLoader.themes + settings.importedThemes.map(\.theme)
     }
 
     var activeTheme: TerminalTheme {
