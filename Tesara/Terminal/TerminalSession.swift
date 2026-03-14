@@ -38,6 +38,8 @@ final class TerminalSession: ObservableObject, Identifiable {
     init() {}
 
 #if DEBUG
+    var onSendTextForTesting: ((String) -> Void)?
+
     func setStatusForTesting(_ status: Status) {
         self.status = status
     }
@@ -94,6 +96,9 @@ final class TerminalSession: ObservableObject, Identifiable {
 
     func send(text: String) {
         guard !text.isEmpty else { return }
+#if DEBUG
+        onSendTextForTesting?(text)
+#endif
         guard let surface = surfaceView?.surface else { return }
         text.withCString { ptr in
             ghostty_surface_text(surface, ptr, UInt(text.utf8.count))

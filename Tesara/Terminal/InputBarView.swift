@@ -21,6 +21,7 @@ final class InputBarState: ObservableObject {
         editorSession.createView(theme: theme, fontFamily: fontFamily, fontSize: fontSize)
         if let view = editorSession.editorView as? EditorView {
             view.delegate = keyHandler
+            view.scrollbarDisabled = true
             editorView = view
         }
 

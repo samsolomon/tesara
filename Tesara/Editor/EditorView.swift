@@ -67,6 +67,7 @@ class EditorView: NSView, NSTextInputClient {
 
     // MARK: - Scrollbar
 
+    var scrollbarDisabled: Bool = false
     private var scrollbarOpacity: Float = 0.0
     private var scrollbarFadeTimer: Timer?
 
@@ -306,7 +307,7 @@ class EditorView: NSView, NSTextInputClient {
 
         // Scrollbar overlay
         var overlayRects: [EditorRenderer.RectInstance] = []
-        if scrollbarOpacity > 0 {
+        if scrollbarOpacity > 0 && !scrollbarDisabled {
             let totalLines: Int
             if session.wordWrapEnabled {
                 totalLines = max(1, layoutEngine.visualLineMap.totalVisualLines)

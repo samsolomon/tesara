@@ -131,6 +131,45 @@ final class TerminalSessionTests: XCTestCase {
         XCTAssertFalse(session.isAtPrompt)
     }
 
+    func testInputBarCtrlCSendsInterrupt() {
+        let handler = InputBarKeyHandler()
+        handler.terminalSession = session
+
+        var sentTexts: [String] = []
+        session.onSendTextForTesting = { sentTexts.append($0) }
+
+        let handled = handler.editorView(makeEditorView(), handleKeyDown: makeKeyEvent(chars: "c", modifiers: [.control]))
+
+        XCTAssertTrue(handled)
+        XCTAssertEqual(sentTexts, ["\u{03}"])
+    }
+
+    func testInputBarCtrlDSendsEOF() {
+        let handler = InputBarKeyHandler()
+        handler.terminalSession = session
+
+        var sentTexts: [String] = []
+        session.onSendTextForTesting = { sentTexts.append($0) }
+
+        let handled = handler.editorView(makeEditorView(), handleKeyDown: makeKeyEvent(chars: "d", modifiers: [.control]))
+
+        XCTAssertTrue(handled)
+        XCTAssertEqual(sentTexts, ["\u{04}"])
+    }
+
+    func testInputBarCtrlZSendsSuspend() {
+        let handler = InputBarKeyHandler()
+        handler.terminalSession = session
+
+        var sentTexts: [String] = []
+        session.onSendTextForTesting = { sentTexts.append($0) }
+
+        let handled = handler.editorView(makeEditorView(), handleKeyDown: makeKeyEvent(chars: "z", modifiers: [.control]))
+
+        XCTAssertTrue(handled)
+        XCTAssertEqual(sentTexts, ["\u{1a}"])
+    }
+
     // MARK: - Stale Temp File Cleanup
 
     func testCleanupStaleTempFilesRemovesOldFiles() throws {
@@ -214,6 +253,34 @@ final class TerminalSessionTests: XCTestCase {
 
         // Clean up manually
         try FileManager.default.removeItem(at: tempDir)
+    }
+
+    private func makeEditorView() -> EditorView {
+        EditorView(
+            session: EditorSession(),
+            theme: BuiltInTheme.oxide.theme,
+            fontFamily: "SF Mono",
+            fontSize: 13
+        )
+    }
+
+    private func makeKeyEvent(chars: String, modifiers: NSEvent.ModifierFlags) -> NSEvent {
+        guard let event = NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: modifiers,
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: chars,
+            charactersIgnoringModifiers: chars,
+            isARepeat: false,
+            keyCode: 0
+        ) else {
+            fatalError("Failed to create NSEvent for test")
+        }
+
+        return event
     }
 
 }
