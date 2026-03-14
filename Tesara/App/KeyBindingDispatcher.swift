@@ -1,5 +1,6 @@
 import AppKit
 import Combine
+import Carbon
 
 /// Intercepts key events via a local event monitor and dispatches matching
 /// key binding overrides to the appropriate app action.
@@ -87,6 +88,13 @@ final class KeyBindingDispatcher: ObservableObject {
             return event
         }
 
+        if let direction = paneNavigationDirection(for: event),
+           let responder = event.window?.firstResponder,
+           (responder is GhosttySurfaceView || responder is EditorView),
+           workspaceManager?.selectAdjacentPane(direction) == true {
+            return nil
+        }
+
         // Don't intercept events in text-input contexts (text fields, editor view, key recorder)
         if let responder = event.window?.firstResponder,
            responder is NSTextView || responder is NSTextField || responder is EditorView {
@@ -106,6 +114,27 @@ final class KeyBindingDispatcher: ObservableObject {
 
         execute(action)
         return nil // consume the event
+    }
+
+    private func paneNavigationDirection(for event: NSEvent) -> PaneNode.NavigationDirection? {
+        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        guard flags.contains([.command, .option]),
+              flags.isDisjoint(with: [.control, .shift]) else {
+            return nil
+        }
+
+        switch Int(event.keyCode) {
+        case kVK_LeftArrow:
+            return .left
+        case kVK_RightArrow:
+            return .right
+        case kVK_UpArrow:
+            return .up
+        case kVK_DownArrow:
+            return .down
+        default:
+            return nil
+        }
     }
 
     // MARK: - Action Execution

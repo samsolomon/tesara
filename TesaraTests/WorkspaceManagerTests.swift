@@ -842,6 +842,61 @@ final class WorkspaceManagerTests: XCTestCase {
         XCTAssertEqual(Double(widths[thirdPaneID] ?? 0), 1.0 / 3.0, accuracy: 0.001)
     }
 
+    func testSelectAdjacentPaneMovesHorizontallyAcrossSplitRow() {
+        addTab()
+        let firstPaneID = manager.activePaneID!
+
+        manager.splitActivePane(
+            direction: .horizontal,
+            position: .second,
+            shellPath: "/bin/zsh",
+            workingDirectory: URL(fileURLWithPath: "/tmp"),
+            blockStore: blockStore
+        )
+        let secondPaneID = manager.activePaneID!
+
+        manager.selectPane(id: firstPaneID)
+        manager.selectAdjacentPane(.right)
+        XCTAssertEqual(manager.activePaneID, secondPaneID)
+
+        manager.selectAdjacentPane(.left)
+        XCTAssertEqual(manager.activePaneID, firstPaneID)
+    }
+
+    func testSelectAdjacentPaneMovesVerticallyWithinNestedLayout() {
+        addTab()
+        let topLeftPaneID = manager.activePaneID!
+
+        manager.splitActivePane(
+            direction: .horizontal,
+            position: .second,
+            shellPath: "/bin/zsh",
+            workingDirectory: URL(fileURLWithPath: "/tmp"),
+            blockStore: blockStore
+        )
+        let rightPaneID = manager.activePaneID!
+
+        manager.selectPane(id: topLeftPaneID)
+        manager.splitActivePane(
+            direction: .vertical,
+            position: .second,
+            shellPath: "/bin/zsh",
+            workingDirectory: URL(fileURLWithPath: "/tmp"),
+            blockStore: blockStore
+        )
+        let bottomLeftPaneID = manager.activePaneID!
+
+        manager.selectPane(id: topLeftPaneID)
+        manager.selectAdjacentPane(.down)
+        XCTAssertEqual(manager.activePaneID, bottomLeftPaneID)
+
+        manager.selectAdjacentPane(.up)
+        XCTAssertEqual(manager.activePaneID, topLeftPaneID)
+
+        manager.selectAdjacentPane(.right)
+        XCTAssertEqual(manager.activePaneID, rightPaneID)
+    }
+
     private func horizontalWidths(in node: PaneNode, availableWidth: CGFloat = 1) -> [UUID: CGFloat] {
         switch node {
         case .leaf(let id, _):

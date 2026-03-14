@@ -333,6 +333,19 @@ final class WorkspaceManager: ObservableObject {
         }
     }
 
+    @discardableResult
+    func selectAdjacentPane(_ direction: PaneNode.NavigationDirection) -> Bool {
+        guard let activePaneID,
+              let activeTabID,
+              let tabIndex = tabs.firstIndex(where: { $0.id == activeTabID }),
+              let adjacentID = tabs[tabIndex].rootPane.adjacentPaneID(to: activePaneID, direction: direction) else {
+            return false
+        }
+
+        selectPane(id: adjacentID)
+        return true
+    }
+
     // MARK: - File I/O
 
     func openFileInEditor(url: URL, theme: TerminalTheme, fontFamily: String, fontSize: Double) {

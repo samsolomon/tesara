@@ -98,6 +98,28 @@ struct TesaraAppCommands: Commands {
             .keyboardShortcut("e", modifiers: [.command, .shift])
         }
 
+        CommandMenu("Panes") {
+            Button("Focus Pane Left") {
+                manager.selectAdjacentPane(.left)
+            }
+            .keyboardShortcut(.leftArrow, modifiers: [.command, .option])
+
+            Button("Focus Pane Right") {
+                manager.selectAdjacentPane(.right)
+            }
+            .keyboardShortcut(.rightArrow, modifiers: [.command, .option])
+
+            Button("Focus Pane Up") {
+                manager.selectAdjacentPane(.up)
+            }
+            .keyboardShortcut(.upArrow, modifiers: [.command, .option])
+
+            Button("Focus Pane Down") {
+                manager.selectAdjacentPane(.down)
+            }
+            .keyboardShortcut(.downArrow, modifiers: [.command, .option])
+        }
+
         CommandMenu("Tabs") {
             Button("Show Previous Tab") {
                 manager.selectPreviousTab()

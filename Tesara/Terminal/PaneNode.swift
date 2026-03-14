@@ -16,6 +16,13 @@ indirect enum PaneNode: Identifiable {
         case second
     }
 
+    enum NavigationDirection {
+        case left
+        case right
+        case up
+        case down
+    }
+
     var id: UUID {
         switch self {
         case .leaf(let id, _): return id
@@ -218,6 +225,55 @@ indirect enum PaneNode: Identifiable {
         }
     }
 
+    func adjacentPaneID(to paneID: UUID, direction: NavigationDirection) -> UUID? {
+        let frames = leafFrames(in: CGRect(x: 0, y: 0, width: 1, height: 1))
+        guard let current = frames.first(where: { $0.id == paneID }) else { return nil }
+
+        let candidates = frames
+            .filter { $0.id != paneID }
+            .compactMap { candidate -> (id: UUID, primary: CGFloat, secondary: CGFloat, overlap: CGFloat)? in
+                switch direction {
+                case .left:
+                    let primary = current.frame.minX - candidate.frame.maxX
+                    let overlap = overlapLength(current.frame.minY...current.frame.maxY, candidate.frame.minY...candidate.frame.maxY)
+                    guard primary >= -0.0001, overlap > 0 else { return nil }
+                    let secondary = abs(candidate.frame.midY - current.frame.midY)
+                    return (candidate.id, primary, secondary, overlap)
+
+                case .right:
+                    let primary = candidate.frame.minX - current.frame.maxX
+                    let overlap = overlapLength(current.frame.minY...current.frame.maxY, candidate.frame.minY...candidate.frame.maxY)
+                    guard primary >= -0.0001, overlap > 0 else { return nil }
+                    let secondary = abs(candidate.frame.midY - current.frame.midY)
+                    return (candidate.id, primary, secondary, overlap)
+
+                case .up:
+                    let primary = current.frame.minY - candidate.frame.maxY
+                    let overlap = overlapLength(current.frame.minX...current.frame.maxX, candidate.frame.minX...candidate.frame.maxX)
+                    guard primary >= -0.0001, overlap > 0 else { return nil }
+                    let secondary = abs(candidate.frame.midX - current.frame.midX)
+                    return (candidate.id, primary, secondary, overlap)
+
+                case .down:
+                    let primary = candidate.frame.minY - current.frame.maxY
+                    let overlap = overlapLength(current.frame.minX...current.frame.maxX, candidate.frame.minX...candidate.frame.maxX)
+                    guard primary >= -0.0001, overlap > 0 else { return nil }
+                    let secondary = abs(candidate.frame.midX - current.frame.midX)
+                    return (candidate.id, primary, secondary, overlap)
+                }
+            }
+
+        return candidates.min {
+            if abs($0.primary - $1.primary) > 0.0001 {
+                return $0.primary < $1.primary
+            }
+            if abs($0.secondary - $1.secondary) > 0.0001 {
+                return $0.secondary < $1.secondary
+            }
+            return $0.overlap > $1.overlap
+        }?.id
+    }
+
     private func participatesInSameDirectionInsertion(targetID: UUID, direction: SplitDirection) -> Bool {
         switch self {
         case .leaf(let id, _):
@@ -260,5 +316,31 @@ indirect enum PaneNode: Identifiable {
         ratio: CGFloat
     ) -> PaneNode {
         .split(id: UUID(), direction: direction, first: first, second: second, ratio: ratio)
+    }
+
+    private func leafFrames(in rect: CGRect) -> [(id: UUID, frame: CGRect)] {
+        switch self {
+        case .leaf(let id, _):
+            return [(id, rect)]
+        case .editor(let id, _):
+            return [(id, rect)]
+        case .split(_, let direction, let first, let second, let ratio):
+            switch direction {
+            case .horizontal:
+                let firstWidth = rect.width * ratio
+                let firstRect = CGRect(x: rect.minX, y: rect.minY, width: firstWidth, height: rect.height)
+                let secondRect = CGRect(x: rect.minX + firstWidth, y: rect.minY, width: rect.width - firstWidth, height: rect.height)
+                return first.leafFrames(in: firstRect) + second.leafFrames(in: secondRect)
+            case .vertical:
+                let firstHeight = rect.height * ratio
+                let firstRect = CGRect(x: rect.minX, y: rect.minY, width: rect.width, height: firstHeight)
+                let secondRect = CGRect(x: rect.minX, y: rect.minY + firstHeight, width: rect.width, height: rect.height - firstHeight)
+                return first.leafFrames(in: firstRect) + second.leafFrames(in: secondRect)
+            }
+        }
+    }
+
+    private func overlapLength(_ lhs: ClosedRange<CGFloat>, _ rhs: ClosedRange<CGFloat>) -> CGFloat {
+        max(0, min(lhs.upperBound, rhs.upperBound) - max(lhs.lowerBound, rhs.lowerBound))
     }
 }
