@@ -68,11 +68,13 @@ enum GhosttyConfig {
         var lines: [String] = []
 
         // Font — sanitize to prevent config injection via newlines
-        lines.append("font-family = \(sanitize(settings.fontFamily))")
+        let fontFamily = settings.fontFamily.isEmpty ? "SF Mono" : settings.fontFamily
+        lines.append("font-family = \(sanitize(fontFamily))")
         lines.append("font-size = \(settings.fontSize)")
 
         // Shell integration — disabled because Tesara provides its own
         lines.append("shell-integration = none")
+
 
         // Font options
         if !settings.fontLigatures {
