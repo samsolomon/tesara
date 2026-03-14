@@ -123,6 +123,29 @@ final class PaneNodeTests: XCTestCase {
         XCTAssertTrue(result?.session === session2)
     }
 
+    func testRemoveNestedPaneFromSecondBranchUpdatesTree() {
+        let id1 = UUID()
+        let id2 = UUID()
+        let id3 = UUID()
+        let node = PaneNode.split(
+            id: UUID(), direction: .horizontal,
+            first: .leaf(id: id1, session: TerminalSession()),
+            second: .split(
+                id: UUID(), direction: .vertical,
+                first: .leaf(id: id2, session: TerminalSession()),
+                second: .leaf(id: id3, session: TerminalSession()),
+                ratio: 0.5
+            ),
+            ratio: 0.5
+        )
+
+        let result = node.removingPane(id: id2)
+
+        XCTAssertNotNil(result)
+        XCTAssertFalse(result?.contains(paneID: id2) ?? true)
+        XCTAssertEqual(result?.allLeafIDs(), [id1, id3])
+    }
+
     // MARK: Ratio
 
     func testUpdateRatioClampsToMin() {

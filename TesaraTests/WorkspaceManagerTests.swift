@@ -446,6 +446,34 @@ final class WorkspaceManagerTests: XCTestCase {
         }
     }
 
+    func testClosePaneInNestedSecondBranchRemovesClosedPane() {
+        addTab()
+        let firstPaneID = manager.activePaneID!
+
+        manager.splitActivePane(
+            direction: .horizontal,
+            shellPath: "/bin/zsh",
+            workingDirectory: URL(fileURLWithPath: "/tmp"),
+            blockStore: blockStore
+        )
+        let rightPaneID = manager.activePaneID!
+
+        manager.selectPane(id: rightPaneID)
+        manager.splitActivePane(
+            direction: .vertical,
+            shellPath: "/bin/zsh",
+            workingDirectory: URL(fileURLWithPath: "/tmp"),
+            blockStore: blockStore
+        )
+        let bottomRightPaneID = manager.activePaneID!
+
+        manager.closePane(id: rightPaneID)
+
+        XCTAssertEqual(manager.activePaneID, bottomRightPaneID)
+        XCTAssertFalse(manager.activeTab?.rootPane.contains(paneID: rightPaneID) ?? true)
+        XCTAssertEqual(manager.activeTab?.rootPane.allLeafIDs(), [firstPaneID, bottomRightPaneID])
+    }
+
     func testSelectPane() {
         addTab()
         let firstPaneID = manager.activePaneID!

@@ -166,19 +166,25 @@ indirect enum PaneNode: Identifiable {
         case .editor(let id, _):
             return id == targetID ? nil : self
         case .split(let id, let direction, let first, let second, let ratio):
-            if first.id == targetID || (first.contains(paneID: targetID) && first.removingPane(id: targetID) == nil) {
-                return second
+            let newFirst: PaneNode? = first.contains(paneID: targetID) ? first.removingPane(id: targetID) : first
+            let newSecond: PaneNode? = second.contains(paneID: targetID) ? second.removingPane(id: targetID) : second
+
+            switch (newFirst, newSecond) {
+            case (nil, nil):
+                return nil
+            case (nil, let remainingSecond?):
+                return remainingSecond
+            case (let remainingFirst?, nil):
+                return remainingFirst
+            case (let remainingFirst?, let remainingSecond?):
+                return .split(
+                    id: id,
+                    direction: direction,
+                    first: remainingFirst,
+                    second: remainingSecond,
+                    ratio: ratio
+                )
             }
-            if second.id == targetID || (second.contains(paneID: targetID) && second.removingPane(id: targetID) == nil) {
-                return first
-            }
-            if let newFirst = first.removingPane(id: targetID) {
-                return .split(id: id, direction: direction, first: newFirst, second: second, ratio: ratio)
-            }
-            if let newSecond = second.removingPane(id: targetID) {
-                return .split(id: id, direction: direction, first: first, second: newSecond, ratio: ratio)
-            }
-            return self
         }
     }
 
