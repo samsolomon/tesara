@@ -3,6 +3,9 @@ import SwiftUI
 struct PaneContainerView: View {
     let node: PaneNode
     let theme: TerminalTheme
+    let fontFamily: String
+    let fontSize: Double
+    let inputBarEnabled: Bool
     let activePaneID: UUID?
     let dimInactiveSplits: Bool
     let inactiveSplitDimAmount: Double
@@ -19,6 +22,9 @@ struct PaneContainerView: View {
                 isActive: id == activePaneID,
                 showBorder: isSplit,
                 theme: theme,
+                fontFamily: fontFamily,
+                fontSize: fontSize,
+                inputBarEnabled: inputBarEnabled,
                 dimInactiveSplit: dimInactiveSplits,
                 inactiveSplitDimAmount: inactiveSplitDimAmount,
                 onSelectPane: onSelectPane
@@ -62,6 +68,9 @@ struct PaneContainerView: View {
                 PaneContainerView(
                     node: first,
                     theme: theme,
+                    fontFamily: fontFamily,
+                    fontSize: fontSize,
+                    inputBarEnabled: inputBarEnabled,
                     activePaneID: activePaneID,
                     dimInactiveSplits: dimInactiveSplits,
                     inactiveSplitDimAmount: inactiveSplitDimAmount,
@@ -74,6 +83,9 @@ struct PaneContainerView: View {
                 PaneContainerView(
                     node: second,
                     theme: theme,
+                    fontFamily: fontFamily,
+                    fontSize: fontSize,
+                    inputBarEnabled: inputBarEnabled,
                     activePaneID: activePaneID,
                     dimInactiveSplits: dimInactiveSplits,
                     inactiveSplitDimAmount: inactiveSplitDimAmount,
@@ -142,31 +154,94 @@ private struct TerminalPaneLeafView: View {
     let isActive: Bool
     let showBorder: Bool
     let theme: TerminalTheme
+    let fontFamily: String
+    let fontSize: Double
+    let inputBarEnabled: Bool
     let dimInactiveSplit: Bool
     let inactiveSplitDimAmount: Double
     let onSelectPane: (UUID) -> Void
 
+    private var showInputBar: Bool {
+        inputBarEnabled && session.isAtPrompt && session.inputBarState?.editorView != nil
+    }
+
+    private func syncInputBarPresentation(session: TerminalSession, surfaceView: GhosttySurfaceView) {
+        if session.isAtPrompt && inputBarEnabled {
+            session.setupInputBar(theme: theme, fontFamily: fontFamily, fontSize: fontSize)
+            session.inputBarState?.editorView?.resumeDisplayLink()
+            focusInputBar(session: session, surfaceView: surfaceView)
+        } else {
+            session.inputBarState?.editorView?.pauseDisplayLink()
+            focusTerminal(session: session, surfaceView: surfaceView)
+        }
+    }
+
+    private func focusInputBar(session: TerminalSession, surfaceView: GhosttySurfaceView) {
+        Task { @MainActor in
+            guard let editorView = session.inputBarState?.editorView else { return }
+            // Defer until the editor view is in the window hierarchy (SwiftUI animation may not have committed yet)
+            if editorView.window == nil {
+                try? await Task.sleep(for: .milliseconds(50))
+            }
+            guard session.isAtPrompt, let window = editorView.window else { return }
+            surfaceView.focusDidChange(false)
+            window.makeFirstResponder(editorView)
+            editorView.focusDidChange(true)
+        }
+    }
+
+    private func focusTerminal(session: TerminalSession, surfaceView: GhosttySurfaceView) {
+        Task { @MainActor in
+            session.inputBarState?.editorView?.focusDidChange(false)
+            guard let window = surfaceView.window else { return }
+            window.makeFirstResponder(surfaceView)
+            surfaceView.focusDidChange(true)
+        }
+    }
+
     var body: some View {
         Group {
             if let surfaceView = session.surfaceView {
-                GeometryReader { geo in
-                    GhosttySurfaceRepresentable(surfaceView: surfaceView)
-                        .onAppear {
-                            #if DEBUG
-                            LocalLogStore.shared.log("[TerminalPane] pane=\(id.uuidString) size=\(Int(geo.size.width))x\(Int(geo.size.height))")
-                            #endif
-                            surfaceView.setFrameSize(geo.size)
-                            surfaceView.sizeDidChange(geo.size)
-                        }
-                        .onChange(of: geo.size) { _, newSize in
-                            #if DEBUG
-                            LocalLogStore.shared.log("[TerminalPane] pane=\(id.uuidString) size=\(Int(newSize.width))x\(Int(newSize.height))")
-                            #endif
-                            surfaceView.setFrameSize(newSize)
-                            surfaceView.sizeDidChange(newSize)
-                        }
+                VStack(spacing: 0) {
+                    GeometryReader { geo in
+                        GhosttySurfaceRepresentable(surfaceView: surfaceView)
+                            .onAppear {
+                                #if DEBUG
+                                LocalLogStore.shared.log("[TerminalPane] pane=\(id.uuidString) size=\(Int(geo.size.width))x\(Int(geo.size.height))")
+                                #endif
+                                surfaceView.setFrameSize(geo.size)
+                                surfaceView.sizeDidChange(geo.size)
+                            }
+                            .onChange(of: geo.size) { _, newSize in
+                                #if DEBUG
+                                LocalLogStore.shared.log("[TerminalPane] pane=\(id.uuidString) size=\(Int(newSize.width))x\(Int(newSize.height))")
+                                #endif
+                                surfaceView.setFrameSize(newSize)
+                                surfaceView.sizeDidChange(newSize)
+                            }
+                    }
+                    .id(session.id)
+
+                    if showInputBar, let inputBarState = session.inputBarState {
+                        InputBarView(
+                            inputBarState: inputBarState,
+                            theme: theme,
+                            fontFamily: fontFamily,
+                            fontSize: fontSize
+                        )
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
                 }
-                .id(session.id)
+                .animation(.easeInOut(duration: 0.15), value: showInputBar)
+                .onAppear {
+                    syncInputBarPresentation(session: session, surfaceView: surfaceView)
+                }
+                .onChange(of: session.isAtPrompt) { _, atPrompt in
+                    syncInputBarPresentation(session: session, surfaceView: surfaceView)
+                }
+                .onChange(of: inputBarEnabled) { _, _ in
+                    syncInputBarPresentation(session: session, surfaceView: surfaceView)
+                }
             } else {
                 Color.clear
             }

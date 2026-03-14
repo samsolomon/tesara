@@ -24,6 +24,13 @@ struct TerminalWorkspaceView: View {
             }
             .onChange(of: settingsStore.activeTheme) { _, newTheme in
                 propagateThemeToEditors(theme: newTheme)
+                propagateThemeToInputBars(theme: newTheme)
+            }
+            .onChange(of: settingsStore.settings.fontFamily) { _, newFamily in
+                propagateFontToInputBars(family: newFamily, size: settingsStore.settings.fontSize)
+            }
+            .onChange(of: settingsStore.settings.fontSize) { _, newSize in
+                propagateFontToInputBars(family: settingsStore.settings.fontFamily, size: newSize)
             }
             .fileImporter(
                 isPresented: $manager.showOpenPanel,
@@ -54,6 +61,9 @@ struct TerminalWorkspaceView: View {
                 PaneContainerView(
                     node: tab.rootPane,
                     theme: settingsStore.activeTheme,
+                    fontFamily: settingsStore.settings.fontFamily,
+                    fontSize: settingsStore.settings.fontSize,
+                    inputBarEnabled: settingsStore.settings.inputBarEnabled,
                     activePaneID: manager.activePaneID,
                     dimInactiveSplits: settingsStore.settings.dimInactiveSplits,
                     inactiveSplitDimAmount: settingsStore.settings.inactiveSplitDimAmount,
@@ -146,6 +156,32 @@ struct TerminalWorkspaceView: View {
         case .split(_, _, let first, let second, _):
             propagateThemeToEditors(in: first, theme: theme)
             propagateThemeToEditors(in: second, theme: theme)
+        }
+    }
+
+    private func propagateThemeToInputBars(theme: TerminalTheme) {
+        guard let activeTab = manager.activeTab else { return }
+        forEachTerminalSession(in: activeTab.rootPane) { session in
+            session.inputBarState?.editorView?.updateTheme(theme)
+        }
+    }
+
+    private func propagateFontToInputBars(family: String, size: Double) {
+        guard let activeTab = manager.activeTab else { return }
+        forEachTerminalSession(in: activeTab.rootPane) { session in
+            session.inputBarState?.editorView?.updateFont(family: family, size: CGFloat(size))
+        }
+    }
+
+    private func forEachTerminalSession(in node: PaneNode, _ body: (TerminalSession) -> Void) {
+        switch node {
+        case .leaf(_, let session):
+            body(session)
+        case .editor:
+            break
+        case .split(_, _, let first, let second, _):
+            forEachTerminalSession(in: first, body)
+            forEachTerminalSession(in: second, body)
         }
     }
 }

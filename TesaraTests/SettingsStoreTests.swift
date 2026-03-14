@@ -20,6 +20,7 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(store.settings.tabTitleMode, .shellTitle)
         XCTAssertTrue(store.settings.dimInactiveSplits)
         XCTAssertEqual(store.settings.inactiveSplitDimAmount, 0.1, accuracy: 0.0001)
+        XCTAssertTrue(store.settings.inputBarEnabled)
     }
 
     func testSettingsRoundTrip() {
@@ -36,6 +37,7 @@ final class SettingsStoreTests: XCTestCase {
         store1.settings.tabTitleMode = .workingDirectory
         store1.settings.dimInactiveSplits = false
         store1.settings.inactiveSplitDimAmount = 0.16
+        store1.settings.inputBarEnabled = false
 
         // Read back
         let store2 = SettingsStore(defaults: defaults)
@@ -47,6 +49,7 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(store2.settings.tabTitleMode, .workingDirectory)
         XCTAssertFalse(store2.settings.dimInactiveSplits)
         XCTAssertEqual(store2.settings.inactiveSplitDimAmount, 0.16, accuracy: 0.0001)
+        XCTAssertFalse(store2.settings.inputBarEnabled)
     }
 
     func testDecodingLegacySettingsDefaultsTrustControls() throws {
@@ -71,6 +74,7 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(settings.tabTitleMode, .shellTitle)
         XCTAssertTrue(settings.dimInactiveSplits)
         XCTAssertEqual(settings.inactiveSplitDimAmount, 0.1, accuracy: 0.0001)
+        XCTAssertTrue(settings.inputBarEnabled)
     }
 
     func testActiveThemeFallsBackToOxide() {

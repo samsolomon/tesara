@@ -85,6 +85,52 @@ final class TerminalSessionTests: XCTestCase {
         XCTAssertNotEqual(session.shellSessionID, session2.shellSessionID)
     }
 
+    // MARK: - Input Bar State
+
+    func testInitialIsAtPromptIsFalse() {
+        XCTAssertFalse(session.isAtPrompt)
+    }
+
+    func testHandleCommandFinishedSetsIsAtPromptTrue() {
+        session.handleCommandFinished(exitCode: 0, durationNs: 1_000_000)
+        XCTAssertTrue(session.isAtPrompt)
+    }
+
+    func testSendFromInputBarSetsIsAtPromptFalse() {
+        session.handleCommandFinished(exitCode: 0, durationNs: 1_000_000)
+        XCTAssertTrue(session.isAtPrompt)
+        session.sendFromInputBar(text: "ls")
+        XCTAssertFalse(session.isAtPrompt)
+    }
+
+    func testSendFromInputBarIgnoresEmptyText() {
+        session.handleCommandFinished(exitCode: 0, durationNs: 1_000_000)
+        session.sendFromInputBar(text: "   ")
+        // Empty/whitespace-only text should not change isAtPrompt
+        XCTAssertTrue(session.isAtPrompt)
+    }
+
+    func testDismissInputBarSetsIsAtPromptFalse() {
+        session.handleCommandFinished(exitCode: 0, durationNs: 1_000_000)
+        XCTAssertTrue(session.isAtPrompt)
+        session.dismissInputBar()
+        XCTAssertFalse(session.isAtPrompt)
+    }
+
+    func testHandleChildExitedClearsIsAtPrompt() {
+        session.handleCommandFinished(exitCode: 0, durationNs: 1_000_000)
+        XCTAssertTrue(session.isAtPrompt)
+        session.handleChildExited(exitCode: 0)
+        XCTAssertFalse(session.isAtPrompt)
+    }
+
+    func testStopClearsIsAtPrompt() {
+        session.handleCommandFinished(exitCode: 0, durationNs: 1_000_000)
+        XCTAssertTrue(session.isAtPrompt)
+        session.stop()
+        XCTAssertFalse(session.isAtPrompt)
+    }
+
     // MARK: - Stale Temp File Cleanup
 
     func testCleanupStaleTempFilesRemovesOldFiles() throws {

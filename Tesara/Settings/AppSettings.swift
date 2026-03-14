@@ -21,6 +21,7 @@ struct AppSettings: Codable, Equatable {
     var tabTitleMode: TabTitleMode
     var dimInactiveSplits: Bool
     var inactiveSplitDimAmount: Double
+    var inputBarEnabled: Bool
 
     init(
         schemaVersion: Int = currentSchemaVersion,
@@ -38,7 +39,8 @@ struct AppSettings: Codable, Equatable {
         confirmOnCloseRunningSession: Bool = false,
         tabTitleMode: TabTitleMode = .shellTitle,
         dimInactiveSplits: Bool = true,
-        inactiveSplitDimAmount: Double = 0.1
+        inactiveSplitDimAmount: Double = 0.1,
+        inputBarEnabled: Bool = true
     ) {
         self.schemaVersion = schemaVersion
         self.fontFamily = fontFamily
@@ -56,6 +58,7 @@ struct AppSettings: Codable, Equatable {
         self.tabTitleMode = tabTitleMode
         self.dimInactiveSplits = dimInactiveSplits
         self.inactiveSplitDimAmount = inactiveSplitDimAmount
+        self.inputBarEnabled = inputBarEnabled
     }
 
     static var `default`: AppSettings {
@@ -101,6 +104,7 @@ struct AppSettings: Codable, Equatable {
         case tabTitleMode
         case dimInactiveSplits
         case inactiveSplitDimAmount
+        case inputBarEnabled
     }
 
     init(from decoder: Decoder) throws {
@@ -122,6 +126,7 @@ struct AppSettings: Codable, Equatable {
         tabTitleMode = try container.decodeIfPresent(TabTitleMode.self, forKey: .tabTitleMode) ?? .shellTitle
         dimInactiveSplits = try container.decodeIfPresent(Bool.self, forKey: .dimInactiveSplits) ?? true
         inactiveSplitDimAmount = try container.decodeIfPresent(Double.self, forKey: .inactiveSplitDimAmount) ?? 0.1
+        inputBarEnabled = try container.decodeIfPresent(Bool.self, forKey: .inputBarEnabled) ?? true
     }
 }
 

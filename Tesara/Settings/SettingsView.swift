@@ -299,6 +299,14 @@ private struct TerminalSettingsPane: View {
             } footer: {
                 Text("Shell and working directory changes apply to new tabs and windows. Paste protection warns before multiline paste, and close confirmation prevents accidentally stopping a live session.")
             }
+
+            Section {
+                Toggle("Enable input editor bar", isOn: $settings.inputBarEnabled)
+            } header: {
+                Text("Input")
+            } footer: {
+                Text("Shows a native text editor at the bottom of each terminal when the shell is at a prompt. Provides full macOS text editing (selection, undo, emoji picker). Requires shell integration.")
+            }
         }
         .formStyle(.grouped)
     }

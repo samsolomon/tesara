@@ -18,6 +18,11 @@ final class TerminalSession: ObservableObject, Identifiable {
     @Published private(set) var currentWorkingDirectory: String?
     @Published private(set) var shellTitle: String?
     @Published private(set) var surfaceView: GhosttySurfaceView?
+    @Published private(set) var isAtPrompt = false
+
+    /// Not `@Published` — view updates are driven by `isAtPrompt` which always
+    /// changes in the same call path as `inputBarState` mutations.
+    private(set) var inputBarState: InputBarState?
 
     private var blockStore: BlockStore?
     private var activeSessionID: UUID?
@@ -102,11 +107,45 @@ final class TerminalSession: ObservableObject, Identifiable {
             ghostty_surface_request_close(surface)
         }
         surfaceView = nil
+        isAtPrompt = false
+        teardownInputBar()
         cleanupTemporaryFiles()
 
         if status != .failed {
             status = .stopped
         }
+    }
+
+    // MARK: - Input Bar
+
+    func sendFromInputBar(text: String) {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        isAtPrompt = false
+        if trimmed.contains("\n") {
+            send(text: "\u{1b}[200~" + trimmed + "\u{1b}[201~\n")
+        } else {
+            send(command: trimmed)
+        }
+    }
+
+    func dismissInputBar() {
+        isAtPrompt = false
+    }
+
+    func setupInputBar(theme: TerminalTheme, fontFamily: String, fontSize: Double) {
+        guard inputBarState == nil else { return }
+        let state = InputBarState()
+        state.createView(theme: theme, fontFamily: fontFamily, fontSize: fontSize)
+        state.keyHandler.terminalSession = self
+        state.keyHandler.onClear = { [weak state] in state?.clear() }
+        state.keyHandler.onDismiss = { [weak self] in self?.dismissInputBar() }
+        inputBarState = state
+    }
+
+    private func teardownInputBar() {
+        inputBarState?.editorView?.pauseDisplayLink()
+        inputBarState = nil
     }
 
     // MARK: - Action Handlers
@@ -140,6 +179,7 @@ final class TerminalSession: ObservableObject, Identifiable {
         }
 
         finalizeActiveCaptureIfNeeded(exitCode: code)
+        isAtPrompt = true
     }
 
     /// Reads and removes the shell-side command temp file for this session.
@@ -152,6 +192,8 @@ final class TerminalSession: ObservableObject, Identifiable {
 
     func handleChildExited(exitCode: UInt32) {
         surfaceView = nil
+        isAtPrompt = false
+        teardownInputBar()
         cleanupTemporaryFiles()
         finalizeActiveCaptureIfNeeded(exitCode: Int(exitCode))
         status = .stopped

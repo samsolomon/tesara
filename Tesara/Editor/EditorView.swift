@@ -2,6 +2,11 @@ import AppKit
 import Metal
 import QuartzCore
 
+@MainActor protocol EditorViewDelegate: AnyObject {
+    func editorView(_ editorView: EditorView, handleKeyDown event: NSEvent) -> Bool
+    func editorView(_ editorView: EditorView, handleSpecialKey key: NSEvent.SpecialKey, mods: NSEvent.ModifierFlags) -> Bool
+}
+
 /// NSView hosting a Metal-rendered rich text editor.
 /// Counterpart to GhosttySurfaceView for the editor pane type.
 class EditorView: NSView, NSTextInputClient {
@@ -12,6 +17,7 @@ class EditorView: NSView, NSTextInputClient {
     // MARK: - Public State
 
     weak var session: EditorSession?
+    weak var delegate: EditorViewDelegate?
     private(set) var focused: Bool = false
 
     // MARK: - Rendering
@@ -417,6 +423,10 @@ class EditorView: NSView, NSTextInputClient {
     // MARK: - Keyboard Input
 
     override func keyDown(with event: NSEvent) {
+        if let delegate, delegate.editorView(self, handleKeyDown: event) {
+            return
+        }
+
         guard let session else {
             interpretKeyEvents([event])
             return
@@ -478,6 +488,9 @@ class EditorView: NSView, NSTextInputClient {
     }
 
     private func handleSpecialKey(_ key: NSEvent.SpecialKey, mods: NSEvent.ModifierFlags, session: EditorSession) {
+        if let delegate, delegate.editorView(self, handleSpecialKey: key, mods: mods) {
+            return
+        }
         let extending = mods.contains(.shift)
 
         switch key {
