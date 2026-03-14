@@ -174,6 +174,15 @@ class GhosttySurfaceView: NSView, NSTextInputClient {
         ghostty_surface_set_focus(surface, isFocused)
     }
 
+    /// Unconditionally update Ghostty's focus state and our tracked flag.
+    /// Use when the guard in focusDidChange would skip (e.g. initial startup).
+    func setGhosttyFocus(_ isFocused: Bool) {
+        focused = isFocused
+        if !isFocused { suppressNextLeftMouseUp = false }
+        guard let surface else { return }
+        ghostty_surface_set_focus(surface, isFocused)
+    }
+
     // MARK: - Tracking Areas
 
     override func updateTrackingAreas() {

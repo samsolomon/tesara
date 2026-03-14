@@ -126,7 +126,6 @@ final class TerminalSession: ObservableObject, Identifiable {
     func sendFromInputBar(text: String) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
-        isAtPrompt = false
         if trimmed.contains("\n") {
             send(text: "\u{1b}[200~" + trimmed + "\u{1b}[201~\n")
         } else {

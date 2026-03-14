@@ -163,7 +163,7 @@ private struct TerminalPaneLeafView: View {
     let onSelectPane: (UUID) -> Void
 
     private var showInputBar: Bool {
-        inputBarEnabled && session.isAtPrompt && session.inputBarState?.editorView != nil
+        inputBarEnabled && session.inputBarState?.editorView != nil
     }
 
     @ViewBuilder
@@ -233,7 +233,8 @@ private struct TerminalPaneLeafView: View {
             return
         }
 
-        if session.isAtPrompt && inputBarEnabled {
+        if inputBarEnabled {
+            // Ensure the input bar editor exists and always owns keyboard focus
             let s = settingsStore.settings
             let cursorCfg = s.cursorStyle.editorCursorConfig(color: hexToColorU8(settingsStore.activeTheme.cursor))
             session.setupInputBar(theme: theme, fontFamily: fontFamily, fontSize: fontSize, cursorConfig: cursorCfg, cursorBlink: true)
@@ -241,8 +242,7 @@ private struct TerminalPaneLeafView: View {
             surfaceView.keyboardFocusDisabled = true
             focusInputBar(session: session, surfaceView: surfaceView)
         } else {
-            session.inputBarState?.editorView?.pauseDisplayLink()
-            session.inputBarState?.editorView?.focusDidChange(false)
+            // No input bar: terminal owns keyboard focus
             surfaceView.keyboardFocusDisabled = false
             if let window = surfaceView.window {
                 window.makeFirstResponder(surfaceView)
@@ -256,10 +256,13 @@ private struct TerminalPaneLeafView: View {
             var editorView = session.inputBarState?.editorView
 
             for _ in 0..<8 {
-                guard session.isAtPrompt, let currentEditorView = editorView else { return }
+                guard let currentEditorView = editorView else { return }
 
                 if let window = currentEditorView.window {
-                    surfaceView.focusDidChange(false)
+                    // Force-unfocus the terminal surface so Ghostty hides its cursor.
+                    // focusDidChange guards on self.focused, but on first launch focused
+                    // may already be false — call the Ghostty API directly.
+                    surfaceView.setGhosttyFocus(false)
                     if window.firstResponder === currentEditorView || window.makeFirstResponder(currentEditorView) {
                         currentEditorView.focusDidChange(true)
                         return
