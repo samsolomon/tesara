@@ -12,6 +12,7 @@ Tesara exists to become the most beautiful, performant, and usable terminal on m
 - Use Liquid Glass only when it improves clarity or interaction.
 - Prefer system APIs and long-term correctness over hacks.
 - Every change should make the product clearer, faster, calmer, or more delightful.
+- UI labels use sentence case: capitalize only the first word and proper nouns.
 
 ## Ghostty Submodule
 

@@ -146,7 +146,7 @@ private enum SettingsPane: String, CaseIterable, Identifiable {
         case .keyboard:
             "Keyboard"
         case .privacy:
-            "Privacy & Data"
+            "Privacy and data"
         }
     }
 
@@ -215,6 +215,23 @@ private struct SettingsDetailContainer<Content: View>: View {
     }
 }
 
+private func settingRow<Content: View>(
+    _ title: String,
+    description: String,
+    @ViewBuilder content: () -> Content
+) -> some View {
+    HStack(alignment: .center) {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+            Text(description)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        Spacer()
+        content()
+    }
+}
+
 private struct AppearanceSettingsPane: View {
     @Binding var settings: AppSettings
     let themes: [TerminalTheme]
@@ -225,23 +242,6 @@ private struct AppearanceSettingsPane: View {
     private var themePickerOptions: some View {
         ForEach(themes) { theme in
             Text(theme.name).tag(theme.id)
-        }
-    }
-
-    private func settingRow<Content: View>(
-        _ title: String,
-        description: String,
-        @ViewBuilder content: () -> Content
-    ) -> some View {
-        HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                Text(description)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-            content()
         }
     }
 
@@ -273,10 +273,10 @@ private struct AppearanceSettingsPane: View {
                     .labelsHidden()
                 }
 
-                LabeledContent("Import / Export") {
+                settingRow("Import and export", description: "Import a JSON theme file or export the current theme.") {
                     HStack {
                         Button("Import JSON", action: onImportTheme)
-                        Button("Export Current", action: onExportTheme)
+                        Button("Export current", action: onExportTheme)
                     }
                 }
             } header: {
@@ -293,23 +293,35 @@ private struct AppearanceSettingsPane: View {
                         .frame(width: 48)
                 }
 
-                Toggle("Font ligatures", isOn: $settings.fontLigatures)
-                Toggle("Thicken font strokes", isOn: $settings.fontThicken)
+                settingRow("Font ligatures", description: "Combines character sequences like -> into single glyphs.") {
+                    Toggle("", isOn: $settings.fontLigatures)
+                        .labelsHidden()
+                }
+
+                settingRow("Thicken font strokes", description: "Adds weight to thin fonts for better readability on low-DPI displays.") {
+                    Toggle("", isOn: $settings.fontThicken)
+                        .labelsHidden()
+                }
             } header: {
                 Text("Font")
             }
 
             Section {
-                Picker("Style", selection: $settings.cursorStyle) {
-                    ForEach(CursorStyle.allCases) { style in
-                        Text(style.title).tag(style)
+                settingRow("Cursor style", description: "Choose between bar, block, or underline cursor shapes.") {
+                    Picker("", selection: $settings.cursorStyle) {
+                        ForEach(CursorStyle.allCases) { style in
+                            Text(style.title).tag(style)
+                        }
                     }
+                    .labelsHidden()
                 }
-                Toggle("Blink cursor", isOn: $settings.cursorBlink)
+
+                settingRow("Blink cursor", description: "Animates the cursor on and off when idle.") {
+                    Toggle("", isOn: $settings.cursorBlink)
+                        .labelsHidden()
+                }
             } header: {
                 Text("Cursor")
-            } footer: {
-                Text("Cursor style is shared with the terminal and native input editor.")
             }
 
             Section {
@@ -320,10 +332,13 @@ private struct AppearanceSettingsPane: View {
                         .frame(width: 48)
                 }
 
-                Toggle("Background blur", isOn: $settings.windowBlur)
+                settingRow("Background blur", description: "Applies a vibrancy effect behind translucent terminal backgrounds.") {
+                    Toggle("", isOn: $settings.windowBlur)
+                        .labelsHidden()
+                }
 
                 HStack {
-                    Text("Horizontal Padding")
+                    Text("Horizontal padding")
                     Spacer()
                     TextField("", value: $settings.windowPaddingX, format: .number)
                         .frame(width: 60)
@@ -332,7 +347,7 @@ private struct AppearanceSettingsPane: View {
                 }
 
                 HStack {
-                    Text("Vertical Padding")
+                    Text("Vertical padding")
                     Spacer()
                     TextField("", value: $settings.windowPaddingY, format: .number)
                         .frame(width: 60)
@@ -341,8 +356,6 @@ private struct AppearanceSettingsPane: View {
                 }
             } header: {
                 Text("Window")
-            } footer: {
-                Text("Opacity below 100% makes the terminal background translucent. Background blur applies a vibrancy effect behind the terminal.")
             }
 
             VStack(alignment: .leading, spacing: 12) {
@@ -378,84 +391,84 @@ private struct TerminalSettingsPane: View {
     var body: some View {
         Form {
             Section("Startup") {
-                TextField("Shell Path", text: $settings.shellPath)
+                settingRow("Shell path", description: "The shell to launch in new terminal sessions.") {
+                    TextField("", text: $settings.shellPath)
+                        .labelsHidden()
+                        .multilineTextAlignment(.trailing)
+                }
 
-                LabeledContent("Default Working Directory") {
+                LabeledContent("Default working directory") {
                     Text(settings.defaultWorkingDirectory.path)
                         .lineLimit(1)
                         .truncationMode(.middle)
                 }
 
-                Button("Choose Directory", action: onChooseDirectory)
+                Button("Choose directory", action: onChooseDirectory)
             }
 
-            Section {
-                Picker("Option Key as Alt", selection: $settings.optionAsAlt) {
-                    ForEach(OptionAsAlt.allCases) { mode in
-                        Text(mode.title).tag(mode)
+            Section("macOS") {
+                settingRow("Option key as Alt", description: "Sends the Option key as Alt for terminal applications like vim, tmux, and emacs.") {
+                    Picker("", selection: $settings.optionAsAlt) {
+                        ForEach(OptionAsAlt.allCases) { mode in
+                            Text(mode.title).tag(mode)
+                        }
                     }
+                    .labelsHidden()
                 }
-            } header: {
-                Text("macOS")
-            } footer: {
-                Text("Sends Option key as Alt for terminal applications like vim, tmux, and emacs. \"Left Only\" keeps the right Option key for macOS character input.")
             }
 
-            Section {
-                HStack {
-                    Text("Scrollback Lines")
-                    Spacer()
+            Section("Scrollback") {
+                settingRow("Scrollback lines", description: "Maximum number of lines kept in the scrollback buffer.") {
                     TextField("", value: $settings.scrollbackLines, format: .number)
                         .frame(width: 80)
                         .multilineTextAlignment(.trailing)
                 }
-            } header: {
-                Text("Scrollback")
-            } footer: {
-                Text("Maximum number of lines kept in the scrollback buffer. Higher values use more memory.")
             }
 
-            Section {
-                Toggle("Copy on select", isOn: $settings.copyOnSelect)
-                Toggle("Trim trailing spaces on copy", isOn: $settings.clipboardTrimTrailingSpaces)
-            } header: {
-                Text("Clipboard")
-            } footer: {
-                Text("Copy on select automatically copies selected text to the clipboard without requiring a separate copy action.")
-            }
-
-            Section {
-                Picker("Bell", selection: $settings.bellMode) {
-                    ForEach(BellMode.allCases) { mode in
-                        Text(mode.title).tag(mode)
-                    }
-                }
-            } header: {
-                Text("Notifications")
-            } footer: {
-                Text("Controls how terminal bell characters (BEL) are handled. Visual flash briefly inverts the terminal colors.")
-            }
-
-            Section {
-                Picker("Paste Protection", selection: $settings.pasteProtectionMode) {
-                    ForEach(PasteProtectionMode.allCases) { mode in
-                        Text(mode.title).tag(mode)
-                    }
+            Section("Clipboard") {
+                settingRow("Copy on select", description: "Automatically copies selected text to the clipboard.") {
+                    Toggle("", isOn: $settings.copyOnSelect)
+                        .labelsHidden()
                 }
 
-                Toggle("Confirm before closing a running session", isOn: $settings.confirmOnCloseRunningSession)
-            } header: {
-                Text("Safety")
-            } footer: {
-                Text("Shell and working directory changes apply to new tabs and windows. Paste protection warns before multiline paste, and close confirmation prevents accidentally stopping a live session.")
+                settingRow("Trim trailing spaces on copy", description: "Removes trailing whitespace from copied text.") {
+                    Toggle("", isOn: $settings.clipboardTrimTrailingSpaces)
+                        .labelsHidden()
+                }
             }
 
-            Section {
-                Toggle("Enable input editor bar", isOn: $settings.inputBarEnabled)
-            } header: {
-                Text("Input")
-            } footer: {
-                Text("Shows a native text editor at the bottom of each terminal when the shell is at a prompt. Provides full macOS text editing (selection, undo, emoji picker). Requires shell integration.")
+            Section("Notifications") {
+                settingRow("Bell", description: "Controls how terminal bell characters are handled.") {
+                    Picker("", selection: $settings.bellMode) {
+                        ForEach(BellMode.allCases) { mode in
+                            Text(mode.title).tag(mode)
+                        }
+                    }
+                    .labelsHidden()
+                }
+            }
+
+            Section("Safety") {
+                settingRow("Paste protection", description: "Warns before pasting text that contains multiple lines.") {
+                    Picker("", selection: $settings.pasteProtectionMode) {
+                        ForEach(PasteProtectionMode.allCases) { mode in
+                            Text(mode.title).tag(mode)
+                        }
+                    }
+                    .labelsHidden()
+                }
+
+                settingRow("Confirm close running session", description: "Shows a confirmation dialog before closing a tab with a running process.") {
+                    Toggle("", isOn: $settings.confirmOnCloseRunningSession)
+                        .labelsHidden()
+                }
+            }
+
+            Section("Input") {
+                settingRow("Input editor bar", description: "Shows a native text editor below the terminal prompt. Provides macOS text editing features like selection, undo, and emoji picker.") {
+                    Toggle("", isOn: $settings.inputBarEnabled)
+                        .labelsHidden()
+                }
             }
         }
         .formStyle(.grouped)
@@ -486,7 +499,7 @@ private struct KeyboardSettingsPane: View {
                 Text("Click a shortcut to record a new key combination. Press Escape to cancel.")
             }
 
-            Button("Reset All to Defaults") {
+            Button("Reset all to defaults") {
                 settingsStore.resetKeyBindings()
             }
         }
@@ -499,20 +512,22 @@ private struct WorkspaceSettingsPane: View {
 
     var body: some View {
         Form {
-            Section {
-                Picker("Tab Title", selection: $settings.tabTitleMode) {
-                    ForEach(TabTitleMode.allCases) { mode in
-                        Text(mode.title).tag(mode)
+            Section("Tabs") {
+                settingRow("Tab title", description: "Whether tabs display the shell-provided title or the current working directory.") {
+                    Picker("", selection: $settings.tabTitleMode) {
+                        ForEach(TabTitleMode.allCases) { mode in
+                            Text(mode.title).tag(mode)
+                        }
                     }
+                    .labelsHidden()
                 }
-            } header: {
-                Text("Tabs")
-            } footer: {
-                Text("Choose whether tabs should prefer the shell-provided title or the current working directory when both are available.")
             }
 
-            Section {
-                Toggle("Dim inactive splits", isOn: $settings.dimInactiveSplits)
+            Section("Splits") {
+                settingRow("Dim inactive splits", description: "Reduces brightness of unfocused panes to highlight the active one.") {
+                    Toggle("", isOn: $settings.dimInactiveSplits)
+                        .labelsHidden()
+                }
 
                 HStack {
                     Slider(value: $settings.inactiveSplitDimAmount, in: 0.04...0.75, step: 0.01)
@@ -523,10 +538,6 @@ private struct WorkspaceSettingsPane: View {
                         .foregroundStyle(settings.dimInactiveSplits ? .secondary : .tertiary)
                         .frame(width: 40, alignment: .trailing)
                 }
-            } header: {
-                Text("Splits")
-            } footer: {
-                Text("Inactive split dimming helps the active pane read as the current context without adding heavy borders.")
             }
         }
         .formStyle(.grouped)
@@ -541,20 +552,29 @@ private struct UpdatesPrivacySettingsPane: View {
 
     var body: some View {
         Form {
-            Toggle("Check for updates automatically", isOn: $settings.updateChecksEnabled)
+            settingRow("Check for updates automatically", description: "Periodically checks for new versions using Sparkle.") {
+                Toggle("", isOn: $settings.updateChecksEnabled)
+                    .labelsHidden()
+            }
 
             CheckForUpdatesView(updater: updater)
 
-            Toggle("Capture command history locally", isOn: $settings.historyCaptureEnabled)
+            settingRow("Capture command history locally", description: "Stores executed commands on this Mac for the history panel.") {
+                Toggle("", isOn: $settings.historyCaptureEnabled)
+                    .labelsHidden()
+            }
 
-            Toggle("Enable local logging", isOn: $settings.localLoggingEnabled)
+            settingRow("Enable local logging", description: "Writes diagnostic logs to disk for troubleshooting.") {
+                Toggle("", isOn: $settings.localLoggingEnabled)
+                    .labelsHidden()
+            }
 
             Section {
-                Button("Clear History", role: .destructive) {
+                Button("Clear history", role: .destructive) {
                     blockStore.clearHistory()
                 }
 
-                Button("Clear Local Logs", role: .destructive) {
+                Button("Clear local logs", role: .destructive) {
                     LocalLogStore.shared.clearLogs()
                 }
             } header: {
