@@ -263,7 +263,8 @@ private struct AppearanceSettingsPane: View {
             }
 
             Section {
-                TextField("Font Family", text: $settings.fontFamily)
+                FixedPitchFontPicker(selection: $settings.fontFamily, previewSize: settings.fontSize)
+
                 HStack {
                     Slider(value: $settings.fontSize, in: 10...24, step: 1)
                     Text("\(Int(settings.fontSize)) pt")
