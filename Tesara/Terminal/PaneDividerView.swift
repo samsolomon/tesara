@@ -34,11 +34,11 @@ struct PaneSplitView<First: View, Second: View>: View {
             ZStack(alignment: .topLeading) {
                 first
                     .frame(width: firstRect.width, height: firstRect.height)
-                    .offset(x: firstRect.minX, y: firstRect.minY)
+                    .position(x: firstRect.midX, y: firstRect.midY)
                     .clipped()
                 second
                     .frame(width: secondRect.width, height: secondRect.height)
-                    .offset(x: secondRect.minX, y: secondRect.minY)
+                    .position(x: secondRect.midX, y: secondRect.midY)
                     .clipped()
                 PaneDividerView(
                     direction: direction,

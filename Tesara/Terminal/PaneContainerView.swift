@@ -133,7 +133,6 @@ private struct EditorPaneLeafView: View {
                 Color.clear
             }
         }
-        .border(showBorder && isActive ? Color.accentColor : Color.clear, width: showBorder ? 2 : 0)
         .overlay {
             if showBorder, dimInactiveSplit, !isActive {
                 Rectangle()
@@ -246,7 +245,6 @@ private struct TerminalPaneLeafView: View {
                 Color.clear
             }
         }
-        .border(showBorder && isActive ? Color.accentColor : Color.clear, width: showBorder ? 2 : 0)
         .overlay {
             if showBorder, dimInactiveSplit, !isActive {
                 Rectangle()
