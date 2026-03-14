@@ -61,6 +61,8 @@ final class SettingsStore: ObservableObject {
     }
 
     func updateKeyBinding(action: KeyBindingAction, shortcut: KeyShortcut) {
+        guard action.supportsCustomization else { return }
+
         // Remove any existing binding that uses this shortcut (conflict resolution)
         settings.keyBindingOverrides.removeAll { $0.action != action && $0.shortcut == shortcut }
 
@@ -72,6 +74,7 @@ final class SettingsStore: ObservableObject {
     }
 
     func removeKeyBinding(action: KeyBindingAction) {
+        guard action.supportsCustomization else { return }
         settings.keyBindingOverrides.removeAll { $0.action == action }
     }
 

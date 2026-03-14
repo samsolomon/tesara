@@ -197,8 +197,8 @@ final class SettingsStoreTests: XCTestCase {
         let original = KeyShortcut(key: "k", modifiers: [.command])
         let replacement = KeyShortcut(key: "j", modifiers: [.command])
 
-        store.updateKeyBinding(action: .copy, shortcut: original)
-        store.updateKeyBinding(action: .copy, shortcut: replacement)
+        store.updateKeyBinding(action: .newTab, shortcut: original)
+        store.updateKeyBinding(action: .newTab, shortcut: replacement)
 
         XCTAssertEqual(store.settings.keyBindingOverrides.count, 1)
         XCTAssertEqual(store.settings.keyBindingOverrides.first?.shortcut, replacement)
@@ -208,12 +208,20 @@ final class SettingsStoreTests: XCTestCase {
         let store = makeStore()
         let shortcut = KeyShortcut(key: "k", modifiers: [.command])
 
-        store.updateKeyBinding(action: .copy, shortcut: shortcut)
-        store.updateKeyBinding(action: .paste, shortcut: shortcut)
+        store.updateKeyBinding(action: .newTab, shortcut: shortcut)
+        store.updateKeyBinding(action: .closeTab, shortcut: shortcut)
 
-        // Copy binding should be removed since paste took its shortcut
+        // New Tab binding should be removed since Close Tab took its shortcut
         XCTAssertEqual(store.settings.keyBindingOverrides.count, 1)
-        XCTAssertEqual(store.settings.keyBindingOverrides.first?.action, .paste)
+        XCTAssertEqual(store.settings.keyBindingOverrides.first?.action, .closeTab)
+    }
+
+    func testUpdateKeyBindingIgnoresUnsupportedAction() {
+        let store = makeStore()
+
+        store.updateKeyBinding(action: .copy, shortcut: KeyShortcut(key: "k", modifiers: [.command]))
+
+        XCTAssertTrue(store.settings.keyBindingOverrides.isEmpty)
     }
 
     func testRemoveKeyBinding() {
@@ -289,16 +297,14 @@ final class SettingsStoreTests: XCTestCase {
     func testKeyBindingOverrideRoundTrip() throws {
         let store = makeStore()
         let shortcut = KeyShortcut(key: "k", modifiers: [.command, .option])
-        store.updateKeyBinding(action: .find, shortcut: shortcut)
+        store.updateKeyBinding(action: .closeTab, shortcut: shortcut)
 
-        // Re-read from same defaults
-        let suiteName = (store as AnyObject).value(forKey: "defaults") as? UserDefaults
-        // Simpler: just encode/decode the settings directly
+        // Encode/decode the settings directly to verify persistence compatibility.
         let data = try JSONEncoder().encode(store.settings)
         let decoded = try JSONDecoder().decode(AppSettings.self, from: data)
 
         XCTAssertEqual(decoded.keyBindingOverrides.count, 1)
-        XCTAssertEqual(decoded.keyBindingOverrides.first?.action, .find)
+        XCTAssertEqual(decoded.keyBindingOverrides.first?.action, .closeTab)
         XCTAssertEqual(decoded.keyBindingOverrides.first?.shortcut.key, "k")
         XCTAssertEqual(decoded.keyBindingOverrides.first?.shortcut.modifiers, [.command, .option])
     }

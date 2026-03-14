@@ -202,6 +202,19 @@ enum KeyBindingAction: String, Codable, CaseIterable, Identifiable {
         }
     }
 
+    var supportsCustomization: Bool {
+        switch self {
+        case .newTab, .closeTab:
+            true
+        case .newWindow, .copy, .paste, .find, .openSettings, .toggleTUIPassthrough:
+            false
+        }
+    }
+
+    static var customizableCases: [KeyBindingAction] {
+        allCases.filter(\.supportsCustomization)
+    }
+
     var defaultShortcut: KeyShortcut? {
         switch self {
         case .newTab: KeyShortcut(key: "t", modifiers: [.command])

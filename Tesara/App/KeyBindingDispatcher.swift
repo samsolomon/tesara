@@ -28,22 +28,24 @@ final class KeyBindingDispatcher: ObservableObject {
     }
 
     func configure(settingsStore: SettingsStore, workspaceManager: WorkspaceManager, blockStore: BlockStore) {
-        guard eventMonitor == nil else { return }
-
         self.settingsStore = settingsStore
         self.workspaceManager = workspaceManager
         self.blockStore = blockStore
 
         rebuildLookupTable()
 
-        cancellable = settingsStore.$settings
-            .map(\.keyBindingOverrides)
-            .removeDuplicates()
-            .sink { [weak self] _ in
-                self?.rebuildLookupTable()
-            }
+        if cancellable == nil {
+            cancellable = settingsStore.$settings
+                .map(\.keyBindingOverrides)
+                .removeDuplicates()
+                .sink { [weak self] _ in
+                    self?.rebuildLookupTable()
+                }
+        }
 
-        installMonitor()
+        if eventMonitor == nil {
+            installMonitor()
+        }
     }
 
     deinit {
@@ -58,7 +60,7 @@ final class KeyBindingDispatcher: ObservableObject {
         guard let settingsStore else { return }
 
         var table: [KeyCombo: KeyBindingAction] = [:]
-        for override in settingsStore.settings.keyBindingOverrides {
+        for override in settingsStore.settings.keyBindingOverrides where override.action.supportsCustomization {
             let combo = KeyCombo(
                 key: override.shortcut.key,
                 modifiers: override.shortcut.eventModifierFlags
@@ -81,6 +83,10 @@ final class KeyBindingDispatcher: ObservableObject {
     }
 
     private func handleKeyEvent(_ event: NSEvent) -> NSEvent? {
+        if ShortcutRecordingState.isRecording {
+            return event
+        }
+
         // Don't intercept events in text-input contexts (text fields, editor view, key recorder)
         if let responder = event.window?.firstResponder,
            responder is NSTextView || responder is NSTextField || responder is EditorView {

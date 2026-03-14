@@ -1,6 +1,11 @@
 import AppKit
 import SwiftUI
 
+@MainActor
+enum ShortcutRecordingState {
+    static var isRecording = false
+}
+
 /// A SwiftUI view that captures a keyboard shortcut via an embedded NSView.
 /// Displays the current shortcut or "Default" when idle, and "Press shortcut..." when recording.
 struct KeyRecorderView: View {
@@ -15,13 +20,13 @@ struct KeyRecorderView: View {
         HStack(spacing: 6) {
             if isRecording {
                 KeyCaptureRepresentable { shortcut in
-                    isRecording = false
-                    if let shortcut {
-                        onRecord(shortcut)
-                    }
+                    finishRecording(with: shortcut)
                 }
                 .frame(width: 0, height: 0)
                 .opacity(0)
+                .onDisappear {
+                    ShortcutRecordingState.isRecording = false
+                }
 
                 Text("Press shortcut...")
                     .foregroundStyle(.secondary)
@@ -34,14 +39,14 @@ struct KeyRecorderView: View {
                     )
 
                 Button("Cancel") {
-                    isRecording = false
+                    finishRecording(with: nil)
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
                 .font(.caption)
             } else {
                 Button {
-                    isRecording = true
+                    beginRecording()
                 } label: {
                     Text(displayText)
                         .foregroundStyle(hasOverride ? .primary : .secondary)
@@ -63,6 +68,19 @@ struct KeyRecorderView: View {
                     .help("Restore default")
                 }
             }
+        }
+    }
+
+    private func beginRecording() {
+        ShortcutRecordingState.isRecording = true
+        isRecording = true
+    }
+
+    private func finishRecording(with shortcut: KeyShortcut?) {
+        ShortcutRecordingState.isRecording = false
+        isRecording = false
+        if let shortcut {
+            onRecord(shortcut)
         }
     }
 

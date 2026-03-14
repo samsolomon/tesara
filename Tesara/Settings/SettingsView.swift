@@ -310,7 +310,7 @@ private struct KeyboardSettingsPane: View {
     var body: some View {
         Form {
             Section {
-                ForEach(KeyBindingAction.allCases) { action in
+                ForEach(KeyBindingAction.customizableCases) { action in
                     LabeledContent(action.title) {
                         KeyRecorderView(
                             action: action,
@@ -325,7 +325,7 @@ private struct KeyboardSettingsPane: View {
                     }
                 }
             } footer: {
-                Text("Click a shortcut to record a new key combination. Press Escape to cancel. System shortcuts (⌘Q, ⌘H, ⌘M) cannot be overridden.")
+                Text("Click a shortcut to record a new key combination. Press Escape to cancel. Only actions with fully replaceable shortcuts are shown here.")
             }
 
             Button("Reset All to Defaults") {
