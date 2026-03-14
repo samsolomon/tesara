@@ -3,7 +3,7 @@ import Foundation
 import SwiftUI
 
 struct AppSettings: Codable, Equatable {
-    static let currentSchemaVersion = 4
+    static let currentSchemaVersion = 6
 
     var schemaVersion: Int
     var fontFamily: String
@@ -22,6 +22,28 @@ struct AppSettings: Codable, Equatable {
     var dimInactiveSplits: Bool
     var inactiveSplitDimAmount: Double
     var inputBarEnabled: Bool
+    var cursorStyle: CursorStyle
+    var cursorBarWidth: Double
+    var cursorRounded: Bool
+    var cursorBlink: Bool
+    var cursorGlow: Bool
+    var cursorGlowRadius: Double
+    var cursorGlowOpacity: Double
+    var cursorSmoothBlink: Bool
+    var autoThemeSwitching: Bool
+    var lightThemeID: String?
+    var darkThemeID: String?
+    var windowOpacity: Double
+    var windowBlur: Bool
+    var windowPaddingX: Int
+    var windowPaddingY: Int
+    var fontLigatures: Bool
+    var fontThicken: Bool
+    var optionAsAlt: OptionAsAlt
+    var scrollbackLines: Int
+    var copyOnSelect: Bool
+    var clipboardTrimTrailingSpaces: Bool
+    var bellMode: BellMode
 
     init(
         schemaVersion: Int = currentSchemaVersion,
@@ -40,7 +62,29 @@ struct AppSettings: Codable, Equatable {
         tabTitleMode: TabTitleMode = .shellTitle,
         dimInactiveSplits: Bool = true,
         inactiveSplitDimAmount: Double = 0.3,
-        inputBarEnabled: Bool = true
+        inputBarEnabled: Bool = true,
+        cursorStyle: CursorStyle = .bar,
+        cursorBarWidth: Double = 3.0,
+        cursorRounded: Bool = true,
+        cursorBlink: Bool = true,
+        cursorGlow: Bool = false,
+        cursorGlowRadius: Double = 6.0,
+        cursorGlowOpacity: Double = 0.4,
+        cursorSmoothBlink: Bool = false,
+        autoThemeSwitching: Bool = false,
+        lightThemeID: String? = nil,
+        darkThemeID: String? = nil,
+        windowOpacity: Double = 1.0,
+        windowBlur: Bool = false,
+        windowPaddingX: Int = 0,
+        windowPaddingY: Int = 0,
+        fontLigatures: Bool = true,
+        fontThicken: Bool = false,
+        optionAsAlt: OptionAsAlt = .off,
+        scrollbackLines: Int = 10000,
+        copyOnSelect: Bool = false,
+        clipboardTrimTrailingSpaces: Bool = false,
+        bellMode: BellMode = .system
     ) {
         self.schemaVersion = schemaVersion
         self.fontFamily = fontFamily
@@ -59,6 +103,28 @@ struct AppSettings: Codable, Equatable {
         self.dimInactiveSplits = dimInactiveSplits
         self.inactiveSplitDimAmount = inactiveSplitDimAmount
         self.inputBarEnabled = inputBarEnabled
+        self.cursorStyle = cursorStyle
+        self.cursorBarWidth = cursorBarWidth
+        self.cursorRounded = cursorRounded
+        self.cursorBlink = cursorBlink
+        self.cursorGlow = cursorGlow
+        self.cursorGlowRadius = cursorGlowRadius
+        self.cursorGlowOpacity = cursorGlowOpacity
+        self.cursorSmoothBlink = cursorSmoothBlink
+        self.autoThemeSwitching = autoThemeSwitching
+        self.lightThemeID = lightThemeID
+        self.darkThemeID = darkThemeID
+        self.windowOpacity = windowOpacity
+        self.windowBlur = windowBlur
+        self.windowPaddingX = windowPaddingX
+        self.windowPaddingY = windowPaddingY
+        self.fontLigatures = fontLigatures
+        self.fontThicken = fontThicken
+        self.optionAsAlt = optionAsAlt
+        self.scrollbackLines = scrollbackLines
+        self.copyOnSelect = copyOnSelect
+        self.clipboardTrimTrailingSpaces = clipboardTrimTrailingSpaces
+        self.bellMode = bellMode
     }
 
     static var `default`: AppSettings {
@@ -105,6 +171,28 @@ struct AppSettings: Codable, Equatable {
         case dimInactiveSplits
         case inactiveSplitDimAmount
         case inputBarEnabled
+        case cursorStyle
+        case cursorBarWidth
+        case cursorRounded
+        case cursorBlink
+        case cursorGlow
+        case cursorGlowRadius
+        case cursorGlowOpacity
+        case cursorSmoothBlink
+        case autoThemeSwitching
+        case lightThemeID
+        case darkThemeID
+        case windowOpacity
+        case windowBlur
+        case windowPaddingX
+        case windowPaddingY
+        case fontLigatures
+        case fontThicken
+        case optionAsAlt
+        case scrollbackLines
+        case copyOnSelect
+        case clipboardTrimTrailingSpaces
+        case bellMode
     }
 
     init(from decoder: Decoder) throws {
@@ -127,6 +215,28 @@ struct AppSettings: Codable, Equatable {
         dimInactiveSplits = try container.decodeIfPresent(Bool.self, forKey: .dimInactiveSplits) ?? true
         inactiveSplitDimAmount = try container.decodeIfPresent(Double.self, forKey: .inactiveSplitDimAmount) ?? 0.3
         inputBarEnabled = try container.decodeIfPresent(Bool.self, forKey: .inputBarEnabled) ?? true
+        cursorStyle = try container.decodeIfPresent(CursorStyle.self, forKey: .cursorStyle) ?? .bar
+        cursorBarWidth = try container.decodeIfPresent(Double.self, forKey: .cursorBarWidth) ?? 3.0
+        cursorRounded = try container.decodeIfPresent(Bool.self, forKey: .cursorRounded) ?? true
+        cursorBlink = try container.decodeIfPresent(Bool.self, forKey: .cursorBlink) ?? true
+        cursorGlow = try container.decodeIfPresent(Bool.self, forKey: .cursorGlow) ?? false
+        cursorGlowRadius = try container.decodeIfPresent(Double.self, forKey: .cursorGlowRadius) ?? 6.0
+        cursorGlowOpacity = try container.decodeIfPresent(Double.self, forKey: .cursorGlowOpacity) ?? 0.4
+        cursorSmoothBlink = try container.decodeIfPresent(Bool.self, forKey: .cursorSmoothBlink) ?? false
+        autoThemeSwitching = try container.decodeIfPresent(Bool.self, forKey: .autoThemeSwitching) ?? false
+        lightThemeID = try container.decodeIfPresent(String.self, forKey: .lightThemeID)
+        darkThemeID = try container.decodeIfPresent(String.self, forKey: .darkThemeID)
+        windowOpacity = try container.decodeIfPresent(Double.self, forKey: .windowOpacity) ?? 1.0
+        windowBlur = try container.decodeIfPresent(Bool.self, forKey: .windowBlur) ?? false
+        windowPaddingX = try container.decodeIfPresent(Int.self, forKey: .windowPaddingX) ?? 0
+        windowPaddingY = try container.decodeIfPresent(Int.self, forKey: .windowPaddingY) ?? 0
+        fontLigatures = try container.decodeIfPresent(Bool.self, forKey: .fontLigatures) ?? true
+        fontThicken = try container.decodeIfPresent(Bool.self, forKey: .fontThicken) ?? false
+        optionAsAlt = try container.decodeIfPresent(OptionAsAlt.self, forKey: .optionAsAlt) ?? .off
+        scrollbackLines = try container.decodeIfPresent(Int.self, forKey: .scrollbackLines) ?? 10000
+        copyOnSelect = try container.decodeIfPresent(Bool.self, forKey: .copyOnSelect) ?? false
+        clipboardTrimTrailingSpaces = try container.decodeIfPresent(Bool.self, forKey: .clipboardTrimTrailingSpaces) ?? false
+        bellMode = try container.decodeIfPresent(BellMode.self, forKey: .bellMode) ?? .system
     }
 }
 
@@ -162,6 +272,68 @@ enum TabTitleMode: String, Codable, CaseIterable, Identifiable {
     }
 }
 
+enum CursorStyle: String, Codable, CaseIterable, Identifiable {
+    case bar
+    case block
+    case underline
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .bar:
+            "Bar"
+        case .block:
+            "Block"
+        case .underline:
+            "Underline"
+        }
+    }
+}
+
+enum OptionAsAlt: String, Codable, CaseIterable, Identifiable {
+    case off
+    case left
+    case right
+    case both
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .off: "Off"
+        case .left: "Left Only"
+        case .right: "Right Only"
+        case .both: "Both"
+        }
+    }
+
+    var ghosttyValue: String {
+        switch self {
+        case .off: "false"
+        case .left: "left"
+        case .right: "right"
+        case .both: "true"
+        }
+    }
+}
+
+enum BellMode: String, Codable, CaseIterable, Identifiable {
+    case none
+    case system
+    case visual
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .none: "None"
+        case .system: "System Sound"
+        case .visual: "Visual Flash"
+        }
+    }
+}
+
 struct ImportedTheme: Codable, Equatable, Identifiable {
     var id: String
     var name: String
@@ -183,41 +355,30 @@ enum KeyBindingAction: String, Codable, CaseIterable, Identifiable {
     case find
     case openSettings
     case toggleTUIPassthrough
+    case splitRight
+    case splitDown
+    case closePane
+    case focusNextPane
+    case focusPrevPane
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
-        case .newTab:
-            "New Tab"
-        case .newWindow:
-            "New Window"
-        case .closeTab:
-            "Close Tab"
-        case .copy:
-            "Copy"
-        case .paste:
-            "Paste"
-        case .find:
-            "Find"
-        case .openSettings:
-            "Open Settings"
-        case .toggleTUIPassthrough:
-            "Toggle TUI Passthrough"
+        case .newTab: "New Tab"
+        case .newWindow: "New Window"
+        case .closeTab: "Close Tab"
+        case .copy: "Copy"
+        case .paste: "Paste"
+        case .find: "Find"
+        case .openSettings: "Open Settings"
+        case .toggleTUIPassthrough: "Toggle TUI Passthrough"
+        case .splitRight: "Split Right"
+        case .splitDown: "Split Down"
+        case .closePane: "Close Pane"
+        case .focusNextPane: "Focus Next Pane"
+        case .focusPrevPane: "Focus Previous Pane"
         }
-    }
-
-    var supportsCustomization: Bool {
-        switch self {
-        case .newTab, .closeTab:
-            true
-        case .newWindow, .copy, .paste, .find, .openSettings, .toggleTUIPassthrough:
-            false
-        }
-    }
-
-    static var customizableCases: [KeyBindingAction] {
-        allCases.filter(\.supportsCustomization)
     }
 
     var defaultShortcut: KeyShortcut? {
@@ -230,6 +391,11 @@ enum KeyBindingAction: String, Codable, CaseIterable, Identifiable {
         case .find: nil
         case .openSettings: KeyShortcut(key: ",", modifiers: [.command])
         case .toggleTUIPassthrough: nil
+        case .splitRight: KeyShortcut(key: "d", modifiers: [.command])
+        case .splitDown: KeyShortcut(key: "d", modifiers: [.command, .shift])
+        case .closePane: KeyShortcut(key: "w", modifiers: [.command])
+        case .focusNextPane: KeyShortcut(key: "]", modifiers: [.command, .option])
+        case .focusPrevPane: KeyShortcut(key: "[", modifiers: [.command, .option])
         }
     }
 }

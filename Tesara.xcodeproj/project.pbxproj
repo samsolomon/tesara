@@ -15,6 +15,8 @@
 		0FAC866DE2F0E11344222CC0 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 4914B0341A868631C86F9855 /* Sparkle */; };
 		17A1E6F4A360BF5C97590C6E /* PaneContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57E292C9A04F867FABB9662E /* PaneContainerView.swift */; };
 		1B3F8A01C4D2E5F7A8B90123 /* InputBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B3F8A02C4D2E5F7A8B90124 /* InputBarView.swift */; };
+		FF2001FF2001FF2001FF2001 /* InputBarHistoryController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF2002FF2002FF2002FF2002 /* InputBarHistoryController.swift */; };
+		FF2003FF2003FF2003FF2003 /* HistorySearchOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF2004FF2004FF2004FF2004 /* HistorySearchOverlayView.swift */; };
 		1851A4083C58F1F7361DB04C /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17E46BFDCDCA182651723141 /* SettingsView.swift */; };
 		1CED6DD8299D1750E4C66631 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BA08886415B515EB410905D /* SettingsStore.swift */; };
 		1D208652A6CF443FFD84D919 /* BlockStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D89D726E46FBCEF09C9F3737 /* BlockStore.swift */; };
@@ -63,6 +65,8 @@
 		BB0010BB0010BB0010BB0010 /* EditorSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0010AA0010AA0010AA0010 /* EditorSessionTests.swift */; };
 		BB0011BB0011BB0011BB0011 /* GlyphAtlasTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0011AA0011AA0011AA0011 /* GlyphAtlasTests.swift */; };
 		BB0012BB0012BB0012BB0012 /* TextStorageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0012AA0012AA0012AA0012 /* TextStorageTests.swift */; };
+		EE1001EE1001EE1001EE1001 /* GlyphCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE1002EE1002EE1002EE1002 /* GlyphCacheTests.swift */; };
+		EE1003EE1003EE1003EE1003 /* KeyBindingDispatcherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE1004EE1004EE1004EE1004 /* KeyBindingDispatcherTests.swift */; };
 		BD773D1042EF68102567BF4B /* WorkspaceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 085DF302ED385DA3320C4E00 /* WorkspaceManager.swift */; };
 		BF3F8B3950CB544D24CA8525 /* TesaraTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3E6DBF6FBE09F48C83448BD /* TesaraTests.swift */; };
 		C9FA15C125CD87815FF03CEC /* TesaraApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED0F772A0E12C469683DBCB8 /* TesaraApp.swift */; };
@@ -105,6 +109,8 @@
 		2292F5BCC3AC767DAD9619D7 /* TerminalIntegration */ = {isa = PBXFileReference; lastKnownFileType = folder; name = TerminalIntegration; path = Tesara/Resources/TerminalIntegration; sourceTree = SOURCE_ROOT; };
 		230B62F5C9074F2BEC567B40 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		1B3F8A02C4D2E5F7A8B90124 /* InputBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputBarView.swift; sourceTree = "<group>"; };
+		FF2002FF2002FF2002FF2002 /* InputBarHistoryController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputBarHistoryController.swift; sourceTree = "<group>"; };
+		FF2004FF2004FF2004FF2004 /* HistorySearchOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistorySearchOverlayView.swift; sourceTree = "<group>"; };
 		36D96A4177859EA0D14FAFCB /* PaneNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaneNode.swift; sourceTree = "<group>"; };
 		388B787A886EB7129E51A67D /* GhosttyConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhosttyConfigTests.swift; sourceTree = "<group>"; };
 		4696C2FAC81FD918FCF4CDCF /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
@@ -139,6 +145,8 @@
 		AA0010AA0010AA0010AA0010 /* EditorSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorSessionTests.swift; sourceTree = "<group>"; };
 		AA0011AA0011AA0011AA0011 /* GlyphAtlasTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlyphAtlasTests.swift; sourceTree = "<group>"; };
 		AA0012AA0012AA0012AA0012 /* TextStorageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextStorageTests.swift; sourceTree = "<group>"; };
+		EE1002EE1002EE1002EE1002 /* GlyphCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlyphCacheTests.swift; sourceTree = "<group>"; };
+		EE1004EE1004EE1004EE1004 /* KeyBindingDispatcherTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyBindingDispatcherTests.swift; sourceTree = "<group>"; };
 		AED370DFD7341D20F6AEBF26 /* JSONTokenizer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = JSONTokenizer.swift; sourceTree = "<group>"; };
 		B124A534C12EBE6DD5126A85 /* SyntaxHighlighterTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SyntaxHighlighterTests.swift; sourceTree = "<group>"; };
 		7503F59GACG295469BC1CG23 /* VisualLineMapTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VisualLineMapTests.swift; sourceTree = "<group>"; };
@@ -307,6 +315,8 @@
 		DAF7F752BD488515A0DA51E4 /* Terminal */ = {
 			isa = PBXGroup;
 			children = (
+				FF2004FF2004FF2004FF2004 /* HistorySearchOverlayView.swift */,
+				FF2002FF2002FF2002FF2002 /* InputBarHistoryController.swift */,
 				1B3F8A02C4D2E5F7A8B90124 /* InputBarView.swift */,
 				57E292C9A04F867FABB9662E /* PaneContainerView.swift */,
 				5B184B08FFBEE976991C8F22 /* PaneDividerView.swift */,
@@ -341,6 +351,8 @@
 				666C53887FEA86980246E389 /* EditorFileIOTests.swift */,
 				B124A534C12EBE6DD5126A85 /* SyntaxHighlighterTests.swift */,
 				7503F59GACG295469BC1CG23 /* VisualLineMapTests.swift */,
+				EE1002EE1002EE1002EE1002 /* GlyphCacheTests.swift */,
+				EE1004EE1004EE1004EE1004 /* KeyBindingDispatcherTests.swift */,
 			);
 			path = TesaraTests;
 			sourceTree = "<group>";
@@ -494,6 +506,8 @@
 				DD0004DD0004DD0004DD0004 /* KeyBindingDispatcher.swift in Sources */,
 				DD0002DD0002DD0002DD0002 /* KeyRecorderView.swift in Sources */,
 				6AB4D491DF5F118108162EEA /* MainWindowView.swift in Sources */,
+				FF2001FF2001FF2001FF2001 /* InputBarHistoryController.swift in Sources */,
+				FF2003FF2003FF2003FF2003 /* HistorySearchOverlayView.swift in Sources */,
 				1B3F8A01C4D2E5F7A8B90123 /* InputBarView.swift in Sources */,
 				17A1E6F4A360BF5C97590C6E /* PaneContainerView.swift in Sources */,
 				B4F68462773E6A1D220DA476 /* PaneDividerView.swift in Sources */,
@@ -548,6 +562,8 @@
 				E6133E8CABCDF858487AE0D9 /* EditorFileIOTests.swift in Sources */,
 				7502E58FABF194358AB0BF11 /* SyntaxHighlighterTests.swift in Sources */,
 				7503F59GACG295469BC1CG22 /* VisualLineMapTests.swift in Sources */,
+				EE1001EE1001EE1001EE1001 /* GlyphCacheTests.swift in Sources */,
+				EE1003EE1003EE1003EE1003 /* KeyBindingDispatcherTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

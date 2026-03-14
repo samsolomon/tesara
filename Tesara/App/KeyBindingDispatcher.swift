@@ -68,7 +68,7 @@ final class KeyBindingDispatcher: ObservableObject {
         guard let settingsStore else { return }
 
         var table: [KeyCombo: KeyBindingAction] = [:]
-        for override in settingsStore.settings.keyBindingOverrides where override.action.supportsCustomization {
+        for override in settingsStore.settings.keyBindingOverrides {
             let combo = KeyCombo(
                 key: override.shortcut.key,
                 modifiers: override.shortcut.eventModifierFlags
@@ -158,18 +158,13 @@ final class KeyBindingDispatcher: ObservableObject {
     // MARK: - Action Execution
 
     private func execute(_ action: KeyBindingAction) {
-        guard let manager = workspaceManager, let settings = settingsStore, let blocks = blockStore else { return }
+        guard let manager = workspaceManager else { return }
 
         switch action {
         case .newTab:
-            manager.newTab(
-                shellPath: settings.settings.shellPath,
-                workingDirectory: settings.settings.defaultWorkingDirectory,
-                blockStore: blocks
-            )
+            manager.newTabFromDefaults()
 
         case .newWindow:
-            // Single-window app — no-op for now
             break
 
         case .closeTab:
@@ -184,31 +179,19 @@ final class KeyBindingDispatcher: ObservableObject {
             NSApp.sendAction(#selector(NSText.paste(_:)), to: nil, from: nil)
 
         case .find:
-            // performFindPanelAction: is an informal AppKit protocol, not exposed for #selector
             NSApp.sendAction(NSSelectorFromString("performFindPanelAction:"), to: nil, from: nil)
 
         case .openSettings:
             settingsOpenCoordinator?.openSettings()
 
         case .toggleTUIPassthrough:
-            // Stubbed — will need a concrete implementation when TUI passthrough mode is built
             break
 
         case .splitRight:
-            manager.splitActivePane(
-                direction: .horizontal,
-                shellPath: settings.settings.shellPath,
-                workingDirectory: settings.settings.defaultWorkingDirectory,
-                blockStore: blocks
-            )
+            manager.splitActivePaneFromDefaults(direction: .horizontal)
 
         case .splitDown:
-            manager.splitActivePane(
-                direction: .vertical,
-                shellPath: settings.settings.shellPath,
-                workingDirectory: settings.settings.defaultWorkingDirectory,
-                blockStore: blocks
-            )
+            manager.splitActivePaneFromDefaults(direction: .vertical)
 
         case .closePane:
             if let id = manager.activePaneID {

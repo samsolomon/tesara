@@ -21,8 +21,16 @@ final class EditorLayoutEngine {
     struct ThemeColors {
         var foreground: SIMD4<UInt8>
         var background: SIMD4<UInt8>
-        var cursor: SIMD4<UInt8>
         var selection: SIMD4<UInt8>
+    }
+
+    struct CursorConfig {
+        var style: CursorStyle
+        var barWidth: Double
+        var rounded: Bool
+        var color: SIMD4<UInt8>
+        var glowRadius: Double = 0
+        var glowOpacity: Double = 0
     }
 
     private(set) var font: CTFont
@@ -366,6 +374,7 @@ final class EditorLayoutEngine {
         selection: TextStorage.Range?,
         cursorPos: TextStorage.Position,
         cursorVisible: Bool,
+        cursorConfig: CursorConfig,
         markedText: MarkedTextInfo?,
         layoutLines: [LayoutLine],
         viewportWidth: CGFloat,
@@ -449,7 +458,7 @@ final class EditorLayoutEngine {
             }
         }
 
-        // Cursor rect (wrap-aware)
+        // Cursor rect (wrap-aware, style-aware)
         if cursorVisible {
             for layoutLine in layoutLines where layoutLine.lineIndex == cursorPos.line {
                 let lineRange = CTLineGetStringRange(layoutLine.ctLine)
@@ -459,11 +468,46 @@ final class EditorLayoutEngine {
                 if !cursorInRange { continue }
 
                 let x = offsetForColumn(cursorPos.column - lineStart, in: layoutLine.ctLine, scale: scale)
-                let cursorWidth: Float = max(Float(2.0 * scale), 1.0)
+
+                // Character-cell width (used by block & underline)
+                let nextColX = offsetForColumn(cursorPos.column - lineStart + 1, in: layoutLine.ctLine, scale: scale)
+                let charCellWidth: Float = {
+                    let w = nextColX - x
+                    return w > 0 ? w : max(Float(8.0 * scale), 1.0)
+                }()
+
+                let cursorWidth: Float
+                let cursorHeight: Float
+                let cursorY: Float
+                let cornerRadius: Float
+
+                switch cursorConfig.style {
+                case .bar:
+                    cursorWidth = max(Float(cursorConfig.barWidth * scale), 1.0)
+                    cursorHeight = Float(scaledLineHeight)
+                    cursorY = Float(layoutLine.origin.y)
+                    cornerRadius = cursorConfig.rounded ? cursorWidth / 2.0 : 0
+
+                case .block:
+                    cursorWidth = charCellWidth
+                    cursorHeight = Float(scaledLineHeight)
+                    cursorY = Float(layoutLine.origin.y)
+                    cornerRadius = cursorConfig.rounded ? min(2.0 * Float(scale), cursorWidth / 2.0) : 0
+
+                case .underline:
+                    cursorWidth = charCellWidth
+                    cursorHeight = max(Float(2.0 * scale), 1.0)
+                    cursorY = Float(layoutLine.origin.y + scaledLineHeight) - cursorHeight
+                    cornerRadius = 0
+                }
+
                 rects.append(EditorRenderer.RectInstance(
-                    position: SIMD2<Float>(x, Float(layoutLine.origin.y)),
-                    size: SIMD2<Float>(cursorWidth, Float(scaledLineHeight)),
-                    color: colors.cursor
+                    position: SIMD2<Float>(x, cursorY),
+                    size: SIMD2<Float>(cursorWidth, cursorHeight),
+                    color: cursorConfig.color,
+                    cornerRadius: cornerRadius,
+                    glowRadius: Float(cursorConfig.glowRadius * scale),
+                    glowOpacity: Float(cursorConfig.glowOpacity)
                 ))
                 break
             }

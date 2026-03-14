@@ -211,6 +211,10 @@ class GhosttySurfaceView: NSView, NSTextInputClient {
         return nil
     }
 
+    /// When true, clicks on the surface do not steal keyboard focus.
+    /// Set by the input bar to keep focus in the editor while allowing mouse interaction (scroll, select).
+    var keyboardFocusDisabled = false
+
     private func localEventLeftMouseDown(_ event: NSEvent) -> NSEvent? {
         guard let window,
               event.window != nil,
@@ -220,6 +224,11 @@ class GhosttySurfaceView: NSView, NSTextInputClient {
         guard hitTest(location) == self else { return event }
 
         suppressNextLeftMouseUp = false
+
+        // When input bar owns focus, allow mouse events but don't claim first responder
+        if keyboardFocusDisabled {
+            return event
+        }
 
         // Already first responder — normal click
         guard window.firstResponder !== self else { return event }

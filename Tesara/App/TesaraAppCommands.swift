@@ -22,11 +22,7 @@ struct TesaraAppCommands: Commands {
 
         CommandGroup(replacing: .newItem) {
             Button("New Tab") {
-                manager.newTab(
-                    shellPath: settingsStore.settings.shellPath,
-                    workingDirectory: settingsStore.settings.defaultWorkingDirectory,
-                    blockStore: blockStore
-                )
+                manager.newTabFromDefaults()
             }
             .keyboardShortcut(settingsStore.resolvedShortcut(for: .newTab, fallback: KeyShortcut(key: "t", modifiers: [.command])))
 
@@ -79,10 +75,10 @@ struct TesaraAppCommands: Commands {
         }
 
         CommandGroup(before: .toolbar) {
-            Button("Split Right") { split(.horizontal) }
+            Button("Split Right") { manager.splitActivePaneFromDefaults(direction: .horizontal) }
                 .keyboardShortcut(settingsStore.resolvedShortcut(for: .splitRight, fallback: KeyShortcut(key: "d", modifiers: [.command])))
 
-            Button("Split Down") { split(.vertical) }
+            Button("Split Down") { manager.splitActivePaneFromDefaults(direction: .vertical) }
                 .keyboardShortcut(settingsStore.resolvedShortcut(for: .splitDown, fallback: KeyShortcut(key: "d", modifiers: [.command, .shift])))
 
             Divider()
@@ -93,7 +89,9 @@ struct TesaraAppCommands: Commands {
                     style: s.cursorStyle,
                     barWidth: s.cursorBarWidth,
                     rounded: s.cursorRounded,
-                    color: hexToColorU8(settingsStore.activeTheme.cursor)
+                    color: hexToColorU8(settingsStore.activeTheme.cursor),
+                    glowRadius: s.cursorGlow ? s.cursorGlowRadius : 0,
+                    glowOpacity: s.cursorGlow ? s.cursorGlowOpacity : 0
                 )
                 manager.splitActivePaneWithEditor(
                     direction: .horizontal,
@@ -161,15 +159,6 @@ struct TesaraAppCommands: Commands {
                 .keyboardShortcut(KeyEquivalent(Character(String(index + 1))), modifiers: .command)
             }
         }
-    }
-
-    private func split(_ direction: PaneNode.SplitDirection) {
-        manager.splitActivePane(
-            direction: direction,
-            shellPath: settingsStore.settings.shellPath,
-            workingDirectory: settingsStore.settings.defaultWorkingDirectory,
-            blockStore: blockStore
-        )
     }
 }
 

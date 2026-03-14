@@ -74,6 +74,44 @@ enum GhosttyConfig {
         // Shell integration — disabled because Tesara provides its own
         lines.append("shell-integration = none")
 
+        // Font options
+        if !settings.fontLigatures {
+            lines.append("font-feature = -liga")
+            lines.append("font-feature = -clig")
+        }
+        lines.append("font-thicken = \(settings.fontThicken)")
+
+        // Cursor
+        lines.append("cursor-style = \(settings.cursorStyle.rawValue)")
+        lines.append("cursor-style-blink = \(settings.cursorBlink)")
+        if settings.cursorGlow {
+            let terminalOpacity = max(0.5, 1.0 - settings.cursorGlowOpacity * 0.5)
+            lines.append("cursor-opacity = \(terminalOpacity)")
+        }
+
+        // Window
+        if settings.windowOpacity < 1.0 {
+            lines.append("background-opacity = \(settings.windowOpacity)")
+        }
+        if settings.windowPaddingX > 0 {
+            lines.append("window-padding-x = \(settings.windowPaddingX)")
+        }
+        if settings.windowPaddingY > 0 {
+            lines.append("window-padding-y = \(settings.windowPaddingY)")
+        }
+
+        // macOS
+        lines.append("macos-option-as-alt = \(settings.optionAsAlt.ghosttyValue)")
+
+        // Scrollback
+        lines.append("scrollback-limit = \(settings.scrollbackLines)")
+
+        // Clipboard
+        if settings.copyOnSelect {
+            lines.append("copy-on-select = clipboard")
+        }
+        lines.append("clipboard-trim-trailing-spaces = \(settings.clipboardTrimTrailingSpaces)")
+
         // Core colors
         lines.append("foreground = \(normalizeHex(theme.foreground))")
         lines.append("background = \(normalizeHex(theme.background))")

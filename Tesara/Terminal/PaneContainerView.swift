@@ -148,6 +148,8 @@ private struct EditorPaneLeafView: View {
 }
 
 private struct TerminalPaneLeafView: View {
+    @EnvironmentObject private var settingsStore: SettingsStore
+
     let id: UUID
     @ObservedObject var session: TerminalSession
     let isActive: Bool
@@ -165,20 +167,42 @@ private struct TerminalPaneLeafView: View {
     }
 
     private func syncInputBarPresentation(session: TerminalSession, surfaceView: GhosttySurfaceView) {
+        guard isActive else {
+            session.inputBarState?.editorView?.pauseDisplayLink()
+            session.inputBarState?.editorView?.focusDidChange(false)
+            surfaceView.keyboardFocusDisabled = false
+            surfaceView.focusDidChange(false)
+            return
+        }
+
         if session.isAtPrompt && inputBarEnabled {
-            session.setupInputBar(theme: theme, fontFamily: fontFamily, fontSize: fontSize)
+            let s = settingsStore.settings
+            let cursorCfg = EditorLayoutEngine.CursorConfig(
+                style: s.cursorStyle,
+                barWidth: s.cursorBarWidth,
+                rounded: s.cursorRounded,
+                color: hexToColorU8(settingsStore.activeTheme.cursor),
+                glowRadius: s.cursorGlow ? s.cursorGlowRadius : 0,
+                glowOpacity: s.cursorGlow ? s.cursorGlowOpacity : 0
+            )
+            session.setupInputBar(theme: theme, fontFamily: fontFamily, fontSize: fontSize, cursorConfig: cursorCfg, cursorBlink: s.cursorBlink)
             session.inputBarState?.editorView?.resumeDisplayLink()
+            surfaceView.keyboardFocusDisabled = true
             focusInputBar(session: session, surfaceView: surfaceView)
         } else {
             session.inputBarState?.editorView?.pauseDisplayLink()
-            focusTerminal(session: session, surfaceView: surfaceView)
+            session.inputBarState?.editorView?.focusDidChange(false)
+            surfaceView.keyboardFocusDisabled = false
+            if let window = surfaceView.window {
+                window.makeFirstResponder(surfaceView)
+                surfaceView.focusDidChange(true)
+            }
         }
     }
 
     private func focusInputBar(session: TerminalSession, surfaceView: GhosttySurfaceView) {
         Task { @MainActor in
             guard let editorView = session.inputBarState?.editorView else { return }
-            // Defer until the editor view is in the window hierarchy (SwiftUI animation may not have committed yet)
             if editorView.window == nil {
                 try? await Task.sleep(for: .milliseconds(50))
             }
@@ -189,45 +213,55 @@ private struct TerminalPaneLeafView: View {
         }
     }
 
-    private func focusTerminal(session: TerminalSession, surfaceView: GhosttySurfaceView) {
-        Task { @MainActor in
-            session.inputBarState?.editorView?.focusDidChange(false)
-            guard let window = surfaceView.window else { return }
-            window.makeFirstResponder(surfaceView)
-            surfaceView.focusDidChange(true)
-        }
-    }
-
     var body: some View {
         Group {
             if let surfaceView = session.surfaceView {
-                VStack(spacing: 0) {
-                    GeometryReader { geo in
-                        GhosttySurfaceRepresentable(surfaceView: surfaceView)
-                            .onAppear {
-                                #if DEBUG
-                                LocalLogStore.shared.log("[TerminalPane] pane=\(id.uuidString) size=\(Int(geo.size.width))x\(Int(geo.size.height))")
-                                #endif
-                                surfaceView.setFrameSize(geo.size)
-                                surfaceView.sizeDidChange(geo.size)
-                            }
-                            .onChange(of: geo.size) { _, newSize in
-                                #if DEBUG
-                                LocalLogStore.shared.log("[TerminalPane] pane=\(id.uuidString) size=\(Int(newSize.width))x\(Int(newSize.height))")
-                                #endif
-                                surfaceView.setFrameSize(newSize)
-                                surfaceView.sizeDidChange(newSize)
-                            }
-                    }
-                    .id(session.id)
-
+                GeometryReader { geo in
+                    GhosttySurfaceRepresentable(surfaceView: surfaceView)
+                        .onAppear {
+                            #if DEBUG
+                            LocalLogStore.shared.log("[TerminalPane] pane=\(id.uuidString) size=\(Int(geo.size.width))x\(Int(geo.size.height))")
+                            #endif
+                            surfaceView.setFrameSize(geo.size)
+                            surfaceView.sizeDidChange(geo.size)
+                        }
+                        .onChange(of: geo.size) { _, newSize in
+                            #if DEBUG
+                            LocalLogStore.shared.log("[TerminalPane] pane=\(id.uuidString) size=\(Int(newSize.width))x\(Int(newSize.height))")
+                            #endif
+                            surfaceView.setFrameSize(newSize)
+                            surfaceView.sizeDidChange(newSize)
+                        }
+                }
+                .id(session.id)
+                .overlay(alignment: .bottom) {
                     if showInputBar, let inputBarState = session.inputBarState {
-                        InputBarView(
-                            inputBarState: inputBarState,
-                            theme: theme,
-                            fontFamily: fontFamily,
-                            fontSize: fontSize
-                        )
+                        VStack(spacing: 4) {
+                            if inputBarState.historyController.isSearchActive {
+                                HistorySearchOverlayView(
+                                    historyController: inputBarState.historyController,
+                                    theme: theme,
+                                    fontFamily: fontFamily,
+                                    fontSize: fontSize,
+                                    onAccept: {
+                                        inputBarState.historyController.acceptSearchResult(inputBarState: inputBarState)
+                                    },
+                                    onCancel: {
+                                        inputBarState.historyController.cancelSearch()
+                                    }
+                                )
+                                .transition(.move(edge: .bottom).combined(with: .opacity))
+                            }
+
+                            InputBarView(
+                                inputBarState: inputBarState,
+                                theme: theme,
+                                fontFamily: fontFamily,
+                                fontSize: fontSize
+                            )
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.bottom, 12)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
                 }
@@ -235,7 +269,10 @@ private struct TerminalPaneLeafView: View {
                 .onAppear {
                     syncInputBarPresentation(session: session, surfaceView: surfaceView)
                 }
-                .onChange(of: session.isAtPrompt) { _, atPrompt in
+                .onChange(of: isActive) { _, _ in
+                    syncInputBarPresentation(session: session, surfaceView: surfaceView)
+                }
+                .onChange(of: session.isAtPrompt) { _, _ in
                     syncInputBarPresentation(session: session, surfaceView: surfaceView)
                 }
                 .onChange(of: inputBarEnabled) { _, _ in

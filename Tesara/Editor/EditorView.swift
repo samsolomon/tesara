@@ -42,13 +42,23 @@ class EditorView: NSView, NSTextInputClient {
 
     private var cursorVisible: Bool = true
     private var cursorBlinkTimer: Timer?
+    private var smoothBlinkEnabled: Bool = false
+    private var smoothBlinkPhase: Double = 0.0
+
+    // MARK: - Cursor Config
+
+    private var cursorConfig = EditorLayoutEngine.CursorConfig(
+        style: .bar,
+        barWidth: 3.0,
+        rounded: true,
+        color: SIMD4<UInt8>(204, 204, 204, 255)
+    )
 
     // MARK: - Theme Colors
 
     private var themeColors = EditorLayoutEngine.ThemeColors(
         foreground: SIMD4<UInt8>(204, 204, 204, 255),
         background: SIMD4<UInt8>(30, 30, 30, 255),
-        cursor: SIMD4<UInt8>(204, 204, 204, 255),
         selection: SIMD4<UInt8>(60, 90, 150, 128)
     )
     private var backgroundColor: SIMD4<Float> = SIMD4<Float>(30.0/255, 30.0/255, 30.0/255, 1.0)
@@ -81,7 +91,7 @@ class EditorView: NSView, NSTextInputClient {
 
     // MARK: - Init
 
-    init(session: EditorSession, theme: TerminalTheme, fontFamily: String, fontSize: CGFloat) {
+    init(session: EditorSession, theme: TerminalTheme, fontFamily: String, fontSize: CGFloat, cursorConfig: EditorLayoutEngine.CursorConfig? = nil, cursorBlink: Bool = true) {
         self.colorGlyphAtlas = GlyphAtlas(size: 512, bytesPerPixel: 4)
         self.glyphCache = GlyphCache(atlas: glyphAtlas, colorAtlas: colorGlyphAtlas)
         self.layoutEngine = EditorLayoutEngine(fontFamily: fontFamily, fontSize: fontSize)
@@ -96,6 +106,9 @@ class EditorView: NSView, NSTextInputClient {
         setContentCompressionResistancePriority(.defaultLow, for: .vertical)
 
         applyTheme(theme)
+        if let cursorConfig {
+            self.cursorConfig = cursorConfig
+        }
 
         // Setup Metal layer
         guard let device = MTLCreateSystemDefaultDevice() else { return }
@@ -121,7 +134,9 @@ class EditorView: NSView, NSTextInputClient {
         }
 
         setupDisplayLink()
-        startCursorBlink()
+        if cursorBlink {
+            startCursorBlink()
+        }
     }
 
     @available(*, unavailable)
@@ -156,6 +171,13 @@ class EditorView: NSView, NSTextInputClient {
             } else {
                 needsRender = true
             }
+        }
+
+        // Smooth blink: advance phase and force continuous rendering
+        if smoothBlinkEnabled && focused {
+            smoothBlinkPhase += (2.0 * .pi) / (60.0 * 1.0) // 1-second full cycle at 60fps
+            if smoothBlinkPhase > 2.0 * .pi { smoothBlinkPhase -= 2.0 * .pi }
+            needsRender = true
         }
 
         guard needsRender else { return }
@@ -295,10 +317,11 @@ class EditorView: NSView, NSTextInputClient {
             markedTextInfo = nil
         }
 
-        let rects = layoutEngine.buildRectInstances(
+        var rects = layoutEngine.buildRectInstances(
             selection: session.selection,
             cursorPos: session.cursorPosition,
             cursorVisible: cursorVisible && focused,
+            cursorConfig: cursorConfig,
             markedText: markedTextInfo,
             layoutLines: layoutLines,
             viewportWidth: viewport.width,
@@ -306,6 +329,14 @@ class EditorView: NSView, NSTextInputClient {
             colors: themeColors,
             storage: session.storage
         )
+
+        // Apply smooth blink opacity to cursor rect (always last when visible)
+        if smoothBlinkEnabled && cursorVisible && focused && !rects.isEmpty {
+            let opacity = Float(0.3 + 0.7 * ((sin(smoothBlinkPhase) + 1.0) / 2.0))
+            let idx = rects.count - 1
+            let c = rects[idx].color
+            rects[idx].color = SIMD4<UInt8>(c.x, c.y, c.z, UInt8(Float(c.w) * opacity))
+        }
 
         // Scrollbar overlay
         var overlayRects: [EditorRenderer.RectInstance] = []
@@ -710,13 +741,35 @@ class EditorView: NSView, NSTextInputClient {
     }
 #endif
 
+    func updateCursorConfig(_ config: EditorLayoutEngine.CursorConfig, blink: Bool, smoothBlink: Bool = false) {
+        cursorConfig = config
+        smoothBlinkEnabled = smoothBlink && blink
+
+        if smoothBlinkEnabled {
+            // Smooth blink: stop the hard blink timer, cursor stays "visible" (opacity modulated in renderFrame)
+            cursorBlinkTimer?.invalidate()
+            cursorBlinkTimer = nil
+            cursorVisible = true
+        } else if blink {
+            if cursorBlinkTimer == nil {
+                startCursorBlink()
+            }
+        } else {
+            cursorBlinkTimer?.invalidate()
+            cursorBlinkTimer = nil
+            cursorVisible = true
+        }
+
+        needsRender = true
+    }
+
     private func applyTheme(_ theme: TerminalTheme) {
         themeColors = EditorLayoutEngine.ThemeColors(
             foreground: hexToColorU8(theme.foreground),
             background: hexToColorU8(theme.background),
-            cursor: hexToColorU8(theme.cursor),
             selection: hexToColorU8(theme.selectionBackground, alpha: 128)
         )
+        cursorConfig.color = hexToColorU8(theme.cursor)
         let bg = hexToColorU8(theme.background)
         backgroundColor = SIMD4<Float>(Float(bg.x) / 255, Float(bg.y) / 255, Float(bg.z) / 255, 1.0)
         syntaxColors = SyntaxColorMap(theme: theme)

@@ -19,6 +19,9 @@ final class EditorRenderer {
         var position: SIMD2<Float>
         var size: SIMD2<Float>
         var color: SIMD4<UInt8>
+        var cornerRadius: Float = 0
+        var glowRadius: Float = 0
+        var glowOpacity: Float = 0
     }
 
     private struct Uniforms {

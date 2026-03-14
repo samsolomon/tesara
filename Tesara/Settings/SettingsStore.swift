@@ -41,13 +41,63 @@ final class SettingsStore: ObservableObject {
         let themeID: String
         let fontFamily: String
         let fontSize: Double
+        let cursorStyle: CursorStyle
+        let cursorBlink: Bool
+        let cursorGlow: Bool
+        let cursorGlowOpacity: Double
+        let fontLigatures: Bool
+        let fontThicken: Bool
+        let optionAsAlt: OptionAsAlt
+        let scrollbackLines: Int
+        let copyOnSelect: Bool
+        let clipboardTrimTrailingSpaces: Bool
+        let windowOpacity: Double
+        let windowPaddingX: Int
+        let windowPaddingY: Int
     }
 
     var ghosttyConfigInputs: GhosttyConfigInputs {
         GhosttyConfigInputs(
             themeID: settings.themeID,
             fontFamily: settings.fontFamily,
-            fontSize: settings.fontSize
+            fontSize: settings.fontSize,
+            cursorStyle: settings.cursorStyle,
+            cursorBlink: settings.cursorBlink,
+            cursorGlow: settings.cursorGlow,
+            cursorGlowOpacity: settings.cursorGlowOpacity,
+            fontLigatures: settings.fontLigatures,
+            fontThicken: settings.fontThicken,
+            optionAsAlt: settings.optionAsAlt,
+            scrollbackLines: settings.scrollbackLines,
+            copyOnSelect: settings.copyOnSelect,
+            clipboardTrimTrailingSpaces: settings.clipboardTrimTrailingSpaces,
+            windowOpacity: settings.windowOpacity,
+            windowPaddingX: settings.windowPaddingX,
+            windowPaddingY: settings.windowPaddingY
+        )
+    }
+
+    struct CursorConfigInputs: Equatable {
+        let cursorStyle: CursorStyle
+        let cursorBarWidth: Double
+        let cursorRounded: Bool
+        let cursorBlink: Bool
+        let cursorGlow: Bool
+        let cursorGlowRadius: Double
+        let cursorGlowOpacity: Double
+        let cursorSmoothBlink: Bool
+    }
+
+    var cursorConfigInputs: CursorConfigInputs {
+        CursorConfigInputs(
+            cursorStyle: settings.cursorStyle,
+            cursorBarWidth: settings.cursorBarWidth,
+            cursorRounded: settings.cursorRounded,
+            cursorBlink: settings.cursorBlink,
+            cursorGlow: settings.cursorGlow,
+            cursorGlowRadius: settings.cursorGlowRadius,
+            cursorGlowOpacity: settings.cursorGlowOpacity,
+            cursorSmoothBlink: settings.cursorSmoothBlink
         )
     }
 
@@ -61,8 +111,6 @@ final class SettingsStore: ObservableObject {
     }
 
     func updateKeyBinding(action: KeyBindingAction, shortcut: KeyShortcut) {
-        guard action.supportsCustomization else { return }
-
         // Remove any existing binding that uses this shortcut (conflict resolution)
         settings.keyBindingOverrides.removeAll { $0.action != action && $0.shortcut == shortcut }
 
@@ -74,7 +122,6 @@ final class SettingsStore: ObservableObject {
     }
 
     func removeKeyBinding(action: KeyBindingAction) {
-        guard action.supportsCustomization else { return }
         settings.keyBindingOverrides.removeAll { $0.action == action }
     }
 
@@ -98,6 +145,18 @@ final class SettingsStore: ObservableObject {
 
     func exportActiveTheme() throws -> Data {
         try encoder.encode(activeTheme)
+    }
+
+    func handleAppearanceChange(isDark: Bool) {
+        guard settings.autoThemeSwitching else { return }
+        let newID: String?
+        if isDark {
+            newID = settings.darkThemeID
+        } else {
+            newID = settings.lightThemeID
+        }
+        guard let newID, newID != settings.themeID else { return }
+        settings.themeID = newID
     }
 
     private func persist() {

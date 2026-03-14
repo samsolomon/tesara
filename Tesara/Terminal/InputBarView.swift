@@ -9,25 +9,23 @@ final class InputBarState: ObservableObject {
     let editorSession = EditorSession()
     private(set) var editorView: EditorView?
     let keyHandler = InputBarKeyHandler()
+    let historyController = InputBarHistoryController()
 
     @Published private(set) var isEmpty: Bool = true
     @Published private(set) var displayLineCount: Int = 1
 
     private var sessionCancellable: AnyCancellable?
 
-    func createView(theme: TerminalTheme, fontFamily: String, fontSize: Double) {
+    func createView(theme: TerminalTheme, fontFamily: String, fontSize: Double, cursorConfig: EditorLayoutEngine.CursorConfig? = nil, cursorBlink: Bool = true) {
         guard editorView == nil else { return }
         editorSession.wordWrapEnabled = true
-        editorSession.createView(theme: theme, fontFamily: fontFamily, fontSize: fontSize)
+        editorSession.createView(theme: theme, fontFamily: fontFamily, fontSize: fontSize, cursorConfig: cursorConfig, cursorBlink: cursorBlink)
         if let view = editorSession.editorView as? EditorView {
             view.delegate = keyHandler
             view.scrollbarDisabled = true
             editorView = view
         }
 
-        // Track text changes to update isEmpty/displayLineCount for SwiftUI.
-        // EditorSession publishes cursorPosition on every mutation, which is
-        // the most reliable change signal without modifying EditorSession.
         sessionCancellable = editorSession.$cursorPosition
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in
@@ -38,6 +36,18 @@ final class InputBarState: ObservableObject {
     func clear() {
         editorSession.selectAll()
         editorSession.deleteBackward()
+    }
+
+    func setText(_ text: String) {
+        editorSession.selectAll()
+        editorSession.deleteBackward()
+        if !text.isEmpty {
+            editorSession.insertText(text)
+        }
+    }
+
+    func currentText() -> String {
+        editorSession.storage.entireString()
     }
 
     private func syncDerivedState() {
@@ -57,20 +67,29 @@ final class InputBarKeyHandler: EditorViewDelegate {
     func editorView(_ editorView: EditorView, handleKeyDown event: NSEvent) -> Bool {
         let mods = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
 
-        // Escape key
+        // Escape — cancel search if active, otherwise clear text
         if let chars = event.charactersIgnoringModifiers, chars == "\u{1b}" {
-            terminalSession?.dismissInputBar()
+            if let state = terminalSession?.inputBarState,
+               state.historyController.isSearchActive {
+                state.historyController.cancelSearch()
+            } else {
+                terminalSession?.inputBarState?.clear()
+            }
             return true
         }
 
-        // Ctrl+key forwarding
+        // Ctrl+key handling
         if mods.contains(.control), let chars = event.charactersIgnoringModifiers {
             switch chars {
             case "c":
-                terminalSession?.send(text: "\u{03}")
+                terminalSession?.inputBarState?.clear()
+                terminalSession?.inputBarState?.historyController.reset()
                 return true
             case "d":
                 terminalSession?.send(text: "\u{04}")
+                return true
+            case "r":
+                terminalSession?.inputBarState?.historyController.beginSearch()
                 return true
             case "z":
                 terminalSession?.send(text: "\u{1a}")
@@ -90,12 +109,13 @@ final class InputBarKeyHandler: EditorViewDelegate {
         switch key {
         case .carriageReturn, .newline, .enter:
             if mods.contains(.shift) {
-                return false // Pass through — insert newline in editor
+                return false
             }
             guard let terminalSession else { return true }
             let text = session.storage.entireString()
             terminalSession.sendFromInputBar(text: text)
             terminalSession.inputBarState?.clear()
+            terminalSession.inputBarState?.historyController.reset()
             return true
 
         case .tab:
@@ -104,14 +124,24 @@ final class InputBarKeyHandler: EditorViewDelegate {
 
         case .upArrow:
             if isSingleLine && !mods.contains(.command) && !mods.contains(.option) {
-                terminalSession?.send(text: "\u{1b}[A")
+                if let state = terminalSession?.inputBarState {
+                    state.historyController.navigateUp(
+                        currentText: state.currentText(),
+                        inputBarState: state
+                    )
+                }
                 return true
             }
             return false
 
         case .downArrow:
             if isSingleLine && !mods.contains(.command) && !mods.contains(.option) {
-                terminalSession?.send(text: "\u{1b}[B")
+                if let state = terminalSession?.inputBarState {
+                    state.historyController.navigateDown(
+                        currentText: state.currentText(),
+                        inputBarState: state
+                    )
+                }
                 return true
             }
             return false
@@ -130,46 +160,65 @@ struct InputBarView: View {
     let fontFamily: String
     let fontSize: Double
 
+    private var isDarkTheme: Bool { theme.isDarkBackground }
+
     var body: some View {
-        VStack(spacing: 0) {
-            Rectangle()
-                .fill(theme.swiftUIColor(from: theme.foreground).opacity(0.15))
-                .frame(height: 1)
+        HStack(alignment: .top, spacing: 8) {
+            Text(">")
+                .font(.custom(fontFamily, size: fontSize))
+                .foregroundStyle(theme.swiftUIColor(from: theme.green))
+                .padding(.top, 6)
 
-            HStack(alignment: .top, spacing: 8) {
-                Text(">")
-                    .font(.custom(fontFamily, size: fontSize))
-                    .foregroundStyle(theme.swiftUIColor(from: theme.green))
-                    .padding(.top, 6)
+            ZStack(alignment: .topLeading) {
+                if inputBarState.isEmpty {
+                    Text("Type a command...")
+                        .font(.custom(fontFamily, size: fontSize))
+                        .foregroundStyle(theme.swiftUIColor(from: theme.foreground).opacity(0.3))
+                        .padding(.top, 6)
+                        .allowsHitTesting(false)
+                }
 
-                ZStack(alignment: .topLeading) {
-                    if inputBarState.isEmpty {
-                        Text("Type a command...")
-                            .font(.custom(fontFamily, size: fontSize))
-                            .foregroundStyle(theme.swiftUIColor(from: theme.foreground).opacity(0.3))
-                            .padding(.top, 6)
-                            .allowsHitTesting(false)
-                    }
-
-                    if let editorView = inputBarState.editorView {
-                        GeometryReader { geo in
-                            EditorViewRepresentable(editorView: editorView)
-                                .onAppear {
-                                    editorView.setFrameSize(geo.size)
-                                    editorView.sizeDidChange(geo.size)
-                                }
-                                .onChange(of: geo.size) { _, newSize in
-                                    editorView.setFrameSize(newSize)
-                                    editorView.sizeDidChange(newSize)
-                                }
-                        }
+                if let editorView = inputBarState.editorView {
+                    GeometryReader { geo in
+                        EditorViewRepresentable(editorView: editorView)
+                            .onAppear {
+                                editorView.setFrameSize(geo.size)
+                                editorView.sizeDidChange(geo.size)
+                            }
+                            .onChange(of: geo.size) { _, newSize in
+                                editorView.setFrameSize(newSize)
+                                editorView.sizeDidChange(newSize)
+                            }
                     }
                 }
-                .frame(maxWidth: .infinity)
             }
-            .padding(.horizontal, 12)
-            .frame(height: editorHeight)
-            .background(theme.swiftUIColor(from: theme.background).opacity(0.95))
+            .frame(maxWidth: .infinity)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .frame(minHeight: editorHeight)
+        .background { inputBarBackground }
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .shadow(color: .black.opacity(isDarkTheme ? 0.4 : 0.15), radius: 8, y: 2)
+    }
+
+    @ViewBuilder
+    private var inputBarBackground: some View {
+        if #available(macOS 26, *) {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(.regularMaterial)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .strokeBorder(.white.opacity(isDarkTheme ? 0.15 : 0.08), lineWidth: 0.5)
+                }
+                .glassEffect(.regular, in: .rect(cornerRadius: 12))
+        } else {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .strokeBorder(.white.opacity(isDarkTheme ? 0.12 : 0.06), lineWidth: 0.5)
+                }
         }
     }
 

@@ -181,6 +181,210 @@ final class GhosttyConfigTests: XCTestCase {
         XCTAssertFalse(lines.contains("command = /bin/evil"))
     }
 
+    // MARK: - Cursor Config
+
+    func testConfigStringContainsCursorStyleBar() {
+        let settings = makeTestSettings()
+        let content = GhosttyConfig.buildConfigString(
+            theme: makeTestTheme(),
+            settings: settings
+        )
+        XCTAssertTrue(content.contains("cursor-style = bar"))
+        XCTAssertTrue(content.contains("cursor-style-blink = true"))
+    }
+
+    func testConfigStringContainsCursorStyleBlock() {
+        var settings = makeTestSettings()
+        settings.cursorStyle = .block
+        settings.cursorBlink = false
+        let content = GhosttyConfig.buildConfigString(
+            theme: makeTestTheme(),
+            settings: settings
+        )
+        XCTAssertTrue(content.contains("cursor-style = block"))
+        XCTAssertTrue(content.contains("cursor-style-blink = false"))
+    }
+
+    func testConfigStringContainsCursorStyleUnderline() {
+        var settings = makeTestSettings()
+        settings.cursorStyle = .underline
+        let content = GhosttyConfig.buildConfigString(
+            theme: makeTestTheme(),
+            settings: settings
+        )
+        XCTAssertTrue(content.contains("cursor-style = underline"))
+    }
+
+    func testConfigStringContainsCursorOpacityWhenGlowEnabled() {
+        var settings = makeTestSettings()
+        settings.cursorGlow = true
+        settings.cursorGlowOpacity = 0.4
+        let content = GhosttyConfig.buildConfigString(
+            theme: makeTestTheme(),
+            settings: settings
+        )
+        XCTAssertTrue(content.contains("cursor-opacity = "))
+    }
+
+    func testConfigStringOmitsCursorOpacityWhenGlowDisabled() {
+        let settings = makeTestSettings()
+        let content = GhosttyConfig.buildConfigString(
+            theme: makeTestTheme(),
+            settings: settings
+        )
+        XCTAssertFalse(content.contains("cursor-opacity"))
+    }
+
+    // MARK: - Tier 1 Settings
+
+    func testConfigStringContainsOptionAsAlt() {
+        var settings = makeTestSettings()
+        settings.optionAsAlt = .left
+        let content = GhosttyConfig.buildConfigString(
+            theme: makeTestTheme(),
+            settings: settings
+        )
+        XCTAssertTrue(content.contains("macos-option-as-alt = left"))
+    }
+
+    func testConfigStringContainsOptionAsAltBoth() {
+        var settings = makeTestSettings()
+        settings.optionAsAlt = .both
+        let content = GhosttyConfig.buildConfigString(
+            theme: makeTestTheme(),
+            settings: settings
+        )
+        XCTAssertTrue(content.contains("macos-option-as-alt = true"))
+    }
+
+    func testConfigStringContainsOptionAsAltOff() {
+        let settings = makeTestSettings()
+        let content = GhosttyConfig.buildConfigString(
+            theme: makeTestTheme(),
+            settings: settings
+        )
+        XCTAssertTrue(content.contains("macos-option-as-alt = false"))
+    }
+
+    func testConfigStringContainsScrollbackLimit() {
+        var settings = makeTestSettings()
+        settings.scrollbackLines = 50000
+        let content = GhosttyConfig.buildConfigString(
+            theme: makeTestTheme(),
+            settings: settings
+        )
+        XCTAssertTrue(content.contains("scrollback-limit = 50000"))
+    }
+
+    func testConfigStringContainsDefaultScrollback() {
+        let settings = makeTestSettings()
+        let content = GhosttyConfig.buildConfigString(
+            theme: makeTestTheme(),
+            settings: settings
+        )
+        XCTAssertTrue(content.contains("scrollback-limit = 10000"))
+    }
+
+    func testConfigStringContainsCopyOnSelect() {
+        var settings = makeTestSettings()
+        settings.copyOnSelect = true
+        let content = GhosttyConfig.buildConfigString(
+            theme: makeTestTheme(),
+            settings: settings
+        )
+        XCTAssertTrue(content.contains("copy-on-select = clipboard"))
+    }
+
+    func testConfigStringOmitsCopyOnSelectWhenDisabled() {
+        let settings = makeTestSettings()
+        let content = GhosttyConfig.buildConfigString(
+            theme: makeTestTheme(),
+            settings: settings
+        )
+        XCTAssertFalse(content.contains("copy-on-select"))
+    }
+
+    func testConfigStringContainsClipboardTrim() {
+        var settings = makeTestSettings()
+        settings.clipboardTrimTrailingSpaces = true
+        let content = GhosttyConfig.buildConfigString(
+            theme: makeTestTheme(),
+            settings: settings
+        )
+        XCTAssertTrue(content.contains("clipboard-trim-trailing-spaces = true"))
+    }
+
+    func testConfigStringContainsFontThicken() {
+        var settings = makeTestSettings()
+        settings.fontThicken = true
+        let content = GhosttyConfig.buildConfigString(
+            theme: makeTestTheme(),
+            settings: settings
+        )
+        XCTAssertTrue(content.contains("font-thicken = true"))
+    }
+
+    func testConfigStringDisablesLigatures() {
+        var settings = makeTestSettings()
+        settings.fontLigatures = false
+        let content = GhosttyConfig.buildConfigString(
+            theme: makeTestTheme(),
+            settings: settings
+        )
+        XCTAssertTrue(content.contains("font-feature = -liga"))
+        XCTAssertTrue(content.contains("font-feature = -clig"))
+    }
+
+    func testConfigStringOmitsLigatureDisableByDefault() {
+        let settings = makeTestSettings()
+        let content = GhosttyConfig.buildConfigString(
+            theme: makeTestTheme(),
+            settings: settings
+        )
+        XCTAssertFalse(content.contains("font-feature"))
+    }
+
+    func testConfigStringContainsWindowOpacity() {
+        var settings = makeTestSettings()
+        settings.windowOpacity = 0.85
+        let content = GhosttyConfig.buildConfigString(
+            theme: makeTestTheme(),
+            settings: settings
+        )
+        XCTAssertTrue(content.contains("background-opacity = 0.85"))
+    }
+
+    func testConfigStringOmitsFullOpacity() {
+        let settings = makeTestSettings()
+        let content = GhosttyConfig.buildConfigString(
+            theme: makeTestTheme(),
+            settings: settings
+        )
+        XCTAssertFalse(content.contains("background-opacity"))
+    }
+
+    func testConfigStringContainsWindowPadding() {
+        var settings = makeTestSettings()
+        settings.windowPaddingX = 8
+        settings.windowPaddingY = 4
+        let content = GhosttyConfig.buildConfigString(
+            theme: makeTestTheme(),
+            settings: settings
+        )
+        XCTAssertTrue(content.contains("window-padding-x = 8"))
+        XCTAssertTrue(content.contains("window-padding-y = 4"))
+    }
+
+    func testConfigStringOmitsZeroPadding() {
+        let settings = makeTestSettings()
+        let content = GhosttyConfig.buildConfigString(
+            theme: makeTestTheme(),
+            settings: settings
+        )
+        XCTAssertFalse(content.contains("window-padding-x"))
+        XCTAssertFalse(content.contains("window-padding-y"))
+    }
+
     // MARK: - Config File Overwrite (requires file I/O)
 
     func testMakeConfigOverwritesPreviousFile() {

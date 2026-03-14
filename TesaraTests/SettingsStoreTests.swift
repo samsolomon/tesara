@@ -19,8 +19,31 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertFalse(store.settings.confirmOnCloseRunningSession)
         XCTAssertEqual(store.settings.tabTitleMode, .shellTitle)
         XCTAssertTrue(store.settings.dimInactiveSplits)
-        XCTAssertEqual(store.settings.inactiveSplitDimAmount, 0.1, accuracy: 0.0001)
+        XCTAssertEqual(store.settings.inactiveSplitDimAmount, 0.3, accuracy: 0.0001)
         XCTAssertTrue(store.settings.inputBarEnabled)
+        XCTAssertEqual(store.settings.cursorStyle, .bar)
+        XCTAssertEqual(store.settings.cursorBarWidth, 3.0)
+        XCTAssertTrue(store.settings.cursorRounded)
+        XCTAssertTrue(store.settings.cursorBlink)
+        XCTAssertFalse(store.settings.cursorGlow)
+        XCTAssertEqual(store.settings.cursorGlowRadius, 6.0)
+        XCTAssertEqual(store.settings.cursorGlowOpacity, 0.4, accuracy: 0.001)
+        XCTAssertFalse(store.settings.cursorSmoothBlink)
+        // Tier 1 defaults
+        XCTAssertFalse(store.settings.autoThemeSwitching)
+        XCTAssertNil(store.settings.lightThemeID)
+        XCTAssertNil(store.settings.darkThemeID)
+        XCTAssertEqual(store.settings.windowOpacity, 1.0)
+        XCTAssertFalse(store.settings.windowBlur)
+        XCTAssertEqual(store.settings.windowPaddingX, 0)
+        XCTAssertEqual(store.settings.windowPaddingY, 0)
+        XCTAssertTrue(store.settings.fontLigatures)
+        XCTAssertFalse(store.settings.fontThicken)
+        XCTAssertEqual(store.settings.optionAsAlt, .off)
+        XCTAssertEqual(store.settings.scrollbackLines, 10000)
+        XCTAssertFalse(store.settings.copyOnSelect)
+        XCTAssertFalse(store.settings.clipboardTrimTrailingSpaces)
+        XCTAssertEqual(store.settings.bellMode, .system)
     }
 
     func testSettingsRoundTrip() {
@@ -38,6 +61,28 @@ final class SettingsStoreTests: XCTestCase {
         store1.settings.dimInactiveSplits = false
         store1.settings.inactiveSplitDimAmount = 0.16
         store1.settings.inputBarEnabled = false
+        store1.settings.cursorStyle = .block
+        store1.settings.cursorBarWidth = 5.0
+        store1.settings.cursorRounded = false
+        store1.settings.cursorBlink = false
+        store1.settings.cursorGlow = true
+        store1.settings.cursorGlowRadius = 10.0
+        store1.settings.cursorGlowOpacity = 0.6
+        store1.settings.cursorSmoothBlink = true
+        store1.settings.autoThemeSwitching = true
+        store1.settings.lightThemeID = "light-theme"
+        store1.settings.darkThemeID = "dark-theme"
+        store1.settings.windowOpacity = 0.85
+        store1.settings.windowBlur = true
+        store1.settings.windowPaddingX = 4
+        store1.settings.windowPaddingY = 2
+        store1.settings.fontLigatures = false
+        store1.settings.fontThicken = true
+        store1.settings.optionAsAlt = .left
+        store1.settings.scrollbackLines = 50000
+        store1.settings.copyOnSelect = true
+        store1.settings.clipboardTrimTrailingSpaces = true
+        store1.settings.bellMode = .visual
 
         // Read back
         let store2 = SettingsStore(defaults: defaults)
@@ -50,6 +95,28 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertFalse(store2.settings.dimInactiveSplits)
         XCTAssertEqual(store2.settings.inactiveSplitDimAmount, 0.16, accuracy: 0.0001)
         XCTAssertFalse(store2.settings.inputBarEnabled)
+        XCTAssertEqual(store2.settings.cursorStyle, .block)
+        XCTAssertEqual(store2.settings.cursorBarWidth, 5.0)
+        XCTAssertFalse(store2.settings.cursorRounded)
+        XCTAssertFalse(store2.settings.cursorBlink)
+        XCTAssertTrue(store2.settings.cursorGlow)
+        XCTAssertEqual(store2.settings.cursorGlowRadius, 10.0)
+        XCTAssertEqual(store2.settings.cursorGlowOpacity, 0.6, accuracy: 0.001)
+        XCTAssertTrue(store2.settings.cursorSmoothBlink)
+        XCTAssertTrue(store2.settings.autoThemeSwitching)
+        XCTAssertEqual(store2.settings.lightThemeID, "light-theme")
+        XCTAssertEqual(store2.settings.darkThemeID, "dark-theme")
+        XCTAssertEqual(store2.settings.windowOpacity, 0.85, accuracy: 0.0001)
+        XCTAssertTrue(store2.settings.windowBlur)
+        XCTAssertEqual(store2.settings.windowPaddingX, 4)
+        XCTAssertEqual(store2.settings.windowPaddingY, 2)
+        XCTAssertFalse(store2.settings.fontLigatures)
+        XCTAssertTrue(store2.settings.fontThicken)
+        XCTAssertEqual(store2.settings.optionAsAlt, .left)
+        XCTAssertEqual(store2.settings.scrollbackLines, 50000)
+        XCTAssertTrue(store2.settings.copyOnSelect)
+        XCTAssertTrue(store2.settings.clipboardTrimTrailingSpaces)
+        XCTAssertEqual(store2.settings.bellMode, .visual)
     }
 
     func testDecodingLegacySettingsDefaultsTrustControls() throws {
@@ -73,8 +140,31 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertFalse(settings.confirmOnCloseRunningSession)
         XCTAssertEqual(settings.tabTitleMode, .shellTitle)
         XCTAssertTrue(settings.dimInactiveSplits)
-        XCTAssertEqual(settings.inactiveSplitDimAmount, 0.1, accuracy: 0.0001)
+        XCTAssertEqual(settings.inactiveSplitDimAmount, 0.3, accuracy: 0.0001)
         XCTAssertTrue(settings.inputBarEnabled)
+        XCTAssertEqual(settings.cursorStyle, .bar)
+        XCTAssertEqual(settings.cursorBarWidth, 3.0)
+        XCTAssertTrue(settings.cursorRounded)
+        XCTAssertTrue(settings.cursorBlink)
+        XCTAssertFalse(settings.cursorGlow)
+        XCTAssertEqual(settings.cursorGlowRadius, 6.0)
+        XCTAssertEqual(settings.cursorGlowOpacity, 0.4, accuracy: 0.001)
+        XCTAssertFalse(settings.cursorSmoothBlink)
+        // Tier 1 fields default correctly from legacy JSON
+        XCTAssertFalse(settings.autoThemeSwitching)
+        XCTAssertNil(settings.lightThemeID)
+        XCTAssertNil(settings.darkThemeID)
+        XCTAssertEqual(settings.windowOpacity, 1.0)
+        XCTAssertFalse(settings.windowBlur)
+        XCTAssertEqual(settings.windowPaddingX, 0)
+        XCTAssertEqual(settings.windowPaddingY, 0)
+        XCTAssertTrue(settings.fontLigatures)
+        XCTAssertFalse(settings.fontThicken)
+        XCTAssertEqual(settings.optionAsAlt, .off)
+        XCTAssertEqual(settings.scrollbackLines, 10000)
+        XCTAssertFalse(settings.copyOnSelect)
+        XCTAssertFalse(settings.clipboardTrimTrailingSpaces)
+        XCTAssertEqual(settings.bellMode, .system)
     }
 
     func testActiveThemeFallsBackToOxide() {
@@ -220,12 +310,13 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(store.settings.keyBindingOverrides.first?.action, .closeTab)
     }
 
-    func testUpdateKeyBindingIgnoresUnsupportedAction() {
+    func testUpdateKeyBindingAllActionsCustomizable() {
         let store = makeStore()
 
         store.updateKeyBinding(action: .copy, shortcut: KeyShortcut(key: "k", modifiers: [.command]))
 
-        XCTAssertTrue(store.settings.keyBindingOverrides.isEmpty)
+        XCTAssertEqual(store.settings.keyBindingOverrides.count, 1)
+        XCTAssertEqual(store.settings.keyBindingOverrides.first?.action, .copy)
     }
 
     func testRemoveKeyBinding() {

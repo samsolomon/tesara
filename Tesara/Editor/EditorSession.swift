@@ -338,9 +338,9 @@ final class EditorSession: ObservableObject, Identifiable {
 
     // MARK: - View Lifecycle
 
-    func createView(theme: TerminalTheme, fontFamily: String, fontSize: Double) {
+    func createView(theme: TerminalTheme, fontFamily: String, fontSize: Double, cursorConfig: EditorLayoutEngine.CursorConfig? = nil, cursorBlink: Bool = true) {
         guard editorView == nil else { return }
-        let view = EditorView(session: self, theme: theme, fontFamily: fontFamily, fontSize: CGFloat(fontSize))
+        let view = EditorView(session: self, theme: theme, fontFamily: fontFamily, fontSize: CGFloat(fontSize), cursorConfig: cursorConfig, cursorBlink: cursorBlink)
         editorView = view
     }
 
@@ -350,6 +350,10 @@ final class EditorSession: ObservableObject, Identifiable {
 
     func updateFont(family: String, size: Double) {
         (editorView as? EditorView)?.updateFont(family: family, size: CGFloat(size))
+    }
+
+    func updateCursorConfig(_ config: EditorLayoutEngine.CursorConfig, blink: Bool, smoothBlink: Bool = false) {
+        (editorView as? EditorView)?.updateCursorConfig(config, blink: blink, smoothBlink: smoothBlink)
     }
 }
 

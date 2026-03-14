@@ -134,15 +134,12 @@ final class TerminalSession: ObservableObject, Identifiable {
         }
     }
 
-    func dismissInputBar() {
-        isAtPrompt = false
-    }
-
-    func setupInputBar(theme: TerminalTheme, fontFamily: String, fontSize: Double) {
+    func setupInputBar(theme: TerminalTheme, fontFamily: String, fontSize: Double, cursorConfig: EditorLayoutEngine.CursorConfig? = nil, cursorBlink: Bool = true) {
         guard inputBarState == nil else { return }
         let state = InputBarState()
-        state.createView(theme: theme, fontFamily: fontFamily, fontSize: fontSize)
+        state.createView(theme: theme, fontFamily: fontFamily, fontSize: fontSize, cursorConfig: cursorConfig, cursorBlink: cursorBlink)
         state.keyHandler.terminalSession = self
+        state.historyController.blockStore = blockStore
         inputBarState = state
     }
 

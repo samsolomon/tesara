@@ -110,13 +110,6 @@ final class TerminalSessionTests: XCTestCase {
         XCTAssertTrue(session.isAtPrompt)
     }
 
-    func testDismissInputBarSetsIsAtPromptFalse() {
-        session.handleCommandFinished(exitCode: 0, durationNs: 1_000_000)
-        XCTAssertTrue(session.isAtPrompt)
-        session.dismissInputBar()
-        XCTAssertFalse(session.isAtPrompt)
-    }
-
     func testHandleChildExitedClearsIsAtPrompt() {
         session.handleCommandFinished(exitCode: 0, durationNs: 1_000_000)
         XCTAssertTrue(session.isAtPrompt)
@@ -131,7 +124,7 @@ final class TerminalSessionTests: XCTestCase {
         XCTAssertFalse(session.isAtPrompt)
     }
 
-    func testInputBarCtrlCSendsInterrupt() {
+    func testInputBarCtrlCClearsBuffer() {
         let handler = InputBarKeyHandler()
         handler.terminalSession = session
 
@@ -141,7 +134,8 @@ final class TerminalSessionTests: XCTestCase {
         let handled = handler.editorView(makeEditorView(), handleKeyDown: makeKeyEvent(chars: "c", modifiers: [.control]))
 
         XCTAssertTrue(handled)
-        XCTAssertEqual(sentTexts, ["\u{03}"])
+        // Ctrl+C clears the buffer instead of sending SIGINT (Warp behavior)
+        XCTAssertTrue(sentTexts.isEmpty)
     }
 
     func testInputBarCtrlDSendsEOF() {

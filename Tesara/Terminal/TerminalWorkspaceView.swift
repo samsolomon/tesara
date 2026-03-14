@@ -32,16 +32,30 @@ struct TerminalWorkspaceView: View {
             .onChange(of: settingsStore.settings.fontSize) { _, newSize in
                 propagateFontToInputBars(family: settingsStore.settings.fontFamily, size: newSize)
             }
+            .onChange(of: settingsStore.cursorConfigInputs) { _, _ in
+                propagateCursorToEditors()
+            }
             .fileImporter(
                 isPresented: $manager.showOpenPanel,
                 allowedContentTypes: [.plainText, .sourceCode, .data]
             ) { result in
                 if case .success(let url) = result {
+                    let s = settingsStore.settings
+                    let cursorCfg = EditorLayoutEngine.CursorConfig(
+                        style: s.cursorStyle,
+                        barWidth: s.cursorBarWidth,
+                        rounded: s.cursorRounded,
+                        color: hexToColorU8(settingsStore.activeTheme.cursor),
+                        glowRadius: s.cursorGlow ? s.cursorGlowRadius : 0,
+                        glowOpacity: s.cursorGlow ? s.cursorGlowOpacity : 0
+                    )
                     manager.openFileInEditor(
                         url: url,
                         theme: settingsStore.activeTheme,
-                        fontFamily: settingsStore.settings.fontFamily,
-                        fontSize: settingsStore.settings.fontSize
+                        fontFamily: s.fontFamily,
+                        fontSize: s.fontSize,
+                        cursorConfig: cursorCfg,
+                        cursorBlink: s.cursorBlink
                     )
                 }
             }
@@ -170,6 +184,36 @@ struct TerminalWorkspaceView: View {
         guard let activeTab = manager.activeTab else { return }
         for (_, session) in activeTab.rootPane.allTerminalSessions() {
             session.inputBarState?.editorView?.updateFont(family: family, size: CGFloat(size))
+        }
+    }
+
+    private func propagateCursorToEditors() {
+        guard let activeTab = manager.activeTab else { return }
+        let s = settingsStore.settings
+        let theme = settingsStore.activeTheme
+        let config = EditorLayoutEngine.CursorConfig(
+            style: s.cursorStyle,
+            barWidth: s.cursorBarWidth,
+            rounded: s.cursorRounded,
+            color: hexToColorU8(theme.cursor),
+            glowRadius: s.cursorGlow ? s.cursorGlowRadius : 0,
+            glowOpacity: s.cursorGlow ? s.cursorGlowOpacity : 0
+        )
+        propagateCursorToEditors(in: activeTab.rootPane, config: config, blink: s.cursorBlink, smoothBlink: s.cursorSmoothBlink)
+        for (_, session) in activeTab.rootPane.allTerminalSessions() {
+            session.inputBarState?.editorView?.updateCursorConfig(config, blink: s.cursorBlink, smoothBlink: s.cursorSmoothBlink)
+        }
+    }
+
+    private func propagateCursorToEditors(in node: PaneNode, config: EditorLayoutEngine.CursorConfig, blink: Bool, smoothBlink: Bool) {
+        switch node {
+        case .leaf:
+            break
+        case .editor(_, let editorSession):
+            editorSession.updateCursorConfig(config, blink: blink, smoothBlink: smoothBlink)
+        case .split(_, _, let first, let second, _):
+            propagateCursorToEditors(in: first, config: config, blink: blink, smoothBlink: smoothBlink)
+            propagateCursorToEditors(in: second, config: config, blink: blink, smoothBlink: smoothBlink)
         }
     }
 }

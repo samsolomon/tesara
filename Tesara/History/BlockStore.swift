@@ -169,6 +169,52 @@ final class BlockStore: ObservableObject {
         }) ?? []
     }
 
+    // MARK: - History Queries
+
+    func recentCommandTexts(limit: Int = 500) -> [String] {
+        guard let dbQueue else { return [] }
+        return (try? dbQueue.read { db in
+            try String.fetchAll(
+                db,
+                sql: """
+                SELECT DISTINCT commandText
+                FROM terminal_blocks
+                ORDER BY startedAt DESC
+                LIMIT ?
+                """,
+                arguments: [limit]
+            )
+        }) ?? []
+    }
+
+    func searchCommands(query: String, limit: Int = 50) -> [String] {
+        guard let dbQueue else { return [] }
+        let words = query.split(separator: " ").map { String($0) }
+        guard !words.isEmpty else { return [] }
+
+        var conditions: [String] = []
+        var args: [String] = []
+        for word in words {
+            conditions.append("commandText LIKE ?")
+            args.append("%\(word)%")
+        }
+
+        let whereClause = conditions.joined(separator: " AND ")
+        return (try? dbQueue.read { db in
+            try String.fetchAll(
+                db,
+                sql: """
+                SELECT DISTINCT commandText
+                FROM terminal_blocks
+                WHERE \(whereClause)
+                ORDER BY startedAt DESC
+                LIMIT ?
+                """,
+                arguments: StatementArguments(args + [String(limit)])!
+            )
+        }) ?? []
+    }
+
     private static func databasePath() throws -> String {
         let fileManager = FileManager.default
         let appSupportDirectory = try fileManager.url(

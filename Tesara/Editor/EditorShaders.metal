@@ -11,14 +11,23 @@ struct EditorUniforms {
 // MARK: - Rectangle Pipeline
 
 struct RectInstance {
-    float2 position [[attribute(0)]];
-    float2 size     [[attribute(1)]];
-    uchar4 color    [[attribute(2)]];
+    float2 position     [[attribute(0)]];
+    float2 size         [[attribute(1)]];
+    uchar4 color        [[attribute(2)]];
+    float  cornerRadius [[attribute(3)]];
+    float  glowRadius   [[attribute(4)]];
+    float  glowOpacity  [[attribute(5)]];
 };
 
 struct RectVertexOut {
     float4 position [[position]];
     float4 color;
+    float2 localPos;
+    float2 rectSize;
+    float2 innerSize;
+    float  cornerRadius;
+    float  glowRadius;
+    float  glowOpacity;
 };
 
 vertex RectVertexOut rect_vertex(
@@ -34,16 +43,49 @@ vertex RectVertexOut rect_vertex(
 
     RectInstance inst = instances[instanceID];
     float2 corner = corners[vertexID];
-    float2 worldPos = inst.position + corner * inst.size - uniforms.scrollOffset;
+
+    // When glow is enabled, expand the quad outward to make room for the halo
+    float2 pad = float2(inst.glowRadius);
+    float2 expandedSize = inst.size + pad * 2.0;
+    float2 origin = inst.position - pad;
+    float2 worldPos = origin + corner * expandedSize - uniforms.scrollOffset;
 
     RectVertexOut out;
     out.position = uniforms.projectionMatrix * float4(worldPos, 0.0, 1.0);
     out.color = float4(inst.color) / 255.0;
+    out.localPos = corner * expandedSize;
+    out.rectSize = expandedSize;
+    out.innerSize = inst.size;
+    out.cornerRadius = inst.cornerRadius;
+    out.glowRadius = inst.glowRadius;
+    out.glowOpacity = inst.glowOpacity;
     return out;
 }
 
 fragment float4 rect_fragment(RectVertexOut in [[stage_in]]) {
-    return in.color;
+    // Fast path: no corner radius and no glow — plain rect
+    if (in.cornerRadius <= 0.0 && in.glowRadius <= 0.0) {
+        return in.color;
+    }
+
+    // Compute SDF to the inner rect (centered within the possibly-expanded quad)
+    float2 innerHalf = in.innerSize * 0.5;
+    float2 center = in.rectSize * 0.5;
+    float r = min(in.cornerRadius, min(innerHalf.x, innerHalf.y));
+    float2 p = abs(in.localPos - center) - (innerHalf - r);
+    float dist = length(max(p, 0.0)) - r;
+
+    // Solid interior with anti-aliased edge
+    float solidAlpha = 1.0 - smoothstep(-0.5, 0.5, dist);
+
+    // Glow exterior: exponential falloff from cursor edge
+    float glowAlpha = 0.0;
+    if (in.glowRadius > 0.0 && dist > 0.0) {
+        glowAlpha = in.glowOpacity * exp(-dist * 2.5 / in.glowRadius);
+    }
+
+    float finalAlpha = max(solidAlpha, glowAlpha);
+    return float4(in.color.rgb, in.color.a * finalAlpha);
 }
 
 // MARK: - Glyph Pipeline

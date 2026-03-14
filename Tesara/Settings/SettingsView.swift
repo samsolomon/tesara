@@ -222,25 +222,141 @@ private struct AppearanceSettingsPane: View {
     let onImportTheme: () -> Void
     let onExportTheme: () -> Void
 
+    private var themePickerOptions: some View {
+        ForEach(themes) { theme in
+            Text(theme.name).tag(theme.id)
+        }
+    }
+
     var body: some View {
         Form {
-            Picker("Theme", selection: $settings.themeID) {
-                ForEach(themes) { theme in
-                    Text(theme.name).tag(theme.id)
+            Section {
+                Picker("Theme", selection: $settings.themeID) {
+                    themePickerOptions
                 }
+                .disabled(settings.autoThemeSwitching)
+
+                HStack {
+                    Button("Import JSON", action: onImportTheme)
+                    Button("Export Current", action: onExportTheme)
+                }
+
+                Toggle("Auto switch with system appearance", isOn: $settings.autoThemeSwitching)
+
+                if settings.autoThemeSwitching {
+                    Picker("Light Theme", selection: Binding(
+                        get: { settings.lightThemeID ?? settings.themeID },
+                        set: { settings.lightThemeID = $0 }
+                    )) {
+                        themePickerOptions
+                    }
+
+                    Picker("Dark Theme", selection: Binding(
+                        get: { settings.darkThemeID ?? settings.themeID },
+                        set: { settings.darkThemeID = $0 }
+                    )) {
+                        themePickerOptions
+                    }
+                }
+            } header: {
+                Text("Theme")
             }
 
-            HStack {
-                Button("Import JSON", action: onImportTheme)
-                Button("Export Current", action: onExportTheme)
+            Section {
+                TextField("Font Family", text: $settings.fontFamily)
+                HStack {
+                    Slider(value: $settings.fontSize, in: 10...24, step: 1)
+                    Text("\(Int(settings.fontSize)) pt")
+                        .monospacedDigit()
+                        .frame(width: 48)
+                }
+
+                Toggle("Font ligatures", isOn: $settings.fontLigatures)
+                Toggle("Thicken font strokes", isOn: $settings.fontThicken)
+            } header: {
+                Text("Font")
             }
 
-            TextField("Font Family", text: $settings.fontFamily)
-            HStack {
-                Slider(value: $settings.fontSize, in: 10...24, step: 1)
-                Text("\(Int(settings.fontSize)) pt")
-                    .monospacedDigit()
-                    .frame(width: 48)
+            Section {
+                Picker("Style", selection: $settings.cursorStyle) {
+                    ForEach(CursorStyle.allCases) { style in
+                        Text(style.title).tag(style)
+                    }
+                }
+
+                if settings.cursorStyle == .bar {
+                    HStack {
+                        Slider(value: $settings.cursorBarWidth, in: 1...6, step: 0.5)
+                        Text("\(settings.cursorBarWidth, specifier: "%.1f") px")
+                            .monospacedDigit()
+                            .frame(width: 48)
+                    }
+                }
+
+                if settings.cursorStyle != .underline {
+                    Toggle("Rounded corners", isOn: $settings.cursorRounded)
+                }
+
+                Toggle("Cursor blink", isOn: $settings.cursorBlink)
+
+                Toggle("Cursor glow", isOn: $settings.cursorGlow)
+
+                if settings.cursorGlow {
+                    HStack {
+                        Text("Glow radius")
+                        Slider(value: $settings.cursorGlowRadius, in: 2...12, step: 1)
+                        Text("\(Int(settings.cursorGlowRadius)) px")
+                            .monospacedDigit()
+                            .frame(width: 36)
+                    }
+
+                    HStack {
+                        Text("Glow opacity")
+                        Slider(value: $settings.cursorGlowOpacity, in: 0.1...0.8, step: 0.05)
+                        Text("\(Int(settings.cursorGlowOpacity * 100))%")
+                            .monospacedDigit()
+                            .frame(width: 40)
+                    }
+                }
+
+                Toggle("Smooth cursor pulse", isOn: $settings.cursorSmoothBlink)
+            } header: {
+                Text("Cursor")
+            } footer: {
+                Text("Glow and smooth pulse apply to the editor cursor. Style and blink settings are shared with the terminal cursor.")
+            }
+
+            Section {
+                HStack {
+                    Slider(value: $settings.windowOpacity, in: 0.3...1.0, step: 0.05)
+                    Text("\(Int(settings.windowOpacity * 100))%")
+                        .monospacedDigit()
+                        .frame(width: 48)
+                }
+
+                Toggle("Background blur", isOn: $settings.windowBlur)
+
+                HStack {
+                    Text("Horizontal Padding")
+                    Spacer()
+                    TextField("", value: $settings.windowPaddingX, format: .number)
+                        .frame(width: 60)
+                        .multilineTextAlignment(.trailing)
+                    Text("px")
+                }
+
+                HStack {
+                    Text("Vertical Padding")
+                    Spacer()
+                    TextField("", value: $settings.windowPaddingY, format: .number)
+                        .frame(width: 60)
+                        .multilineTextAlignment(.trailing)
+                    Text("px")
+                }
+            } header: {
+                Text("Window")
+            } footer: {
+                Text("Opacity below 100% makes the terminal background translucent. Background blur applies a vibrancy effect behind the terminal.")
             }
 
             VStack(alignment: .leading, spacing: 12) {
@@ -248,6 +364,7 @@ private struct AppearanceSettingsPane: View {
                     .font(.headline)
                 RoundedRectangle(cornerRadius: 16)
                     .fill(activeTheme.swiftUIBackgroundGradient)
+                    .opacity(settings.windowOpacity)
                     .frame(height: 140)
                     .overlay(alignment: .topLeading) {
                         VStack(alignment: .leading, spacing: 6) {
@@ -287,6 +404,53 @@ private struct TerminalSettingsPane: View {
             }
 
             Section {
+                Picker("Option Key as Alt", selection: $settings.optionAsAlt) {
+                    ForEach(OptionAsAlt.allCases) { mode in
+                        Text(mode.title).tag(mode)
+                    }
+                }
+            } header: {
+                Text("macOS")
+            } footer: {
+                Text("Sends Option key as Alt for terminal applications like vim, tmux, and emacs. \"Left Only\" keeps the right Option key for macOS character input.")
+            }
+
+            Section {
+                HStack {
+                    Text("Scrollback Lines")
+                    Spacer()
+                    TextField("", value: $settings.scrollbackLines, format: .number)
+                        .frame(width: 80)
+                        .multilineTextAlignment(.trailing)
+                }
+            } header: {
+                Text("Scrollback")
+            } footer: {
+                Text("Maximum number of lines kept in the scrollback buffer. Higher values use more memory.")
+            }
+
+            Section {
+                Toggle("Copy on select", isOn: $settings.copyOnSelect)
+                Toggle("Trim trailing spaces on copy", isOn: $settings.clipboardTrimTrailingSpaces)
+            } header: {
+                Text("Clipboard")
+            } footer: {
+                Text("Copy on select automatically copies selected text to the clipboard without requiring a separate copy action.")
+            }
+
+            Section {
+                Picker("Bell", selection: $settings.bellMode) {
+                    ForEach(BellMode.allCases) { mode in
+                        Text(mode.title).tag(mode)
+                    }
+                }
+            } header: {
+                Text("Notifications")
+            } footer: {
+                Text("Controls how terminal bell characters (BEL) are handled. Visual flash briefly inverts the terminal colors.")
+            }
+
+            Section {
                 Picker("Paste Protection", selection: $settings.pasteProtectionMode) {
                     ForEach(PasteProtectionMode.allCases) { mode in
                         Text(mode.title).tag(mode)
@@ -318,7 +482,7 @@ private struct KeyboardSettingsPane: View {
     var body: some View {
         Form {
             Section {
-                ForEach(KeyBindingAction.customizableCases) { action in
+                ForEach(KeyBindingAction.allCases) { action in
                     LabeledContent(action.title) {
                         KeyRecorderView(
                             action: action,
@@ -333,7 +497,7 @@ private struct KeyboardSettingsPane: View {
                     }
                 }
             } footer: {
-                Text("Click a shortcut to record a new key combination. Press Escape to cancel. Only actions with fully replaceable shortcuts are shown here.")
+                Text("Click a shortcut to record a new key combination. Press Escape to cancel.")
             }
 
             Button("Reset All to Defaults") {

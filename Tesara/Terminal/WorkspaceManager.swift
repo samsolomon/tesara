@@ -183,6 +183,25 @@ final class WorkspaceManager: ObservableObject {
         return nil
     }
 
+    func splitActivePaneFromDefaults(direction: PaneNode.SplitDirection) {
+        guard let settingsStore, let blockStore else { return }
+        splitActivePane(
+            direction: direction,
+            shellPath: settingsStore.settings.shellPath,
+            workingDirectory: settingsStore.settings.defaultWorkingDirectory,
+            blockStore: blockStore
+        )
+    }
+
+    func newTabFromDefaults() {
+        guard let settingsStore, let blockStore else { return }
+        newTab(
+            shellPath: settingsStore.settings.shellPath,
+            workingDirectory: settingsStore.settings.defaultWorkingDirectory,
+            blockStore: blockStore
+        )
+    }
+
     func splitActivePane(direction: PaneNode.SplitDirection, position: PaneNode.PanePosition = .second, shellPath: String, workingDirectory: URL, blockStore: BlockStore) {
         guard let activePaneID,
               let tabIndex = tabs.firstIndex(where: { $0.id == activeTabID }),
@@ -225,13 +244,13 @@ final class WorkspaceManager: ObservableObject {
         refreshWorkspaceMetadata()
     }
 
-    func splitActivePaneWithEditor(direction: PaneNode.SplitDirection, theme: TerminalTheme, fontFamily: String, fontSize: Double) {
+    func splitActivePaneWithEditor(direction: PaneNode.SplitDirection, theme: TerminalTheme, fontFamily: String, fontSize: Double, cursorConfig: EditorLayoutEngine.CursorConfig? = nil, cursorBlink: Bool = true) {
         guard let activePaneID,
               let tabIndex = tabs.firstIndex(where: { $0.id == activeTabID }),
               tabs[tabIndex].rootPane.contains(paneID: activePaneID) else { return }
 
         let editorSession = EditorSession()
-        editorSession.createView(theme: theme, fontFamily: fontFamily, fontSize: fontSize)
+        editorSession.createView(theme: theme, fontFamily: fontFamily, fontSize: fontSize, cursorConfig: cursorConfig, cursorBlink: cursorBlink)
         let newPaneID = UUID()
         let newEditor = PaneNode.editor(id: newPaneID, session: editorSession)
 
@@ -333,6 +352,22 @@ final class WorkspaceManager: ObservableObject {
         }
     }
 
+    func selectNextPane() { selectPaneByOffset(1) }
+    func selectPreviousPane() { selectPaneByOffset(-1) }
+
+    private func selectPaneByOffset(_ offset: Int) {
+        guard let activePaneID,
+              let activeTabID,
+              let tabIndex = tabs.firstIndex(where: { $0.id == activeTabID }) else { return }
+
+        let leafIDs = tabs[tabIndex].rootPane.allLeafIDs()
+        guard leafIDs.count > 1,
+              let currentIndex = leafIDs.firstIndex(of: activePaneID) else { return }
+
+        let newIndex = (currentIndex + offset + leafIDs.count) % leafIDs.count
+        selectPane(id: leafIDs[newIndex])
+    }
+
     @discardableResult
     func selectAdjacentPane(_ direction: PaneNode.NavigationDirection) -> Bool {
         guard let activePaneID,
@@ -348,7 +383,7 @@ final class WorkspaceManager: ObservableObject {
 
     // MARK: - File I/O
 
-    func openFileInEditor(url: URL, theme: TerminalTheme, fontFamily: String, fontSize: Double) {
+    func openFileInEditor(url: URL, theme: TerminalTheme, fontFamily: String, fontSize: Double, cursorConfig: EditorLayoutEngine.CursorConfig? = nil, cursorBlink: Bool = true) {
         // Check for duplicate: if already open, focus that pane
         for tab in tabs {
             for (paneID, session) in tab.rootPane.allEditorSessions() {
@@ -362,7 +397,7 @@ final class WorkspaceManager: ObservableObject {
 
         // Create a new editor pane with the file
         let editorSession = EditorSession()
-        editorSession.createView(theme: theme, fontFamily: fontFamily, fontSize: fontSize)
+        editorSession.createView(theme: theme, fontFamily: fontFamily, fontSize: fontSize, cursorConfig: cursorConfig, cursorBlink: cursorBlink)
 
         do {
             try editorSession.loadFile(url: url)
