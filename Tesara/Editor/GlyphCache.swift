@@ -243,10 +243,11 @@ final class GlyphCache {
                 bitmapInfo: CGImageAlphaInfo.none.rawValue
             ) else { return }
 
-            context.setAllowsFontSmoothing(true)
-            context.setShouldSmoothFonts(true)
             context.setAllowsAntialiasing(true)
             context.setShouldAntialias(true)
+            context.setAllowsFontSmoothing(false)
+            context.setShouldSmoothFonts(false)
+            context.setFillColor(CGColor(gray: 1.0, alpha: 1.0))
 
             // Position glyph so its origin aligns with the bitmap
             let drawX = -bearingX + CGFloat(padding) + subpixelOffset

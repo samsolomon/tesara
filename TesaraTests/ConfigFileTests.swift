@@ -108,12 +108,12 @@ final class ConfigFileTests: XCTestCase {
         XCTAssertEqual(s.fontSize, 16)
     }
 
-    func testApplyOptionalThemes() {
-        let parsed = ConfigFile.parse("light-theme = my-light\ndark-theme =")
+    func testApplyThemeOverrides() {
+        let parsed = ConfigFile.parse("light-theme = my-light\ndark-theme = my-dark")
         var s = AppSettings.default
         ConfigFile.applyParsedConfig(parsed, to: &s)
         XCTAssertEqual(s.lightThemeID, "my-light")
-        XCTAssertNil(s.darkThemeID)
+        XCTAssertEqual(s.darkThemeID, "my-dark")
     }
 
     func testApplyKeybinds() {
@@ -156,11 +156,11 @@ final class ConfigFileTests: XCTestCase {
         XCTAssertFalse(s.shellPath.isEmpty)
     }
 
-    func testApplyEmptyThemeFallsBackToDefault() {
-        let parsed = ConfigFile.parse("theme =")
+    func testApplyEmptyColorModeFallsBackToDefault() {
+        let parsed = ConfigFile.parse("color-mode =")
         var s = AppSettings.default
         ConfigFile.applyParsedConfig(parsed, to: &s)
-        XCTAssertEqual(s.themeID, BuiltInTheme.oxide.id)
+        XCTAssertEqual(s.colorMode, .system)
     }
 
     // MARK: - Round Trip
@@ -169,7 +169,7 @@ final class ConfigFileTests: XCTestCase {
         var original = AppSettings.default
         original.fontFamily = "JetBrains Mono"
         original.fontSize = 16
-        original.themeID = "custom"
+        original.colorMode = .dark
         original.fontLigatures = false
         original.fontThicken = true
         original.cursorStyle = .block
@@ -177,7 +177,6 @@ final class ConfigFileTests: XCTestCase {
         original.windowBlur = true
         original.windowPaddingX = 4
         original.windowPaddingY = 2
-        original.autoThemeSwitching = true
         original.lightThemeID = "lt"
         original.darkThemeID = "dk"
         original.shellPath = "/usr/local/bin/fish"
@@ -206,7 +205,7 @@ final class ConfigFileTests: XCTestCase {
 
         XCTAssertEqual(restored.fontFamily, original.fontFamily)
         XCTAssertEqual(restored.fontSize, original.fontSize)
-        XCTAssertEqual(restored.themeID, original.themeID)
+        XCTAssertEqual(restored.colorMode, original.colorMode)
         XCTAssertEqual(restored.fontLigatures, original.fontLigatures)
         XCTAssertEqual(restored.fontThicken, original.fontThicken)
         XCTAssertEqual(restored.cursorStyle, original.cursorStyle)
@@ -214,7 +213,6 @@ final class ConfigFileTests: XCTestCase {
         XCTAssertEqual(restored.windowBlur, original.windowBlur)
         XCTAssertEqual(restored.windowPaddingX, original.windowPaddingX)
         XCTAssertEqual(restored.windowPaddingY, original.windowPaddingY)
-        XCTAssertEqual(restored.autoThemeSwitching, original.autoThemeSwitching)
         XCTAssertEqual(restored.lightThemeID, original.lightThemeID)
         XCTAssertEqual(restored.darkThemeID, original.darkThemeID)
         XCTAssertEqual(restored.shellPath, original.shellPath)

@@ -136,8 +136,8 @@ fragment float4 glyph_fragment(
     GlyphVertexOut in [[stage_in]],
     texture2d<float> atlas [[texture(0)]]
 ) {
-    constexpr sampler linearSampler(mag_filter::linear, min_filter::linear);
-    float alpha = atlas.sample(linearSampler, in.texCoord).r;
+    constexpr sampler nearestSampler(mag_filter::nearest, min_filter::nearest);
+    float alpha = atlas.sample(nearestSampler, in.texCoord).r;
     return float4(in.color.rgb, in.color.a * alpha);
 }
 

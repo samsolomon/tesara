@@ -47,6 +47,8 @@ final class EditorLayoutEngine {
         let newFont = CTFontCreateWithName(family as CFString, size, nil)
         self.font = newFont
         self.lineHeight = ceil(CTFontGetAscent(newFont) + CTFontGetDescent(newFont) + CTFontGetLeading(newFont))
+        self.rasterFont = nil
+        self.rasterFontScale = 0
     }
 
     // MARK: - Visual Line Map
@@ -282,6 +284,18 @@ final class EditorLayoutEngine {
         var color: [EditorRenderer.GlyphInstance]
     }
 
+    /// Cached font scaled for rasterization at the current display scale.
+    private var rasterFont: CTFont?
+    private var rasterFontScale: CGFloat = 0
+
+    private func scaledRasterFont(scale: CGFloat) -> CTFont {
+        if scale == rasterFontScale, let rasterFont { return rasterFont }
+        let scaled = CTFontCreateCopyWithAttributes(font, CTFontGetSize(font) * scale, nil, nil)
+        rasterFont = scaled
+        rasterFontScale = scale
+        return scaled
+    }
+
     func buildGlyphInstances(
         from layoutLines: [LayoutLine],
         cache: GlyphCache,
@@ -292,6 +306,9 @@ final class EditorLayoutEngine {
     ) -> GlyphBuildResult {
         var monoInstances: [EditorRenderer.GlyphInstance] = []
         var colorInstances: [EditorRenderer.GlyphInstance] = []
+
+        // Rasterize glyphs at screen scale so atlas stores retina-resolution bitmaps
+        let rasterFont = scale > 1 ? scaledRasterFont(scale: scale) : font
 
         for layoutLine in layoutLines {
             let runs = CTLineGetGlyphRuns(layoutLine.ctLine) as! [CTRun]
@@ -312,7 +329,7 @@ final class EditorLayoutEngine {
                 CTRunGetStringIndices(run, CFRange(location: 0, length: glyphCount), &stringIndices)
 
                 for j in 0..<glyphCount {
-                    let cached = cache.rasterize(glyph: glyphs[j], font: font)
+                    let cached = cache.rasterize(glyph: glyphs[j], font: rasterFont)
                     guard cached.region.width > 0, cached.region.height > 0 else { continue }
 
                     let screenX = Float(positions[j].x * scale)
