@@ -808,6 +808,57 @@ final class WorkspaceManagerTests: XCTestCase {
         XCTAssertEqual(second.id, originalPaneID)
     }
 
+    func testRepeatedSameDirectionSplitsRebalanceSiblingsEvenly() {
+        addTab()
+        let firstPaneID = manager.activePaneID!
+
+        manager.splitActivePane(
+            direction: .horizontal,
+            position: .second,
+            shellPath: "/bin/zsh",
+            workingDirectory: URL(fileURLWithPath: "/tmp"),
+            blockStore: blockStore
+        )
+        let secondPaneID = manager.activePaneID!
+
+        manager.selectPane(id: firstPaneID)
+        manager.splitActivePane(
+            direction: .horizontal,
+            position: .second,
+            shellPath: "/bin/zsh",
+            workingDirectory: URL(fileURLWithPath: "/tmp"),
+            blockStore: blockStore
+        )
+        let thirdPaneID = manager.activePaneID!
+
+        guard let rootPane = manager.activeTab?.rootPane else {
+            XCTFail("Expected active root pane")
+            return
+        }
+
+        let widths = horizontalWidths(in: rootPane)
+        XCTAssertEqual(Double(widths[firstPaneID] ?? 0), 1.0 / 3.0, accuracy: 0.001)
+        XCTAssertEqual(Double(widths[secondPaneID] ?? 0), 1.0 / 3.0, accuracy: 0.001)
+        XCTAssertEqual(Double(widths[thirdPaneID] ?? 0), 1.0 / 3.0, accuracy: 0.001)
+    }
+
+    private func horizontalWidths(in node: PaneNode, availableWidth: CGFloat = 1) -> [UUID: CGFloat] {
+        switch node {
+        case .leaf(let id, _):
+            return [id: availableWidth]
+        case .editor(let id, _):
+            return [id: availableWidth]
+        case .split(_, let direction, let first, let second, let ratio):
+            if direction == .horizontal {
+                return horizontalWidths(in: first, availableWidth: availableWidth * ratio)
+                    .merging(horizontalWidths(in: second, availableWidth: availableWidth * (1 - ratio))) { _, rhs in rhs }
+            }
+
+            return horizontalWidths(in: first, availableWidth: availableWidth)
+                .merging(horizontalWidths(in: second, availableWidth: availableWidth)) { _, rhs in rhs }
+        }
+    }
+
     private var testTheme: TerminalTheme {
         TerminalTheme(
             id: "test", name: "Test",

@@ -185,20 +185,11 @@ final class WorkspaceManager: ObservableObject {
 
     func splitActivePane(direction: PaneNode.SplitDirection, position: PaneNode.PanePosition = .second, shellPath: String, workingDirectory: URL, blockStore: BlockStore) {
         guard let activePaneID,
-              let tabIndex = tabs.firstIndex(where: { $0.id == activeTabID }) else { return }
-
-        // Find the current pane node to preserve it in the split
-        let currentNode: PaneNode
-        if let termSession = tabs[tabIndex].rootPane.findSession(forPaneID: activePaneID) {
-            currentNode = .leaf(id: activePaneID, session: termSession)
-        } else if let editorSession = tabs[tabIndex].rootPane.findEditorSession(forPaneID: activePaneID) {
-            currentNode = .editor(id: activePaneID, session: editorSession)
-        } else {
-            return
-        }
+              let tabIndex = tabs.firstIndex(where: { $0.id == activeTabID }),
+              tabs[tabIndex].rootPane.contains(paneID: activePaneID) else { return }
 
         performSplit(
-            tabIndex: tabIndex, paneID: activePaneID, currentNode: currentNode,
+            tabIndex: tabIndex, paneID: activePaneID,
             direction: direction, position: position,
             shellPath: shellPath, workingDirectory: workingDirectory, blockStore: blockStore
         )
@@ -207,33 +198,27 @@ final class WorkspaceManager: ObservableObject {
     /// Split for a specific session (used by Ghostty action handlers).
     func splitPane(for session: TerminalSession, direction: PaneNode.SplitDirection, position: PaneNode.PanePosition, shellPath: String, workingDirectory: URL, blockStore: BlockStore) {
         guard let (tabID, paneID) = tabAndPaneID(for: session),
-              let tabIndex = tabs.firstIndex(where: { $0.id == tabID }),
-              let termSession = tabs[tabIndex].rootPane.findSession(forPaneID: paneID) else { return }
-
-        let currentNode = PaneNode.leaf(id: paneID, session: termSession)
+              let tabIndex = tabs.firstIndex(where: { $0.id == tabID }) else { return }
         activeTabID = tabs[tabIndex].id
         performSplit(
-            tabIndex: tabIndex, paneID: paneID, currentNode: currentNode,
+            tabIndex: tabIndex, paneID: paneID,
             direction: direction, position: position,
             shellPath: shellPath, workingDirectory: workingDirectory, blockStore: blockStore
         )
     }
 
-    private func performSplit(tabIndex: Int, paneID: UUID, currentNode: PaneNode, direction: PaneNode.SplitDirection, position: PaneNode.PanePosition, shellPath: String, workingDirectory: URL, blockStore: BlockStore) {
+    private func performSplit(tabIndex: Int, paneID: UUID, direction: PaneNode.SplitDirection, position: PaneNode.PanePosition, shellPath: String, workingDirectory: URL, blockStore: BlockStore) {
         let newSession = sessionFactory()
         newSession.configure(blockStore: blockStore)
         let newPaneID = UUID()
         let newLeaf = PaneNode.leaf(id: newPaneID, session: newSession)
 
-        let splitNode = PaneNode.split(
-            id: UUID(),
+        tabs[tabIndex].rootPane = tabs[tabIndex].rootPane.insertingPane(
+            id: paneID,
+            newPane: newLeaf,
             direction: direction,
-            first: position == .second ? currentNode : newLeaf,
-            second: position == .second ? newLeaf : currentNode,
-            ratio: 0.5
+            position: position
         )
-
-        tabs[tabIndex].rootPane = tabs[tabIndex].rootPane.replacingPane(id: paneID, with: splitNode)
         tabs[tabIndex].selectedPaneID = newPaneID
         activePaneID = newPaneID
         newSession.start(shellPath: shellPath, workingDirectory: workingDirectory)
@@ -242,32 +227,20 @@ final class WorkspaceManager: ObservableObject {
 
     func splitActivePaneWithEditor(direction: PaneNode.SplitDirection, theme: TerminalTheme, fontFamily: String, fontSize: Double) {
         guard let activePaneID,
-              let tabIndex = tabs.firstIndex(where: { $0.id == activeTabID }) else { return }
-
-        // Find the current pane node to preserve it in the split
-        let currentNode: PaneNode
-        if let termSession = tabs[tabIndex].rootPane.findSession(forPaneID: activePaneID) {
-            currentNode = .leaf(id: activePaneID, session: termSession)
-        } else if let editorSession = tabs[tabIndex].rootPane.findEditorSession(forPaneID: activePaneID) {
-            currentNode = .editor(id: activePaneID, session: editorSession)
-        } else {
-            return
-        }
+              let tabIndex = tabs.firstIndex(where: { $0.id == activeTabID }),
+              tabs[tabIndex].rootPane.contains(paneID: activePaneID) else { return }
 
         let editorSession = EditorSession()
         editorSession.createView(theme: theme, fontFamily: fontFamily, fontSize: fontSize)
         let newPaneID = UUID()
         let newEditor = PaneNode.editor(id: newPaneID, session: editorSession)
 
-        let splitNode = PaneNode.split(
-            id: UUID(),
+        tabs[tabIndex].rootPane = tabs[tabIndex].rootPane.insertingPane(
+            id: activePaneID,
+            newPane: newEditor,
             direction: direction,
-            first: currentNode,
-            second: newEditor,
-            ratio: 0.5
+            position: .second
         )
-
-        tabs[tabIndex].rootPane = tabs[tabIndex].rootPane.replacingPane(id: activePaneID, with: splitNode)
         tabs[tabIndex].selectedPaneID = newPaneID
         self.activePaneID = newPaneID
         refreshWorkspaceMetadata()

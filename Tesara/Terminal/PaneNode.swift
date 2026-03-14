@@ -101,6 +101,57 @@ indirect enum PaneNode: Identifiable {
         }
     }
 
+    func insertingPane(
+        id targetID: UUID,
+        newPane: PaneNode,
+        direction: SplitDirection,
+        position: PanePosition
+    ) -> PaneNode {
+        switch self {
+        case .leaf(let id, _):
+            guard id == targetID else { return self }
+            return Self.makeSplit(
+                direction: direction,
+                first: position == .second ? self : newPane,
+                second: position == .second ? newPane : self,
+                ratio: 0.5
+            )
+
+        case .editor(let id, _):
+            guard id == targetID else { return self }
+            return Self.makeSplit(
+                direction: direction,
+                first: position == .second ? self : newPane,
+                second: position == .second ? newPane : self,
+                ratio: 0.5
+            )
+
+        case .split(let id, let splitDirection, let first, let second, let ratio):
+            if splitDirection == direction {
+                let firstParticipates = first.participatesInSameDirectionInsertion(targetID: targetID, direction: direction)
+                let secondParticipates = second.participatesInSameDirectionInsertion(targetID: targetID, direction: direction)
+
+                if firstParticipates || secondParticipates {
+                    var siblings = flattenedSiblings(for: direction)
+                    guard let targetIndex = siblings.firstIndex(where: { $0.contains(paneID: targetID) }) else {
+                        return self
+                    }
+                    let insertionIndex = position == .first ? targetIndex : targetIndex + 1
+                    siblings.insert(newPane, at: insertionIndex)
+                    return Self.rebuildEvenly(siblings, direction: direction)
+                }
+            }
+
+            return .split(
+                id: id,
+                direction: splitDirection,
+                first: first.insertingPane(id: targetID, newPane: newPane, direction: direction, position: position),
+                second: second.insertingPane(id: targetID, newPane: newPane, direction: direction, position: position),
+                ratio: ratio
+            )
+        }
+    }
+
     func removingPane(id targetID: UUID) -> PaneNode? {
         switch self {
         case .leaf(let id, _):
@@ -165,5 +216,49 @@ indirect enum PaneNode: Identifiable {
                 ratio: currentRatio
             )
         }
+    }
+
+    private func participatesInSameDirectionInsertion(targetID: UUID, direction: SplitDirection) -> Bool {
+        switch self {
+        case .leaf(let id, _):
+            return id == targetID
+        case .editor(let id, _):
+            return id == targetID
+        case .split(_, let splitDirection, _, _, _):
+            return splitDirection == direction && contains(paneID: targetID)
+        }
+    }
+
+    private func flattenedSiblings(for direction: SplitDirection) -> [PaneNode] {
+        switch self {
+        case .split(_, let splitDirection, let first, let second, _) where splitDirection == direction:
+            return first.flattenedSiblings(for: direction) + second.flattenedSiblings(for: direction)
+        default:
+            return [self]
+        }
+    }
+
+    private static func rebuildEvenly(_ siblings: [PaneNode], direction: SplitDirection) -> PaneNode {
+        guard siblings.count > 1 else {
+            return siblings[0]
+        }
+
+        let first = siblings[0]
+        let remaining = Array(siblings.dropFirst())
+        return makeSplit(
+            direction: direction,
+            first: first,
+            second: rebuildEvenly(remaining, direction: direction),
+            ratio: 1 / CGFloat(siblings.count)
+        )
+    }
+
+    private static func makeSplit(
+        direction: SplitDirection,
+        first: PaneNode,
+        second: PaneNode,
+        ratio: CGFloat
+    ) -> PaneNode {
+        .split(id: UUID(), direction: direction, first: first, second: second, ratio: ratio)
     }
 }
