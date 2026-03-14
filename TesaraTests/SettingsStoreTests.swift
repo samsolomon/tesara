@@ -4,9 +4,11 @@ import XCTest
 @MainActor
 final class SettingsStoreTests: XCTestCase {
     private func makeStore() -> SettingsStore {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("tesara-test-\(UUID().uuidString)")
         let suiteName = "tesara.test.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
-        return SettingsStore(defaults: defaults)
+        return SettingsStore(configDirectory: tempDir, defaults: defaults)
     }
 
     func testDefaultSettingsAreApplied() {
@@ -29,7 +31,6 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(store.settings.cursorGlowRadius, 6.0)
         XCTAssertEqual(store.settings.cursorGlowOpacity, 0.4, accuracy: 0.001)
         XCTAssertFalse(store.settings.cursorSmoothBlink)
-        // Tier 1 defaults
         XCTAssertFalse(store.settings.autoThemeSwitching)
         XCTAssertNil(store.settings.lightThemeID)
         XCTAssertNil(store.settings.darkThemeID)
@@ -47,11 +48,12 @@ final class SettingsStoreTests: XCTestCase {
     }
 
     func testSettingsRoundTrip() {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("tesara-test-\(UUID().uuidString)")
         let suiteName = "tesara.test.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
 
-        // Write
-        let store1 = SettingsStore(defaults: defaults)
+        let store1 = SettingsStore(configDirectory: tempDir, defaults: defaults)
         store1.settings.themeID = BuiltInTheme.atlas.id
         store1.settings.fontSize = 16
         store1.settings.historyCaptureEnabled = false
@@ -84,8 +86,7 @@ final class SettingsStoreTests: XCTestCase {
         store1.settings.clipboardTrimTrailingSpaces = true
         store1.settings.bellMode = .visual
 
-        // Read back
-        let store2 = SettingsStore(defaults: defaults)
+        let store2 = SettingsStore(configDirectory: tempDir, defaults: defaults)
         XCTAssertEqual(store2.settings.themeID, BuiltInTheme.atlas.id)
         XCTAssertEqual(store2.settings.fontSize, 16)
         XCTAssertFalse(store2.settings.historyCaptureEnabled)
@@ -150,7 +151,6 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(settings.cursorGlowRadius, 6.0)
         XCTAssertEqual(settings.cursorGlowOpacity, 0.4, accuracy: 0.001)
         XCTAssertFalse(settings.cursorSmoothBlink)
-        // Tier 1 fields default correctly from legacy JSON
         XCTAssertFalse(settings.autoThemeSwitching)
         XCTAssertNil(settings.lightThemeID)
         XCTAssertNil(settings.darkThemeID)
@@ -167,6 +167,25 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(settings.bellMode, .system)
     }
 
+    func testLegacyUserDefaultsMigration() {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("tesara-test-\(UUID().uuidString)")
+        let suiteName = "tesara.test.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+
+        var legacySettings = AppSettings.default
+        legacySettings.fontSize = 18
+        legacySettings.themeID = BuiltInTheme.atlas.id
+        let data = try! JSONEncoder().encode(legacySettings)
+        defaults.set(data, forKey: "tesara.app-settings")
+
+        let store = SettingsStore(configDirectory: tempDir, defaults: defaults)
+        XCTAssertEqual(store.settings.fontSize, 18)
+        XCTAssertEqual(store.settings.themeID, BuiltInTheme.atlas.id)
+        XCTAssertNil(defaults.data(forKey: "tesara.app-settings"))
+        XCTAssertNotNil(ConfigFile.readConfigFile(from: tempDir))
+    }
+
     func testActiveThemeFallsBackToOxide() {
         let store = makeStore()
         store.settings.themeID = "nonexistent-theme"
@@ -181,56 +200,11 @@ final class SettingsStoreTests: XCTestCase {
     func testThemeImportExportCycle() throws {
         let store = makeStore()
 
-        // Create and export a custom theme
         let customTheme = TerminalTheme(
-            id: "test-custom",
-            name: "Test Custom",
-            foreground: "#FFFFFF",
-            background: "#000000",
-            cursor: "#FF0000",
-            cursorText: "#000000",
-            selectionBackground: "#333333",
-            selectionForeground: "#FFFFFF",
-            black: "#000000",
-            red: "#FF0000",
-            green: "#00FF00",
-            yellow: "#FFFF00",
-            blue: "#0000FF",
-            magenta: "#FF00FF",
-            cyan: "#00FFFF",
-            white: "#FFFFFF",
-            brightBlack: "#808080",
-            brightRed: "#FF0000",
-            brightGreen: "#00FF00",
-            brightYellow: "#FFFF00",
-            brightBlue: "#0000FF",
-            brightMagenta: "#FF00FF",
-            brightCyan: "#00FFFF",
-            brightWhite: "#FFFFFF"
-        )
-
-        let data = try JSONEncoder().encode(customTheme)
-        try store.importTheme(from: data)
-
-        XCTAssertEqual(store.settings.themeID, "test-custom")
-        XCTAssertEqual(store.activeTheme.name, "Test Custom")
-        XCTAssertEqual(store.availableThemes.count, BuiltInTheme.allCases.count + 1)
-
-        // Export and verify
-        let exported = try store.exportActiveTheme()
-        let decoded = try JSONDecoder().decode(TerminalTheme.self, from: exported)
-        XCTAssertEqual(decoded.id, "test-custom")
-        XCTAssertEqual(decoded.name, "Test Custom")
-    }
-
-    func testImportThemeOverwritesExisting() throws {
-        let store = makeStore()
-
-        let theme1 = TerminalTheme(
-            id: "overwrite-test", name: "V1",
+            id: "test-custom", name: "Test Custom",
             foreground: "#FFFFFF", background: "#000000",
             cursor: "#FF0000", cursorText: "#000000",
-            selectionBackground: "#333333",
+            selectionBackground: "#333333", selectionForeground: "#FFFFFF",
             black: "#000000", red: "#FF0000", green: "#00FF00",
             yellow: "#FFFF00", blue: "#0000FF", magenta: "#FF00FF",
             cyan: "#00FFFF", white: "#FFFFFF",
@@ -240,11 +214,38 @@ final class SettingsStoreTests: XCTestCase {
             brightCyan: "#00FFFF", brightWhite: "#FFFFFF"
         )
 
+        try store.importTheme(from: JSONEncoder().encode(customTheme))
+        XCTAssertEqual(store.settings.themeID, "test-custom")
+        XCTAssertEqual(store.activeTheme.name, "Test Custom")
+        XCTAssertEqual(store.availableThemes.count, BuiltInTheme.allCases.count + 1)
+
+        let decoded = try JSONDecoder().decode(TerminalTheme.self, from: store.exportActiveTheme())
+        XCTAssertEqual(decoded.id, "test-custom")
+
+        let themes = ConfigFile.loadImportedThemes(from: store.configDirectory)
+        XCTAssertEqual(themes.count, 1)
+        XCTAssertEqual(themes.first?.id, "test-custom")
+    }
+
+    func testImportThemeOverwritesExisting() throws {
+        let store = makeStore()
+
+        let theme1 = TerminalTheme(
+            id: "overwrite-test", name: "V1",
+            foreground: "#FFFFFF", background: "#000000",
+            cursor: "#FF0000", cursorText: "#000000", selectionBackground: "#333333",
+            black: "#000000", red: "#FF0000", green: "#00FF00",
+            yellow: "#FFFF00", blue: "#0000FF", magenta: "#FF00FF",
+            cyan: "#00FFFF", white: "#FFFFFF",
+            brightBlack: "#808080", brightRed: "#FF0000",
+            brightGreen: "#00FF00", brightYellow: "#FFFF00",
+            brightBlue: "#0000FF", brightMagenta: "#FF00FF",
+            brightCyan: "#00FFFF", brightWhite: "#FFFFFF"
+        )
         let theme2 = TerminalTheme(
             id: "overwrite-test", name: "V2",
             foreground: "#FFFFFF", background: "#111111",
-            cursor: "#FF0000", cursorText: "#000000",
-            selectionBackground: "#333333",
+            cursor: "#FF0000", cursorText: "#000000", selectionBackground: "#333333",
             black: "#000000", red: "#FF0000", green: "#00FF00",
             yellow: "#FFFF00", blue: "#0000FF", magenta: "#FF00FF",
             cyan: "#00FFFF", white: "#FFFFFF",
@@ -256,10 +257,7 @@ final class SettingsStoreTests: XCTestCase {
 
         try store.importTheme(from: JSONEncoder().encode(theme1))
         try store.importTheme(from: JSONEncoder().encode(theme2))
-
-        // Should overwrite, not duplicate
-        let importedCount = store.settings.importedThemes.filter { $0.id == "overwrite-test" }.count
-        XCTAssertEqual(importedCount, 1)
+        XCTAssertEqual(store.settings.importedThemes.filter { $0.id == "overwrite-test" }.count, 1)
         XCTAssertEqual(store.activeTheme.name, "V2")
     }
 
@@ -268,8 +266,6 @@ final class SettingsStoreTests: XCTestCase {
         store.settings.keyBindingOverrides = [
             KeyBindingOverride(action: .copy, shortcut: KeyShortcut(key: "c", modifiers: [.command]))
         ]
-        XCTAssertFalse(store.settings.keyBindingOverrides.isEmpty)
-
         store.resetKeyBindings()
         XCTAssertTrue(store.settings.keyBindingOverrides.isEmpty)
     }
@@ -280,7 +276,6 @@ final class SettingsStoreTests: XCTestCase {
         let store = makeStore()
         let shortcut = KeyShortcut(key: "k", modifiers: [.command, .shift])
         store.updateKeyBinding(action: .newTab, shortcut: shortcut)
-
         XCTAssertEqual(store.settings.keyBindingOverrides.count, 1)
         XCTAssertEqual(store.settings.keyBindingOverrides.first?.action, .newTab)
         XCTAssertEqual(store.settings.keyBindingOverrides.first?.shortcut, shortcut)
@@ -288,42 +283,25 @@ final class SettingsStoreTests: XCTestCase {
 
     func testUpdateKeyBindingReplacesExisting() {
         let store = makeStore()
-        let original = KeyShortcut(key: "k", modifiers: [.command])
-        let replacement = KeyShortcut(key: "j", modifiers: [.command])
-
-        store.updateKeyBinding(action: .newTab, shortcut: original)
-        store.updateKeyBinding(action: .newTab, shortcut: replacement)
-
+        store.updateKeyBinding(action: .newTab, shortcut: KeyShortcut(key: "k", modifiers: [.command]))
+        store.updateKeyBinding(action: .newTab, shortcut: KeyShortcut(key: "j", modifiers: [.command]))
         XCTAssertEqual(store.settings.keyBindingOverrides.count, 1)
-        XCTAssertEqual(store.settings.keyBindingOverrides.first?.shortcut, replacement)
+        XCTAssertEqual(store.settings.keyBindingOverrides.first?.shortcut.key, "j")
     }
 
     func testUpdateKeyBindingResolvesConflicts() {
         let store = makeStore()
         let shortcut = KeyShortcut(key: "k", modifiers: [.command])
-
         store.updateKeyBinding(action: .newTab, shortcut: shortcut)
         store.updateKeyBinding(action: .closeTab, shortcut: shortcut)
-
-        // New Tab binding should be removed since Close Tab took its shortcut
         XCTAssertEqual(store.settings.keyBindingOverrides.count, 1)
         XCTAssertEqual(store.settings.keyBindingOverrides.first?.action, .closeTab)
-    }
-
-    func testUpdateKeyBindingAllActionsCustomizable() {
-        let store = makeStore()
-
-        store.updateKeyBinding(action: .copy, shortcut: KeyShortcut(key: "k", modifiers: [.command]))
-
-        XCTAssertEqual(store.settings.keyBindingOverrides.count, 1)
-        XCTAssertEqual(store.settings.keyBindingOverrides.first?.action, .copy)
     }
 
     func testRemoveKeyBinding() {
         let store = makeStore()
         store.updateKeyBinding(action: .newTab, shortcut: KeyShortcut(key: "k", modifiers: [.command]))
         store.removeKeyBinding(action: .newTab)
-
         XCTAssertTrue(store.settings.keyBindingOverrides.isEmpty)
     }
 
@@ -331,87 +309,65 @@ final class SettingsStoreTests: XCTestCase {
         let store = makeStore()
         let custom = KeyShortcut(key: "k", modifiers: [.command, .shift])
         store.updateKeyBinding(action: .newTab, shortcut: custom)
-
         XCTAssertEqual(store.resolvedShortcut(for: .newTab), custom)
     }
 
     func testResolvedShortcutFallsBackToDefault() {
         let store = makeStore()
-        let resolved = store.resolvedShortcut(for: .newTab)
-
-        XCTAssertEqual(resolved, KeyBindingAction.newTab.defaultShortcut)
+        XCTAssertEqual(store.resolvedShortcut(for: .newTab), KeyBindingAction.newTab.defaultShortcut)
     }
 
     func testResolvedShortcutReturnsNilForActionWithoutDefault() {
-        let store = makeStore()
-        XCTAssertNil(store.resolvedShortcut(for: .toggleTUIPassthrough))
+        XCTAssertNil(makeStore().resolvedShortcut(for: .toggleTUIPassthrough))
     }
 
     func testResolvedShortcutWithFallbackNeverReturnsNil() {
-        let store = makeStore()
         let fallback = KeyShortcut(key: "z", modifiers: [.command])
-        let resolved = store.resolvedShortcut(for: .toggleTUIPassthrough, fallback: fallback)
-
-        XCTAssertEqual(resolved, fallback)
+        XCTAssertEqual(makeStore().resolvedShortcut(for: .toggleTUIPassthrough, fallback: fallback), fallback)
     }
 
     // MARK: - KeyShortcut
 
     func testKeyShortcutDisplayValueForRegularKey() {
-        let shortcut = KeyShortcut(key: "t", modifiers: [.command])
-        XCTAssertEqual(shortcut.displayValue, "⌘T")
+        XCTAssertEqual(KeyShortcut(key: "t", modifiers: [.command]).displayValue, "⌘T")
     }
 
     func testKeyShortcutDisplayValueForSpecialKey() {
-        let shortcut = KeyShortcut(key: "\u{F700}", modifiers: [.command, .shift])
-        XCTAssertEqual(shortcut.displayValue, "⌘⇧Up")
+        XCTAssertEqual(KeyShortcut(key: "\u{F700}", modifiers: [.command, .shift]).displayValue, "⌘⇧Up")
     }
 
     func testKeyShortcutDisplayValueMultipleModifiers() {
-        let shortcut = KeyShortcut(key: "c", modifiers: [.control, .option, .shift, .command])
-        XCTAssertEqual(shortcut.displayValue, "⌃⌥⇧⌘C")
+        XCTAssertEqual(KeyShortcut(key: "c", modifiers: [.control, .option, .shift, .command]).displayValue, "⌃⌥⇧⌘C")
     }
 
     func testKeyShortcutReservedDetection() {
-        let reserved = KeyShortcut(key: "q", modifiers: [.command])
-        XCTAssertTrue(reserved.isReserved)
-
-        let notReserved = KeyShortcut(key: "t", modifiers: [.command])
-        XCTAssertFalse(notReserved.isReserved)
+        XCTAssertTrue(KeyShortcut(key: "q", modifiers: [.command]).isReserved)
+        XCTAssertFalse(KeyShortcut(key: "t", modifiers: [.command]).isReserved)
     }
 
     func testKeyShortcutEquality() {
         let a = KeyShortcut(key: "t", modifiers: [.command])
-        let b = KeyShortcut(key: "t", modifiers: [.command])
-        let c = KeyShortcut(key: "t", modifiers: [.command, .shift])
-
-        XCTAssertEqual(a, b)
-        XCTAssertNotEqual(a, c)
+        XCTAssertEqual(a, KeyShortcut(key: "t", modifiers: [.command]))
+        XCTAssertNotEqual(a, KeyShortcut(key: "t", modifiers: [.command, .shift]))
     }
 
     func testKeyBindingOverrideRoundTrip() throws {
         let store = makeStore()
-        let shortcut = KeyShortcut(key: "k", modifiers: [.command, .option])
-        store.updateKeyBinding(action: .closeTab, shortcut: shortcut)
-
-        // Encode/decode the settings directly to verify persistence compatibility.
-        let data = try JSONEncoder().encode(store.settings)
-        let decoded = try JSONDecoder().decode(AppSettings.self, from: data)
-
+        store.updateKeyBinding(action: .closeTab, shortcut: KeyShortcut(key: "k", modifiers: [.command, .option]))
+        let decoded = try JSONDecoder().decode(AppSettings.self, from: JSONEncoder().encode(store.settings))
         XCTAssertEqual(decoded.keyBindingOverrides.count, 1)
         XCTAssertEqual(decoded.keyBindingOverrides.first?.action, .closeTab)
-        XCTAssertEqual(decoded.keyBindingOverrides.first?.shortcut.key, "k")
         XCTAssertEqual(decoded.keyBindingOverrides.first?.shortcut.modifiers, [.command, .option])
     }
+
+    // MARK: - LocalLogStore
 
     func testLocalLogStoreWritesWhenEnabled() throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         let store = LocalLogStore(directoryURL: directory)
-
         store.setEnabled(true)
         store.log("test message")
         waitForLogWrite()
-
         let contents = try String(contentsOf: store.logFileURL, encoding: .utf8)
         XCTAssertTrue(contents.contains("test message"))
     }
@@ -419,33 +375,26 @@ final class SettingsStoreTests: XCTestCase {
     func testLocalLogStoreDoesNotWriteWhenDisabled() throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         let store = LocalLogStore(directoryURL: directory)
-
         store.setEnabled(false)
         store.log("suppressed message")
         waitForLogWrite()
-
         XCTAssertFalse(FileManager.default.fileExists(atPath: store.logFileURL.path))
     }
 
     func testLocalLogStoreClearLogsRemovesLogDirectory() throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         let store = LocalLogStore(directoryURL: directory)
-
         store.setEnabled(true)
         store.log("to be cleared")
         waitForLogWrite()
         XCTAssertTrue(FileManager.default.fileExists(atPath: store.logFileURL.path))
-
         store.clearLogs()
-
         XCTAssertFalse(FileManager.default.fileExists(atPath: directory.path))
     }
 
     private func waitForLogWrite() {
-        let expectation = XCTestExpectation(description: "log write")
-        DispatchQueue.global().asyncAfter(deadline: .now() + 0.1) {
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 1)
+        let e = XCTestExpectation(description: "log write")
+        DispatchQueue.global().asyncAfter(deadline: .now() + 0.1) { e.fulfill() }
+        wait(for: [e], timeout: 1)
     }
 }

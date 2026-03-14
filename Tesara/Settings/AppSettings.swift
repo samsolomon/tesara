@@ -485,6 +485,45 @@ struct KeyShortcut: Codable, Equatable {
     }
 }
 
+enum ConfigKey {
+    static let fontFamily = "font-family"
+    static let fontSize = "font-size"
+    static let theme = "theme"
+    static let fontLigatures = "font-ligatures"
+    static let fontThicken = "font-thicken"
+    static let cursorStyle = "cursor-style"
+    static let cursorBarWidth = "cursor-bar-width"
+    static let cursorRounded = "cursor-rounded"
+    static let cursorBlink = "cursor-blink"
+    static let cursorGlow = "cursor-glow"
+    static let cursorGlowRadius = "cursor-glow-radius"
+    static let cursorGlowOpacity = "cursor-glow-opacity"
+    static let cursorSmoothBlink = "cursor-smooth-blink"
+    static let windowOpacity = "window-opacity"
+    static let windowBlur = "window-blur"
+    static let windowPaddingX = "window-padding-x"
+    static let windowPaddingY = "window-padding-y"
+    static let autoThemeSwitching = "auto-theme-switching"
+    static let lightTheme = "light-theme"
+    static let darkTheme = "dark-theme"
+    static let shellPath = "shell-path"
+    static let optionAsAlt = "option-as-alt"
+    static let scrollbackLines = "scrollback-lines"
+    static let copyOnSelect = "copy-on-select"
+    static let clipboardTrimTrailingSpaces = "clipboard-trim-trailing-spaces"
+    static let bellMode = "bell-mode"
+    static let pasteProtection = "paste-protection"
+    static let inputBarEnabled = "input-bar-enabled"
+    static let tabTitleMode = "tab-title-mode"
+    static let dimInactiveSplits = "dim-inactive-splits"
+    static let inactiveSplitDimAmount = "inactive-split-dim-amount"
+    static let confirmOnCloseRunningSession = "confirm-on-close-running-session"
+    static let updateChecksEnabled = "update-checks-enabled"
+    static let localLoggingEnabled = "local-logging-enabled"
+    static let historyCaptureEnabled = "history-capture-enabled"
+    static let keybind = "keybind"
+}
+
 enum KeyModifier: String, Codable, CaseIterable {
     case command
     case option
