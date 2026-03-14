@@ -161,27 +161,15 @@ struct TerminalWorkspaceView: View {
 
     private func propagateThemeToInputBars(theme: TerminalTheme) {
         guard let activeTab = manager.activeTab else { return }
-        forEachTerminalSession(in: activeTab.rootPane) { session in
+        for (_, session) in activeTab.rootPane.allTerminalSessions() {
             session.inputBarState?.editorView?.updateTheme(theme)
         }
     }
 
     private func propagateFontToInputBars(family: String, size: Double) {
         guard let activeTab = manager.activeTab else { return }
-        forEachTerminalSession(in: activeTab.rootPane) { session in
+        for (_, session) in activeTab.rootPane.allTerminalSessions() {
             session.inputBarState?.editorView?.updateFont(family: family, size: CGFloat(size))
-        }
-    }
-
-    private func forEachTerminalSession(in node: PaneNode, _ body: (TerminalSession) -> Void) {
-        switch node {
-        case .leaf(_, let session):
-            body(session)
-        case .editor:
-            break
-        case .split(_, _, let first, let second, _):
-            forEachTerminalSession(in: first, body)
-            forEachTerminalSession(in: second, body)
         }
     }
 }

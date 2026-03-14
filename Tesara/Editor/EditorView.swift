@@ -20,6 +20,8 @@ class EditorView: NSView, NSTextInputClient {
     weak var delegate: EditorViewDelegate?
     private(set) var focused: Bool = false
 
+    var lineHeight: CGFloat { layoutEngine.lineHeight }
+
     // MARK: - Rendering
 
     private var metalLayer: CAMetalLayer!

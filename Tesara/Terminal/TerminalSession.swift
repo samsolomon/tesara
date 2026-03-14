@@ -143,8 +143,6 @@ final class TerminalSession: ObservableObject, Identifiable {
         let state = InputBarState()
         state.createView(theme: theme, fontFamily: fontFamily, fontSize: fontSize)
         state.keyHandler.terminalSession = self
-        state.keyHandler.onClear = { [weak state] in state?.clear() }
-        state.keyHandler.onDismiss = { [weak self] in self?.dismissInputBar() }
         inputBarState = state
     }
 

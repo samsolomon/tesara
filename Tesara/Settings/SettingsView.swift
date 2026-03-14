@@ -365,7 +365,7 @@ private struct WorkspaceSettingsPane: View {
                 Toggle("Dim inactive splits", isOn: $settings.dimInactiveSplits)
 
                 HStack {
-                    Slider(value: $settings.inactiveSplitDimAmount, in: 0.04...0.22, step: 0.01)
+                    Slider(value: $settings.inactiveSplitDimAmount, in: 0.04...0.75, step: 0.01)
                         .disabled(!settings.dimInactiveSplits)
 
                     Text("\(Int(settings.inactiveSplitDimAmount * 100))%")

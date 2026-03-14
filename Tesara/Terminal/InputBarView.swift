@@ -40,15 +40,11 @@ final class InputBarState: ObservableObject {
         editorSession.deleteBackward()
     }
 
-    var isContentEmpty: Bool {
-        editorSession.storage.lineCount == 1 && editorSession.storage.lineLength(0) == 0
-    }
-
     private func syncDerivedState() {
-        let newEmpty = isContentEmpty
-        let newLineCount = editorSession.storage.lineCount
+        let lineCount = editorSession.storage.lineCount
+        let newEmpty = lineCount == 1 && editorSession.storage.lineLength(0) == 0
         if isEmpty != newEmpty { isEmpty = newEmpty }
-        if displayLineCount != newLineCount { displayLineCount = newLineCount }
+        if displayLineCount != lineCount { displayLineCount = lineCount }
     }
 }
 
@@ -57,15 +53,13 @@ final class InputBarState: ObservableObject {
 @MainActor
 final class InputBarKeyHandler: EditorViewDelegate {
     weak var terminalSession: TerminalSession?
-    var onDismiss: (() -> Void)?
-    var onClear: (() -> Void)?
 
     func editorView(_ editorView: EditorView, handleKeyDown event: NSEvent) -> Bool {
         let mods = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
 
         // Escape key
         if let chars = event.charactersIgnoringModifiers, chars == "\u{1b}" {
-            onDismiss?()
+            terminalSession?.dismissInputBar()
             return true
         }
 
@@ -101,7 +95,7 @@ final class InputBarKeyHandler: EditorViewDelegate {
             guard let terminalSession else { return true }
             let text = session.storage.entireString()
             terminalSession.sendFromInputBar(text: text)
-            onClear?()
+            terminalSession.inputBarState?.clear()
             return true
 
         case .tab:
@@ -180,7 +174,7 @@ struct InputBarView: View {
     }
 
     private var editorHeight: CGFloat {
-        let lineHeight = CGFloat(fontSize) * 1.5
+        let lineHeight = inputBarState.editorView?.lineHeight ?? CGFloat(fontSize) * 1.5
         let lines = min(max(inputBarState.displayLineCount, 1), 4)
         return CGFloat(lines) * lineHeight + 12
     }
