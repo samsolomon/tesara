@@ -246,9 +246,11 @@ private struct AppearanceSettingsPane: View {
                     themePickerOptions
                 }
 
-                HStack {
-                    Button("Import JSON", action: onImportTheme)
-                    Button("Export Current", action: onExportTheme)
+                LabeledContent("Import / Export") {
+                    HStack {
+                        Button("Import JSON", action: onImportTheme)
+                        Button("Export Current", action: onExportTheme)
+                    }
                 }
             } header: {
                 Text("Theme")
