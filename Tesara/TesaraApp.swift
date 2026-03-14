@@ -10,6 +10,8 @@ struct TesaraApp: App {
     @StateObject private var blockStore = BlockStore()
     @StateObject private var workspaceManager = WorkspaceManager()
     @StateObject private var keyBindingDispatcher = KeyBindingDispatcher()
+    @StateObject private var settingsOpenCoordinator = SettingsOpenCoordinator()
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some Scene {
         WindowGroup {
@@ -17,6 +19,7 @@ struct TesaraApp: App {
                 .environmentObject(settingsStore)
                 .environmentObject(blockStore)
                 .environmentObject(workspaceManager)
+                .environmentObject(settingsOpenCoordinator)
                 .frame(minWidth: minimumWindowSize.width, minHeight: minimumWindowSize.height)
                 .onAppear {
                     updaterController.updater.automaticallyChecksForUpdates = settingsStore.settings.updateChecksEnabled
@@ -35,7 +38,8 @@ struct TesaraApp: App {
                     keyBindingDispatcher.configure(
                         settingsStore: settingsStore,
                         workspaceManager: workspaceManager,
-                        blockStore: blockStore
+                        blockStore: blockStore,
+                        settingsOpenCoordinator: settingsOpenCoordinator
                     )
                 }
                 .onChange(of: settingsStore.settings.updateChecksEnabled) {
@@ -65,10 +69,25 @@ struct TesaraApp: App {
                         settings: settingsStore.settings
                     )
                 }
+                .onChange(of: colorScheme) {
+                    settingsStore.handleAppearanceChange(isDark: colorScheme == .dark)
+                }
+                .onChange(of: settingsStore.settings.windowBlur) {
+                    if let window = NSApp.mainWindow {
+                        window.isOpaque = !settingsStore.settings.windowBlur
+                        window.backgroundColor = settingsStore.settings.windowBlur ? .clear : .windowBackgroundColor
+                    }
+                }
         }
         .windowToolbarStyle(.unifiedCompact(showsTitle: false))
         .commands {
-            TesaraAppCommands(manager: workspaceManager, settingsStore: settingsStore, blockStore: blockStore, updater: updaterController.updater)
+            TesaraAppCommands(
+                manager: workspaceManager,
+                settingsStore: settingsStore,
+                blockStore: blockStore,
+                settingsOpenCoordinator: settingsOpenCoordinator,
+                updater: updaterController.updater
+            )
         }
 
         Settings {

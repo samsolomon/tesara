@@ -5,6 +5,8 @@ struct MainWindowView: View {
     @EnvironmentObject private var settingsStore: SettingsStore
     @EnvironmentObject private var blockStore: BlockStore
     @EnvironmentObject private var workspaceManager: WorkspaceManager
+    @EnvironmentObject private var settingsOpenCoordinator: SettingsOpenCoordinator
+    @Environment(\.openSettings) private var openSettings
 
     private var showTabBar: Bool {
         workspaceManager.tabs.count > 1
@@ -33,6 +35,15 @@ struct MainWindowView: View {
                     backgroundColor: themeBackgroundColor,
                     isDark: settingsStore.activeTheme.isDarkBackground
                 )
+            }
+            .background {
+                Color.clear
+                    .frame(width: 0, height: 0)
+                    .onAppear {
+                        settingsOpenCoordinator.setAction {
+                            openSettings()
+                        }
+                    }
             }
             .safeAreaInset(edge: .top, spacing: 0) {
                 if showTabBar {
@@ -85,4 +96,5 @@ private struct WindowConfigurator: NSViewRepresentable {
         .environmentObject(SettingsStore())
         .environmentObject(BlockStore())
         .environmentObject(WorkspaceManager())
+        .environmentObject(SettingsOpenCoordinator())
 }

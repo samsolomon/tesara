@@ -38,6 +38,7 @@
 		7502E58FABF194358AB0BF11 /* SyntaxHighlighterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B124A534C12EBE6DD5126A85 /* SyntaxHighlighterTests.swift */; };
 		7503F59GACG295469BC1CG22 /* VisualLineMapTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7503F59GACG295469BC1CG23 /* VisualLineMapTests.swift */; };
 		79F0B4BD6843110ADF62D883 /* CheckForUpdatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D87C2B989F7DF6FA07307499 /* CheckForUpdatesView.swift */; };
+		79F0B4BE6843110ADF62D884 /* SettingsOpenCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = D87C2B999F7DF6FA0730749A /* SettingsOpenCoordinator.swift */; };
 		7C4EC6EB70E96401AD27AFB9 /* SettingsStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0913B2DEDB933D3E3356B83 /* SettingsStoreTests.swift */; };
 		81D353BEAF13304C4935B40F /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6D9B1F4149EB9724158875C /* HistoryView.swift */; };
 		81F684B3EE723B89F0976D5E /* TerminalThemeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 692291F83027B0F2F4CA76BF /* TerminalThemeTests.swift */; };
@@ -151,6 +152,7 @@
 		C43028483E4CE7E65A49B780 /* TabBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBarView.swift; sourceTree = "<group>"; };
 		DD0001DD0001DD0001DD0001 /* KeyRecorderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyRecorderView.swift; sourceTree = "<group>"; };
 		DD0003DD0003DD0003DD0003 /* KeyBindingDispatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyBindingDispatcher.swift; sourceTree = "<group>"; };
+		D87C2B999F7DF6FA0730749A /* SettingsOpenCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsOpenCoordinator.swift; sourceTree = "<group>"; };
 		C6C01AC8A2526A1108FCC5E8 /* Tesara.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tesara.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C768AC12E87B5CAD5629087D /* SyntaxColorMap.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SyntaxColorMap.swift; sourceTree = "<group>"; };
 		CFFBF769DCCA796E1A27EF05 /* GhosttySurfaceRepresentable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhosttySurfaceRepresentable.swift; sourceTree = "<group>"; };
@@ -220,6 +222,7 @@
 			children = (
 				D87C2B989F7DF6FA07307499 /* CheckForUpdatesView.swift */,
 				DD0003DD0003DD0003DD0003 /* KeyBindingDispatcher.swift */,
+				D87C2B999F7DF6FA0730749A /* SettingsOpenCoordinator.swift */,
 				8393A786736D6332BB25DC07 /* TesaraAppCommands.swift */,
 			);
 			path = App;
@@ -480,6 +483,7 @@
 				1D208652A6CF443FFD84D919 /* BlockStore.swift in Sources */,
 				28AA7C7CF64F0DE82AA98573 /* BuiltInTheme.swift in Sources */,
 				79F0B4BD6843110ADF62D883 /* CheckForUpdatesView.swift in Sources */,
+				79F0B4BE6843110ADF62D884 /* SettingsOpenCoordinator.swift in Sources */,
 				557CAC20FEDDC988A2A62617 /* GhosttyApp.swift in Sources */,
 				20E83390D91A14BBAFD615CC /* GhosttyConfig.swift in Sources */,
 				04C5D01461574B2DC70B2976 /* GhosttyInput.swift in Sources */,

@@ -1,4 +1,3 @@
-import AppKit
 import Sparkle
 import SwiftUI
 
@@ -6,12 +5,13 @@ struct TesaraAppCommands: Commands {
     @ObservedObject var manager: WorkspaceManager
     @ObservedObject var settingsStore: SettingsStore
     @ObservedObject var blockStore: BlockStore
+    @ObservedObject var settingsOpenCoordinator: SettingsOpenCoordinator
     let updater: SPUUpdater
 
     var body: some Commands {
         CommandGroup(replacing: .appSettings) {
             Button("Settings...") {
-                showSettings()
+                settingsOpenCoordinator.openSettings()
             }
             .keyboardShortcut(",", modifiers: [.command])
         }
@@ -35,7 +35,7 @@ struct TesaraAppCommands: Commands {
                     manager.closePane(id: id)
                 }
             }
-            .keyboardShortcut("w")
+            .keyboardShortcut(settingsStore.resolvedShortcut(for: .closePane, fallback: KeyShortcut(key: "w", modifiers: [.command])))
 
             Button("Close Tab") {
                 if let id = manager.activeTabID {
@@ -80,25 +80,46 @@ struct TesaraAppCommands: Commands {
 
         CommandGroup(before: .toolbar) {
             Button("Split Right") { split(.horizontal) }
-                .keyboardShortcut("d")
+                .keyboardShortcut(settingsStore.resolvedShortcut(for: .splitRight, fallback: KeyShortcut(key: "d", modifiers: [.command])))
 
             Button("Split Down") { split(.vertical) }
-                .keyboardShortcut("d", modifiers: [.command, .shift])
+                .keyboardShortcut(settingsStore.resolvedShortcut(for: .splitDown, fallback: KeyShortcut(key: "d", modifiers: [.command, .shift])))
 
             Divider()
 
             Button("New Editor") {
+                let s = settingsStore.settings
+                let cursorCfg = EditorLayoutEngine.CursorConfig(
+                    style: s.cursorStyle,
+                    barWidth: s.cursorBarWidth,
+                    rounded: s.cursorRounded,
+                    color: hexToColorU8(settingsStore.activeTheme.cursor)
+                )
                 manager.splitActivePaneWithEditor(
                     direction: .horizontal,
                     theme: settingsStore.activeTheme,
-                    fontFamily: settingsStore.settings.fontFamily,
-                    fontSize: settingsStore.settings.fontSize
+                    fontFamily: s.fontFamily,
+                    fontSize: s.fontSize,
+                    cursorConfig: cursorCfg,
+                    cursorBlink: s.cursorBlink
                 )
             }
             .keyboardShortcut("e", modifiers: [.command, .shift])
         }
 
         CommandMenu("Panes") {
+            Button("Focus Next Pane") {
+                manager.selectNextPane()
+            }
+            .keyboardShortcut(settingsStore.resolvedShortcut(for: .focusNextPane, fallback: KeyShortcut(key: "]", modifiers: [.command, .option])))
+
+            Button("Focus Previous Pane") {
+                manager.selectPreviousPane()
+            }
+            .keyboardShortcut(settingsStore.resolvedShortcut(for: .focusPrevPane, fallback: KeyShortcut(key: "[", modifiers: [.command, .option])))
+
+            Divider()
+
             Button("Focus Pane Left") {
                 manager.selectAdjacentPane(.left)
             }
@@ -149,10 +170,6 @@ struct TesaraAppCommands: Commands {
             workingDirectory: settingsStore.settings.defaultWorkingDirectory,
             blockStore: blockStore
         )
-    }
-
-    private func showSettings() {
-        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
     }
 }
 

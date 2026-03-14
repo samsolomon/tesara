@@ -13,6 +13,7 @@ final class KeyBindingDispatcher: ObservableObject {
     private weak var settingsStore: SettingsStore?
     private weak var workspaceManager: WorkspaceManager?
     private weak var blockStore: BlockStore?
+    private weak var settingsOpenCoordinator: SettingsOpenCoordinator?
 
     struct KeyCombo: Hashable {
         let key: String
@@ -28,10 +29,16 @@ final class KeyBindingDispatcher: ObservableObject {
         }
     }
 
-    func configure(settingsStore: SettingsStore, workspaceManager: WorkspaceManager, blockStore: BlockStore) {
+    func configure(
+        settingsStore: SettingsStore,
+        workspaceManager: WorkspaceManager,
+        blockStore: BlockStore,
+        settingsOpenCoordinator: SettingsOpenCoordinator
+    ) {
         self.settingsStore = settingsStore
         self.workspaceManager = workspaceManager
         self.blockStore = blockStore
+        self.settingsOpenCoordinator = settingsOpenCoordinator
 
         rebuildLookupTable()
 
@@ -88,6 +95,11 @@ final class KeyBindingDispatcher: ObservableObject {
             return event
         }
 
+        if isOpenSettingsShortcut(event) {
+            settingsOpenCoordinator?.openSettings()
+            return nil
+        }
+
         if let direction = paneNavigationDirection(for: event),
            let responder = event.window?.firstResponder,
            (responder is GhosttySurfaceView || responder is EditorView),
@@ -114,6 +126,12 @@ final class KeyBindingDispatcher: ObservableObject {
 
         execute(action)
         return nil // consume the event
+    }
+
+    private func isOpenSettingsShortcut(_ event: NSEvent) -> Bool {
+        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        guard flags == [.command] else { return false }
+        return event.charactersIgnoringModifiers == ","
     }
 
     private func paneNavigationDirection(for event: NSEvent) -> PaneNode.NavigationDirection? {
@@ -170,12 +188,38 @@ final class KeyBindingDispatcher: ObservableObject {
             NSApp.sendAction(NSSelectorFromString("performFindPanelAction:"), to: nil, from: nil)
 
         case .openSettings:
-            // Private SwiftUI selector for Settings scene — no public API alternative
-            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+            settingsOpenCoordinator?.openSettings()
 
         case .toggleTUIPassthrough:
             // Stubbed — will need a concrete implementation when TUI passthrough mode is built
             break
+
+        case .splitRight:
+            manager.splitActivePane(
+                direction: .horizontal,
+                shellPath: settings.settings.shellPath,
+                workingDirectory: settings.settings.defaultWorkingDirectory,
+                blockStore: blocks
+            )
+
+        case .splitDown:
+            manager.splitActivePane(
+                direction: .vertical,
+                shellPath: settings.settings.shellPath,
+                workingDirectory: settings.settings.defaultWorkingDirectory,
+                blockStore: blocks
+            )
+
+        case .closePane:
+            if let id = manager.activePaneID {
+                manager.closePane(id: id)
+            }
+
+        case .focusNextPane:
+            manager.selectNextPane()
+
+        case .focusPrevPane:
+            manager.selectPreviousPane()
         }
     }
 }
