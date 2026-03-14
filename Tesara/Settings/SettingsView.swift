@@ -284,6 +284,7 @@ private struct AppearanceSettingsPane: View {
                         Text(style.title).tag(style)
                     }
                 }
+                Toggle("Blink cursor", isOn: $settings.cursorBlink)
             } header: {
                 Text("Cursor")
             } footer: {

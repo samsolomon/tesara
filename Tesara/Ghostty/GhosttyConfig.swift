@@ -85,7 +85,7 @@ enum GhosttyConfig {
 
         // Cursor
         lines.append("cursor-style = \(settings.cursorStyle.rawValue)")
-        lines.append("cursor-style-blink = true")
+        lines.append("cursor-style-blink = \(settings.cursorBlink)")
 
         // Window
         if settings.windowOpacity < 1.0 {

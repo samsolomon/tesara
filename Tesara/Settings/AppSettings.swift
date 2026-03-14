@@ -23,6 +23,7 @@ struct AppSettings: Codable, Equatable {
     var inactiveSplitDimAmount: Double
     var inputBarEnabled: Bool
     var cursorStyle: CursorStyle
+    var cursorBlink: Bool
     var autoThemeSwitching: Bool
     var lightThemeID: String?
     var darkThemeID: String?
@@ -57,6 +58,7 @@ struct AppSettings: Codable, Equatable {
         inactiveSplitDimAmount: Double = 0.3,
         inputBarEnabled: Bool = true,
         cursorStyle: CursorStyle = .bar,
+        cursorBlink: Bool = true,
         autoThemeSwitching: Bool = false,
         lightThemeID: String? = nil,
         darkThemeID: String? = nil,
@@ -90,6 +92,7 @@ struct AppSettings: Codable, Equatable {
         self.inactiveSplitDimAmount = inactiveSplitDimAmount
         self.inputBarEnabled = inputBarEnabled
         self.cursorStyle = cursorStyle
+        self.cursorBlink = cursorBlink
         self.autoThemeSwitching = autoThemeSwitching
         self.lightThemeID = lightThemeID
         self.darkThemeID = darkThemeID
@@ -151,6 +154,7 @@ struct AppSettings: Codable, Equatable {
         case inactiveSplitDimAmount
         case inputBarEnabled
         case cursorStyle
+        case cursorBlink
         case autoThemeSwitching
         case lightThemeID
         case darkThemeID
@@ -188,6 +192,7 @@ struct AppSettings: Codable, Equatable {
         inactiveSplitDimAmount = try container.decodeIfPresent(Double.self, forKey: .inactiveSplitDimAmount) ?? 0.3
         inputBarEnabled = try container.decodeIfPresent(Bool.self, forKey: .inputBarEnabled) ?? true
         cursorStyle = try container.decodeIfPresent(CursorStyle.self, forKey: .cursorStyle) ?? .bar
+        cursorBlink = try container.decodeIfPresent(Bool.self, forKey: .cursorBlink) ?? true
         autoThemeSwitching = try container.decodeIfPresent(Bool.self, forKey: .autoThemeSwitching) ?? false
         lightThemeID = try container.decodeIfPresent(String.self, forKey: .lightThemeID)
         darkThemeID = try container.decodeIfPresent(String.self, forKey: .darkThemeID)
@@ -486,6 +491,7 @@ enum ConfigKey {
     static let fontLigatures = "font-ligatures"
     static let fontThicken = "font-thicken"
     static let cursorStyle = "cursor-style"
+    static let cursorBlink = "cursor-blink"
     static let windowOpacity = "window-opacity"
     static let windowBlur = "window-blur"
     static let windowPaddingX = "window-padding-x"

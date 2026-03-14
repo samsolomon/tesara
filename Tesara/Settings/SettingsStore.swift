@@ -65,6 +65,7 @@ final class SettingsStore: ObservableObject {
         let fontFamily: String
         let fontSize: Double
         let cursorStyle: CursorStyle
+        let cursorBlink: Bool
         let fontLigatures: Bool
         let fontThicken: Bool
         let optionAsAlt: OptionAsAlt
@@ -82,6 +83,7 @@ final class SettingsStore: ObservableObject {
             fontFamily: settings.fontFamily,
             fontSize: settings.fontSize,
             cursorStyle: settings.cursorStyle,
+            cursorBlink: settings.cursorBlink,
             fontLigatures: settings.fontLigatures,
             fontThicken: settings.fontThicken,
             optionAsAlt: settings.optionAsAlt,

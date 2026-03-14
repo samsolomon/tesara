@@ -34,6 +34,7 @@ enum ConfigFile {
         lines.append("")
         lines.append("# Cursor")
         lines.append("\(K.cursorStyle) = \(settings.cursorStyle.rawValue)")
+        lines.append("\(K.cursorBlink) = \(settings.cursorBlink)")
         lines.append("")
         lines.append("# Window")
         lines.append("\(K.windowOpacity) = \(fmt(settings.windowOpacity))")
@@ -121,6 +122,7 @@ enum ConfigFile {
         settings.fontThicken = bool(K.fontThicken, d.fontThicken)
 
         settings.cursorStyle = enumVal(K.cursorStyle, d.cursorStyle)
+        settings.cursorBlink = bool(K.cursorBlink, d.cursorBlink)
 
         settings.windowOpacity = double(K.windowOpacity, d.windowOpacity)
         settings.windowBlur = bool(K.windowBlur, d.windowBlur)
