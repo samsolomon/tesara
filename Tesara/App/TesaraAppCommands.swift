@@ -9,6 +9,13 @@ struct TesaraAppCommands: Commands {
     let updater: SPUUpdater
 
     var body: some Commands {
+        CommandGroup(replacing: .appSettings) {
+            Button("Settings...") {
+                showSettings()
+            }
+            .keyboardShortcut(",", modifiers: [.command])
+        }
+
         CommandGroup(after: .appInfo) {
             CheckForUpdatesView(updater: updater)
         }
@@ -91,7 +98,7 @@ struct TesaraAppCommands: Commands {
             .keyboardShortcut("e", modifiers: [.command, .shift])
         }
 
-        CommandGroup(after: .toolbar) {
+        CommandMenu("Tabs") {
             Button("Show Previous Tab") {
                 manager.selectPreviousTab()
             }
@@ -120,6 +127,10 @@ struct TesaraAppCommands: Commands {
             workingDirectory: settingsStore.settings.defaultWorkingDirectory,
             blockStore: blockStore
         )
+    }
+
+    private func showSettings() {
+        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
     }
 }
 

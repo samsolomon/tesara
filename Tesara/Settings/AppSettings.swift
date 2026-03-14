@@ -39,7 +39,7 @@ struct AppSettings: Codable, Equatable {
         confirmOnCloseRunningSession: Bool = false,
         tabTitleMode: TabTitleMode = .shellTitle,
         dimInactiveSplits: Bool = true,
-        inactiveSplitDimAmount: Double = 0.1,
+        inactiveSplitDimAmount: Double = 0.3,
         inputBarEnabled: Bool = true
     ) {
         self.schemaVersion = schemaVersion
@@ -125,7 +125,7 @@ struct AppSettings: Codable, Equatable {
         confirmOnCloseRunningSession = try container.decodeIfPresent(Bool.self, forKey: .confirmOnCloseRunningSession) ?? false
         tabTitleMode = try container.decodeIfPresent(TabTitleMode.self, forKey: .tabTitleMode) ?? .shellTitle
         dimInactiveSplits = try container.decodeIfPresent(Bool.self, forKey: .dimInactiveSplits) ?? true
-        inactiveSplitDimAmount = try container.decodeIfPresent(Double.self, forKey: .inactiveSplitDimAmount) ?? 0.1
+        inactiveSplitDimAmount = try container.decodeIfPresent(Double.self, forKey: .inactiveSplitDimAmount) ?? 0.3
         inputBarEnabled = try container.decodeIfPresent(Bool.self, forKey: .inputBarEnabled) ?? true
     }
 }
