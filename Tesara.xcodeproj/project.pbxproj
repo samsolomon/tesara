@@ -14,10 +14,8 @@
 		0789B77C48FA2DB725063E37 /* SyntaxHighlighter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8496FD6E1109A62D4EA44418 /* SyntaxHighlighter.swift */; };
 		0FAC866DE2F0E11344222CC0 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 4914B0341A868631C86F9855 /* Sparkle */; };
 		17A1E6F4A360BF5C97590C6E /* PaneContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57E292C9A04F867FABB9662E /* PaneContainerView.swift */; };
-		1B3F8A01C4D2E5F7A8B90123 /* InputBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B3F8A02C4D2E5F7A8B90124 /* InputBarView.swift */; };
-		FF2001FF2001FF2001FF2001 /* InputBarHistoryController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF2002FF2002FF2002FF2002 /* InputBarHistoryController.swift */; };
-		FF2003FF2003FF2003FF2003 /* HistorySearchOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF2004FF2004FF2004FF2004 /* HistorySearchOverlayView.swift */; };
 		1851A4083C58F1F7361DB04C /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17E46BFDCDCA182651723141 /* SettingsView.swift */; };
+		1B3F8A01C4D2E5F7A8B90123 /* InputBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B3F8A02C4D2E5F7A8B90124 /* InputBarView.swift */; };
 		1CED6DD8299D1750E4C66631 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BA08886415B515EB410905D /* SettingsStore.swift */; };
 		1D208652A6CF443FFD84D919 /* BlockStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D89D726E46FBCEF09C9F3737 /* BlockStore.swift */; };
 		20E83390D91A14BBAFD615CC /* GhosttyConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF7543B634720042FBCD3C12 /* GhosttyConfig.swift */; };
@@ -29,6 +27,7 @@
 		3A9CB9669EA9FFC856BD0681 /* GhosttyConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 388B787A886EB7129E51A67D /* GhosttyConfigTests.swift */; };
 		3D72C5CAEC99162968379EB2 /* TesaraAppCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8393A786736D6332BB25DC07 /* TesaraAppCommands.swift */; };
 		406A4786F958C46D88472E0F /* TerminalBlockCaptureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9098467F6B5E13AF93A1ECD /* TerminalBlockCaptureTests.swift */; };
+		4E996EE4E1989AC52B315D31 /* ConfigFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C2AAC510E6D732B6FB13544 /* ConfigFile.swift */; };
 		557CAC20FEDDC988A2A62617 /* GhosttyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0FB01095EFA9F4ABC5E58EC /* GhosttyApp.swift */; };
 		5AA7A60643A0EC3F1EABDB83 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 17813D398B505968462B467F /* QuartzCore.framework */; };
 		67946EE861023962AF28FA7B /* GhosttySurfaceConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BEFEA907D720F797090FCEE /* GhosttySurfaceConfigTests.swift */; };
@@ -65,8 +64,6 @@
 		BB0010BB0010BB0010BB0010 /* EditorSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0010AA0010AA0010AA0010 /* EditorSessionTests.swift */; };
 		BB0011BB0011BB0011BB0011 /* GlyphAtlasTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0011AA0011AA0011AA0011 /* GlyphAtlasTests.swift */; };
 		BB0012BB0012BB0012BB0012 /* TextStorageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0012AA0012AA0012AA0012 /* TextStorageTests.swift */; };
-		EE1001EE1001EE1001EE1001 /* GlyphCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE1002EE1002EE1002EE1002 /* GlyphCacheTests.swift */; };
-		EE1003EE1003EE1003EE1003 /* KeyBindingDispatcherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE1004EE1004EE1004EE1004 /* KeyBindingDispatcherTests.swift */; };
 		BD773D1042EF68102567BF4B /* WorkspaceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 085DF302ED385DA3320C4E00 /* WorkspaceManager.swift */; };
 		BF3F8B3950CB544D24CA8525 /* TesaraTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3E6DBF6FBE09F48C83448BD /* TesaraTests.swift */; };
 		C9FA15C125CD87815FF03CEC /* TesaraApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED0F772A0E12C469683DBCB8 /* TesaraApp.swift */; };
@@ -74,15 +71,25 @@
 		D3E51D8F5752833947C4E6E0 /* TerminalBlockCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 735D7C1606ECD4D9128A5A44 /* TerminalBlockCapture.swift */; };
 		D92C7A0446CBC7553B01AD55 /* PaneNodeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64F682A08A5ECC9A73792C74 /* PaneNodeTests.swift */; };
 		DC4B28FCBE3C849D3766A101 /* TerminalSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9ACBFEB7F97B6D7DB444D4F /* TerminalSession.swift */; };
+		DD0002DD0002DD0002DD0002 /* KeyRecorderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD0001DD0001DD0001DD0001 /* KeyRecorderView.swift */; };
+		DD0004DD0004DD0004DD0004 /* KeyBindingDispatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD0003DD0003DD0003DD0003 /* KeyBindingDispatcher.swift */; };
 		E6133E8CABCDF858487AE0D9 /* EditorFileIOTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666C53887FEA86980246E389 /* EditorFileIOTests.swift */; };
 		E9CC8D1BFE1AFC349433C4B4 /* TabBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C43028483E4CE7E65A49B780 /* TabBarView.swift */; };
 		EA98351C0BD53659BCAE0D5A /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4696C2FAC81FD918FCF4CDCF /* IOKit.framework */; };
 		EDC1E85DDAF298E3EA0D7E25 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0A3302C81E3683C9C6F70DE2 /* CoreGraphics.framework */; };
+		EE1001EE1001EE1001EE1001 /* GlyphCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE1002EE1002EE1002EE1002 /* GlyphCacheTests.swift */; };
+		EE1003EE1003EE1003EE1003 /* KeyBindingDispatcherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE1004EE1004EE1004EE1004 /* KeyBindingDispatcherTests.swift */; };
 		F3A965F6F8A10320AB0FA888 /* CoreText.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 025C0C0CA0E7477A899440FC /* CoreText.framework */; };
-		DD0002DD0002DD0002DD0002 /* KeyRecorderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD0001DD0001DD0001DD0001 /* KeyRecorderView.swift */; };
-		DD0004DD0004DD0004DD0004 /* KeyBindingDispatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD0003DD0003DD0003DD0003 /* KeyBindingDispatcher.swift */; };
 		F7AE7359CEADA892CDB4EE63 /* JSONTokenizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AED370DFD7341D20F6AEBF26 /* JSONTokenizer.swift */; };
+		F8F3ADFA6693519DC8962FCF /* ConfigFileTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45A7826F141A696DB5A95276 /* ConfigFileTests.swift */; };
 		FA96111B4FCCEF18236CA364 /* TerminalIntegration in Resources */ = {isa = PBXBuildFile; fileRef = 2292F5BCC3AC767DAD9619D7 /* TerminalIntegration */; };
+		FF2001FF2001FF2001FF2001 /* InputBarHistoryController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF2002FF2002FF2002FF2002 /* InputBarHistoryController.swift */; };
+		FF2003FF2003FF2003FF2003 /* HistorySearchOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF2004FF2004FF2004FF2004 /* HistorySearchOverlayView.swift */; };
+		FF3002FF3002FF3002FF3002 /* EditorLayoutEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF3001FF3001FF3001FF3001 /* EditorLayoutEngineTests.swift */; };
+		FF3004FF3004FF3004FF3004 /* SyntaxColorMapTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF3003FF3003FF3003FF3003 /* SyntaxColorMapTests.swift */; };
+		FF3006FF3006FF3006FF3006 /* InputBarHistoryControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF3005FF3005FF3005FF3005 /* InputBarHistoryControllerTests.swift */; };
+		FF3008FF3008FF3008FF3008 /* CLikeTokenizerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF3007FF3007FF3007FF3007 /* CLikeTokenizerTests.swift */; };
+		FF3010FF3010FF3010FF3010 /* JSONTokenizerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF3009FF3009FF3009FF3009 /* JSONTokenizerTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -97,6 +104,7 @@
 
 /* Begin PBXFileReference section */
 		025C0C0CA0E7477A899440FC /* CoreText.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreText.framework; path = System/Library/Frameworks/CoreText.framework; sourceTree = SDKROOT; };
+		02E8FA3D795EACA795F11233 /* LocalLogStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLogStore.swift; sourceTree = "<group>"; };
 		085DF302ED385DA3320C4E00 /* WorkspaceManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceManager.swift; sourceTree = "<group>"; };
 		0A3302C81E3683C9C6F70DE2 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		1364841324D193323F195910 /* CLikeTokenizer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CLikeTokenizer.swift; sourceTree = "<group>"; };
@@ -105,28 +113,28 @@
 		17813D398B505968462B467F /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		17E46BFDCDCA182651723141 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		194C23B007577944F607E3A3 /* CommandCaptureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandCaptureTests.swift; sourceTree = "<group>"; };
+		1B3F8A02C4D2E5F7A8B90124 /* InputBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputBarView.swift; sourceTree = "<group>"; };
 		1EE22681A74E38D510DFCDA3 /* IOSurface.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOSurface.framework; path = System/Library/Frameworks/IOSurface.framework; sourceTree = SDKROOT; };
 		2292F5BCC3AC767DAD9619D7 /* TerminalIntegration */ = {isa = PBXFileReference; lastKnownFileType = folder; name = TerminalIntegration; path = Tesara/Resources/TerminalIntegration; sourceTree = SOURCE_ROOT; };
 		230B62F5C9074F2BEC567B40 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		1B3F8A02C4D2E5F7A8B90124 /* InputBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputBarView.swift; sourceTree = "<group>"; };
-		FF2002FF2002FF2002FF2002 /* InputBarHistoryController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputBarHistoryController.swift; sourceTree = "<group>"; };
-		FF2004FF2004FF2004FF2004 /* HistorySearchOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistorySearchOverlayView.swift; sourceTree = "<group>"; };
 		36D96A4177859EA0D14FAFCB /* PaneNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaneNode.swift; sourceTree = "<group>"; };
 		388B787A886EB7129E51A67D /* GhosttyConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhosttyConfigTests.swift; sourceTree = "<group>"; };
+		45A7826F141A696DB5A95276 /* ConfigFileTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ConfigFileTests.swift; sourceTree = "<group>"; };
 		4696C2FAC81FD918FCF4CDCF /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		47AE7A424F00C8FA129FC9B7 /* Tesara-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Tesara-Bridging-Header.h"; sourceTree = "<group>"; };
 		4BA08886415B515EB410905D /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
-		02E8FA3D795EACA795F11233 /* LocalLogStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLogStore.swift; sourceTree = "<group>"; };
 		5563A901A8F611AC6D01A419 /* BlockStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockStoreTests.swift; sourceTree = "<group>"; };
 		57A5490A849F9317664968E7 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		57E292C9A04F867FABB9662E /* PaneContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaneContainerView.swift; sourceTree = "<group>"; };
 		5B184B08FFBEE976991C8F22 /* PaneDividerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaneDividerView.swift; sourceTree = "<group>"; };
+		5C2AAC510E6D732B6FB13544 /* ConfigFile.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ConfigFile.swift; sourceTree = "<group>"; };
 		64F682A08A5ECC9A73792C74 /* PaneNodeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaneNodeTests.swift; sourceTree = "<group>"; };
 		666C53887FEA86980246E389 /* EditorFileIOTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EditorFileIOTests.swift; sourceTree = "<group>"; };
 		692291F83027B0F2F4CA76BF /* TerminalThemeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalThemeTests.swift; sourceTree = "<group>"; };
 		6C11B2123603104BFA909CD4 /* GhosttyInputTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhosttyInputTests.swift; sourceTree = "<group>"; };
 		6C880ADE2985F2564FE074A9 /* GhosttyInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhosttyInput.swift; sourceTree = "<group>"; };
 		735D7C1606ECD4D9128A5A44 /* TerminalBlockCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalBlockCapture.swift; sourceTree = "<group>"; };
+		7503F59GACG295469BC1CG23 /* VisualLineMapTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VisualLineMapTests.swift; sourceTree = "<group>"; };
 		7FAE7C81FD9BEE1D30BCF809 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
 		8393A786736D6332BB25DC07 /* TesaraAppCommands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TesaraAppCommands.swift; sourceTree = "<group>"; };
 		8496FD6E1109A62D4EA44418 /* SyntaxHighlighter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SyntaxHighlighter.swift; sourceTree = "<group>"; };
@@ -145,11 +153,8 @@
 		AA0010AA0010AA0010AA0010 /* EditorSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorSessionTests.swift; sourceTree = "<group>"; };
 		AA0011AA0011AA0011AA0011 /* GlyphAtlasTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlyphAtlasTests.swift; sourceTree = "<group>"; };
 		AA0012AA0012AA0012AA0012 /* TextStorageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextStorageTests.swift; sourceTree = "<group>"; };
-		EE1002EE1002EE1002EE1002 /* GlyphCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlyphCacheTests.swift; sourceTree = "<group>"; };
-		EE1004EE1004EE1004EE1004 /* KeyBindingDispatcherTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyBindingDispatcherTests.swift; sourceTree = "<group>"; };
 		AED370DFD7341D20F6AEBF26 /* JSONTokenizer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = JSONTokenizer.swift; sourceTree = "<group>"; };
 		B124A534C12EBE6DD5126A85 /* SyntaxHighlighterTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SyntaxHighlighterTests.swift; sourceTree = "<group>"; };
-		7503F59GACG295469BC1CG23 /* VisualLineMapTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VisualLineMapTests.swift; sourceTree = "<group>"; };
 		B8C0E5566A3C23FA6CFC0EB2 /* BuiltInTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuiltInTheme.swift; sourceTree = "<group>"; };
 		B8CF6564CD0AF8278F222619 /* MainWindowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindowView.swift; sourceTree = "<group>"; };
 		B9098467F6B5E13AF93A1ECD /* TerminalBlockCaptureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalBlockCaptureTests.swift; sourceTree = "<group>"; };
@@ -158,23 +163,32 @@
 		C0A422BFC855684762B34843 /* Tesara.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Tesara.entitlements; sourceTree = "<group>"; };
 		C22B629EF42855D98028F0C4 /* GhosttySurfaceConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhosttySurfaceConfig.swift; sourceTree = "<group>"; };
 		C43028483E4CE7E65A49B780 /* TabBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBarView.swift; sourceTree = "<group>"; };
-		DD0001DD0001DD0001DD0001 /* KeyRecorderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyRecorderView.swift; sourceTree = "<group>"; };
-		DD0003DD0003DD0003DD0003 /* KeyBindingDispatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyBindingDispatcher.swift; sourceTree = "<group>"; };
-		D87C2B999F7DF6FA0730749A /* SettingsOpenCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsOpenCoordinator.swift; sourceTree = "<group>"; };
 		C6C01AC8A2526A1108FCC5E8 /* Tesara.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tesara.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C768AC12E87B5CAD5629087D /* SyntaxColorMap.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SyntaxColorMap.swift; sourceTree = "<group>"; };
 		CFFBF769DCCA796E1A27EF05 /* GhosttySurfaceRepresentable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhosttySurfaceRepresentable.swift; sourceTree = "<group>"; };
 		D87C2B989F7DF6FA07307499 /* CheckForUpdatesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckForUpdatesView.swift; sourceTree = "<group>"; };
+		D87C2B999F7DF6FA0730749A /* SettingsOpenCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsOpenCoordinator.swift; sourceTree = "<group>"; };
 		D89D726E46FBCEF09C9F3737 /* BlockStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockStore.swift; sourceTree = "<group>"; };
 		D9ACBFEB7F97B6D7DB444D4F /* TerminalSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalSession.swift; sourceTree = "<group>"; };
+		DD0001DD0001DD0001DD0001 /* KeyRecorderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyRecorderView.swift; sourceTree = "<group>"; };
+		DD0003DD0003DD0003DD0003 /* KeyBindingDispatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyBindingDispatcher.swift; sourceTree = "<group>"; };
 		E0FB01095EFA9F4ABC5E58EC /* GhosttyApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhosttyApp.swift; sourceTree = "<group>"; };
 		E6D9B1F4149EB9724158875C /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		ED0F772A0E12C469683DBCB8 /* TesaraApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TesaraApp.swift; sourceTree = "<group>"; };
 		EDDA22FF0E3CCF02CE8BCD05 /* TerminalWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalWorkspaceView.swift; sourceTree = "<group>"; };
+		EE1002EE1002EE1002EE1002 /* GlyphCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlyphCacheTests.swift; sourceTree = "<group>"; };
+		EE1004EE1004EE1004EE1004 /* KeyBindingDispatcherTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyBindingDispatcherTests.swift; sourceTree = "<group>"; };
 		F3E6DBF6FBE09F48C83448BD /* TesaraTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TesaraTests.swift; sourceTree = "<group>"; };
 		F55C30259BAA845533624745 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		F7D656612F1AA5C6D7C0A0F2 /* TesaraTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TesaraTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		FF2002FF2002FF2002FF2002 /* InputBarHistoryController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputBarHistoryController.swift; sourceTree = "<group>"; };
+		FF2004FF2004FF2004FF2004 /* HistorySearchOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistorySearchOverlayView.swift; sourceTree = "<group>"; };
 		FF7543B634720042FBCD3C12 /* GhosttyConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhosttyConfig.swift; sourceTree = "<group>"; };
+		FF3001FF3001FF3001FF3001 /* EditorLayoutEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorLayoutEngineTests.swift; sourceTree = "<group>"; };
+		FF3003FF3003FF3003FF3003 /* SyntaxColorMapTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyntaxColorMapTests.swift; sourceTree = "<group>"; };
+		FF3005FF3005FF3005FF3005 /* InputBarHistoryControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputBarHistoryControllerTests.swift; sourceTree = "<group>"; };
+		FF3007FF3007FF3007FF3007 /* CLikeTokenizerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLikeTokenizerTests.swift; sourceTree = "<group>"; };
+		FF3009FF3009FF3009FF3009 /* JSONTokenizerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONTokenizerTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -244,6 +258,7 @@
 				02E8FA3D795EACA795F11233 /* LocalLogStore.swift */,
 				4BA08886415B515EB410905D /* SettingsStore.swift */,
 				17E46BFDCDCA182651723141 /* SettingsView.swift */,
+				5C2AAC510E6D732B6FB13544 /* ConfigFile.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -353,6 +368,12 @@
 				7503F59GACG295469BC1CG23 /* VisualLineMapTests.swift */,
 				EE1002EE1002EE1002EE1002 /* GlyphCacheTests.swift */,
 				EE1004EE1004EE1004EE1004 /* KeyBindingDispatcherTests.swift */,
+				45A7826F141A696DB5A95276 /* ConfigFileTests.swift */,
+				FF3001FF3001FF3001FF3001 /* EditorLayoutEngineTests.swift */,
+				FF3003FF3003FF3003FF3003 /* SyntaxColorMapTests.swift */,
+				FF3005FF3005FF3005FF3005 /* InputBarHistoryControllerTests.swift */,
+				FF3007FF3007FF3007FF3007 /* CLikeTokenizerTests.swift */,
+				FF3009FF3009FF3009FF3009 /* JSONTokenizerTests.swift */,
 			);
 			path = TesaraTests;
 			sourceTree = "<group>";
@@ -536,6 +557,7 @@
 				73C2552023E4D95A6CE71B77 /* SyntaxColorMap.swift in Sources */,
 				02D7FA3B694DABA694E00121 /* CLikeTokenizer.swift in Sources */,
 				F7AE7359CEADA892CDB4EE63 /* JSONTokenizer.swift in Sources */,
+				4E996EE4E1989AC52B315D31 /* ConfigFile.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -564,6 +586,12 @@
 				7503F59GACG295469BC1CG22 /* VisualLineMapTests.swift in Sources */,
 				EE1001EE1001EE1001EE1001 /* GlyphCacheTests.swift in Sources */,
 				EE1003EE1003EE1003EE1003 /* KeyBindingDispatcherTests.swift in Sources */,
+				F8F3ADFA6693519DC8962FCF /* ConfigFileTests.swift in Sources */,
+				FF3002FF3002FF3002FF3002 /* EditorLayoutEngineTests.swift in Sources */,
+				FF3004FF3004FF3004FF3004 /* SyntaxColorMapTests.swift in Sources */,
+				FF3006FF3006FF3006FF3006 /* InputBarHistoryControllerTests.swift in Sources */,
+				FF3008FF3008FF3008FF3008 /* CLikeTokenizerTests.swift in Sources */,
+				FF3010FF3010FF3010FF3010 /* JSONTokenizerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
