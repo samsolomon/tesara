@@ -71,8 +71,10 @@ struct TesaraApp: App {
                         settings: settingsStore.settings
                     )
                 }
-                .onChange(of: colorScheme) {
-                    settingsStore.isDark = colorScheme == .dark
+                .onChange(of: colorScheme) { _, newScheme in
+                    Task { @MainActor in
+                        settingsStore.isDark = newScheme == .dark
+                    }
                 }
                 .onChange(of: settingsStore.settings.windowBlur) {
                     applyWindowBlur(settingsStore.settings.windowBlur)

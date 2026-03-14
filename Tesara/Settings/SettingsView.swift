@@ -228,22 +228,49 @@ private struct AppearanceSettingsPane: View {
         }
     }
 
+    private func settingRow<Content: View>(
+        _ title: String,
+        description: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                Text(description)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            content()
+        }
+    }
+
     var body: some View {
         Form {
             Section {
-                Picker("Color Mode", selection: $settings.colorMode) {
-                    ForEach(ColorMode.allCases) { mode in
-                        Text(mode.title).tag(mode)
+                settingRow("Color Mode", description: "Use a fixed light or dark theme, or follow your system appearance.") {
+                    Picker("", selection: $settings.colorMode) {
+                        ForEach(ColorMode.allCases) { mode in
+                            Text(mode.title).tag(mode)
+                        }
                     }
-                }
-                .pickerStyle(.segmented)
-
-                Picker("Light Theme", selection: $settings.lightThemeID) {
-                    themePickerOptions
+                    .labelsHidden()
+                    .pickerStyle(.segmented)
+                    .fixedSize()
                 }
 
-                Picker("Dark Theme", selection: $settings.darkThemeID) {
-                    themePickerOptions
+                settingRow("Light Theme", description: "Used when color mode is Light, or System in light appearance.") {
+                    Picker("", selection: $settings.lightThemeID) {
+                        themePickerOptions
+                    }
+                    .labelsHidden()
+                }
+
+                settingRow("Dark Theme", description: "Used when color mode is Dark, or System in dark appearance.") {
+                    Picker("", selection: $settings.darkThemeID) {
+                        themePickerOptions
+                    }
+                    .labelsHidden()
                 }
 
                 LabeledContent("Import / Export") {
