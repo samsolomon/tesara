@@ -184,6 +184,9 @@ final class KeyBindingDispatcher: ObservableObject {
         case .openSettings:
             settingsOpenCoordinator?.openSettings()
 
+        case .toggleInputBar:
+            settingsStore?.settings.inputBarEnabled.toggle()
+
         case .toggleTUIPassthrough:
             break
 

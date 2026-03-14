@@ -354,6 +354,7 @@ enum KeyBindingAction: String, Codable, CaseIterable, Identifiable {
     case paste
     case find
     case openSettings
+    case toggleInputBar
     case toggleTUIPassthrough
     case splitRight
     case splitDown
@@ -372,6 +373,7 @@ enum KeyBindingAction: String, Codable, CaseIterable, Identifiable {
         case .paste: "Paste"
         case .find: "Find"
         case .openSettings: "Open Settings"
+        case .toggleInputBar: "Toggle Input Editor Bar"
         case .toggleTUIPassthrough: "Toggle TUI Passthrough"
         case .splitRight: "Split Right"
         case .splitDown: "Split Down"
@@ -390,6 +392,7 @@ enum KeyBindingAction: String, Codable, CaseIterable, Identifiable {
         case .paste: KeyShortcut(key: "v", modifiers: [.command])
         case .find: nil
         case .openSettings: KeyShortcut(key: ",", modifiers: [.command])
+        case .toggleInputBar: KeyShortcut(key: "l", modifiers: [.command, .shift])
         case .toggleTUIPassthrough: nil
         case .splitRight: KeyShortcut(key: "d", modifiers: [.command])
         case .splitDown: KeyShortcut(key: "d", modifiers: [.command, .shift])

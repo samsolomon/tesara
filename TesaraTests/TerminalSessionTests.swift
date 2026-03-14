@@ -164,6 +164,48 @@ final class TerminalSessionTests: XCTestCase {
         XCTAssertEqual(sentTexts, ["\u{1a}"])
     }
 
+    func testInputBarCtrlJInsertsNewline() {
+        let handler = InputBarKeyHandler()
+        let editorSession = EditorSession()
+        let editorView = EditorView(
+            session: editorSession,
+            theme: BuiltInTheme.oxide.theme,
+            fontFamily: "SF Mono",
+            fontSize: 13
+        )
+
+        XCTAssertEqual(editorSession.storage.entireString(), "")
+
+        let handled = handler.editorView(editorView, handleKeyDown: makeKeyEvent(chars: "j", modifiers: [.control]))
+
+        XCTAssertTrue(handled)
+        XCTAssertEqual(editorSession.storage.entireString(), "\n")
+    }
+
+    func testInputBarShiftEnterFallsBackToEditorNewline() {
+        let handler = InputBarKeyHandler()
+
+        let handled = handler.editorView(makeEditorView(), handleSpecialKey: .enter, mods: [.shift])
+
+        XCTAssertFalse(handled)
+    }
+
+    func testInputBarControlEnterFallsBackToEditorNewline() {
+        let handler = InputBarKeyHandler()
+
+        let handled = handler.editorView(makeEditorView(), handleSpecialKey: .enter, mods: [.control])
+
+        XCTAssertFalse(handled)
+    }
+
+    func testInputBarOptionEnterFallsBackToEditorNewline() {
+        let handler = InputBarKeyHandler()
+
+        let handled = handler.editorView(makeEditorView(), handleSpecialKey: .enter, mods: [.option])
+
+        XCTAssertFalse(handled)
+    }
+
     // MARK: - Stale Temp File Cleanup
 
     func testCleanupStaleTempFilesRemovesOldFiles() throws {

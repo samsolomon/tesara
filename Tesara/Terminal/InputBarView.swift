@@ -88,6 +88,9 @@ final class InputBarKeyHandler: EditorViewDelegate {
             case "d":
                 terminalSession?.send(text: "\u{04}")
                 return true
+            case "j":
+                editorView.session?.insertNewline()
+                return true
             case "r":
                 terminalSession?.inputBarState?.historyController.beginSearch()
                 return true
@@ -108,7 +111,7 @@ final class InputBarKeyHandler: EditorViewDelegate {
 
         switch key {
         case .carriageReturn, .newline, .enter:
-            if mods.contains(.shift) {
+            if mods.intersection([.shift, .control, .option]).isEmpty == false {
                 return false
             }
             guard let terminalSession else { return true }

@@ -166,6 +166,60 @@ private struct TerminalPaneLeafView: View {
         inputBarEnabled && session.isAtPrompt && session.inputBarState?.editorView != nil
     }
 
+    @ViewBuilder
+    private func terminalSurface(_ surfaceView: GhosttySurfaceView) -> some View {
+        GeometryReader { geo in
+            GhosttySurfaceRepresentable(surfaceView: surfaceView)
+                .onAppear {
+                    #if DEBUG
+                    LocalLogStore.shared.log("[TerminalPane] pane=\(id.uuidString) size=\(Int(geo.size.width))x\(Int(geo.size.height))")
+                    #endif
+                    surfaceView.setFrameSize(geo.size)
+                    surfaceView.sizeDidChange(geo.size)
+                }
+                .onChange(of: geo.size) { _, newSize in
+                    #if DEBUG
+                    LocalLogStore.shared.log("[TerminalPane] pane=\(id.uuidString) size=\(Int(newSize.width))x\(Int(newSize.height))")
+                    #endif
+                    surfaceView.setFrameSize(newSize)
+                    surfaceView.sizeDidChange(newSize)
+                }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    @ViewBuilder
+    private func inputBarRegion(_ inputBarState: InputBarState) -> some View {
+        VStack(spacing: 4) {
+            if inputBarState.historyController.isSearchActive {
+                HistorySearchOverlayView(
+                    historyController: inputBarState.historyController,
+                    theme: theme,
+                    fontFamily: fontFamily,
+                    fontSize: fontSize,
+                    onAccept: {
+                        inputBarState.historyController.acceptSearchResult(inputBarState: inputBarState)
+                    },
+                    onCancel: {
+                        inputBarState.historyController.cancelSearch()
+                    }
+                )
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+
+            InputBarView(
+                inputBarState: inputBarState,
+                theme: theme,
+                fontFamily: fontFamily,
+                fontSize: fontSize
+            )
+        }
+        .padding(.horizontal, 12)
+        .padding(.top, 4)
+        .padding(.bottom, 12)
+        .transition(.move(edge: .bottom).combined(with: .opacity))
+    }
+
     private func syncInputBarPresentation(session: TerminalSession, surfaceView: GhosttySurfaceView) {
         guard isActive else {
             session.inputBarState?.editorView?.pauseDisplayLink()
@@ -216,55 +270,15 @@ private struct TerminalPaneLeafView: View {
     var body: some View {
         Group {
             if let surfaceView = session.surfaceView {
-                GeometryReader { geo in
-                    GhosttySurfaceRepresentable(surfaceView: surfaceView)
-                        .onAppear {
-                            #if DEBUG
-                            LocalLogStore.shared.log("[TerminalPane] pane=\(id.uuidString) size=\(Int(geo.size.width))x\(Int(geo.size.height))")
-                            #endif
-                            surfaceView.setFrameSize(geo.size)
-                            surfaceView.sizeDidChange(geo.size)
-                        }
-                        .onChange(of: geo.size) { _, newSize in
-                            #if DEBUG
-                            LocalLogStore.shared.log("[TerminalPane] pane=\(id.uuidString) size=\(Int(newSize.width))x\(Int(newSize.height))")
-                            #endif
-                            surfaceView.setFrameSize(newSize)
-                            surfaceView.sizeDidChange(newSize)
-                        }
-                }
-                .id(session.id)
-                .overlay(alignment: .bottom) {
-                    if showInputBar, let inputBarState = session.inputBarState {
-                        VStack(spacing: 4) {
-                            if inputBarState.historyController.isSearchActive {
-                                HistorySearchOverlayView(
-                                    historyController: inputBarState.historyController,
-                                    theme: theme,
-                                    fontFamily: fontFamily,
-                                    fontSize: fontSize,
-                                    onAccept: {
-                                        inputBarState.historyController.acceptSearchResult(inputBarState: inputBarState)
-                                    },
-                                    onCancel: {
-                                        inputBarState.historyController.cancelSearch()
-                                    }
-                                )
-                                .transition(.move(edge: .bottom).combined(with: .opacity))
-                            }
+                VStack(spacing: 0) {
+                    terminalSurface(surfaceView)
+                        .layoutPriority(1)
 
-                            InputBarView(
-                                inputBarState: inputBarState,
-                                theme: theme,
-                                fontFamily: fontFamily,
-                                fontSize: fontSize
-                            )
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.bottom, 12)
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                    if showInputBar, let inputBarState = session.inputBarState {
+                        inputBarRegion(inputBarState)
                     }
                 }
+                .id(session.id)
                 .animation(.easeInOut(duration: 0.15), value: showInputBar)
                 .onAppear {
                     syncInputBarPresentation(session: session, surfaceView: surfaceView)

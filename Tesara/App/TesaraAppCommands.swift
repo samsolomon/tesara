@@ -72,6 +72,13 @@ struct TesaraAppCommands: Commands {
                 )
             }
             .keyboardShortcut("r", modifiers: [.command, .shift])
+
+            Divider()
+
+            Button(settingsStore.settings.inputBarEnabled ? "Hide Input Editor" : "Show Input Editor") {
+                settingsStore.settings.inputBarEnabled.toggle()
+            }
+            .keyboardShortcut(settingsStore.resolvedShortcut(for: .toggleInputBar, fallback: KeyShortcut(key: "l", modifiers: [.command, .shift])))
         }
 
         CommandGroup(before: .toolbar) {

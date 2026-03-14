@@ -20,9 +20,9 @@ final class TerminalSession: ObservableObject, Identifiable {
     @Published private(set) var surfaceView: GhosttySurfaceView?
     @Published private(set) var isAtPrompt = false
 
-    /// Not `@Published` — view updates are driven by `isAtPrompt` which always
-    /// changes in the same call path as `inputBarState` mutations.
-    private(set) var inputBarState: InputBarState?
+    /// Published so prompt-driven presentation updates can react when the input
+    /// bar is created or torn down outside the same render pass.
+    @Published private(set) var inputBarState: InputBarState?
 
     private var blockStore: BlockStore?
     private var activeSessionID: UUID?

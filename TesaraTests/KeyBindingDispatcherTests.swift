@@ -234,6 +234,7 @@ final class KeyBindingDispatcherTests: XCTestCase {
         XCTAssertEqual(KeyBindingAction.newTab.defaultShortcut?.key, "t")
         XCTAssertEqual(KeyBindingAction.copy.defaultShortcut?.key, "c")
         XCTAssertEqual(KeyBindingAction.paste.defaultShortcut?.key, "v")
+        XCTAssertEqual(KeyBindingAction.toggleInputBar.defaultShortcut?.key, "l")
         XCTAssertEqual(KeyBindingAction.splitRight.defaultShortcut?.key, "d")
         XCTAssertEqual(KeyBindingAction.closePane.defaultShortcut?.key, "w")
     }
