@@ -126,11 +126,35 @@ final class TerminalSession: ObservableObject, Identifiable {
     func sendFromInputBar(text: String) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
-        if trimmed.contains("\n") {
-            send(text: "\u{1b}[200~" + trimmed + "\u{1b}[201~\n")
-        } else {
-            send(command: trimmed)
+        // Send text via ghostty_surface_text (handles bracketed paste encoding),
+        // then send a Return key event to execute. We must not include '\n' in
+        // the text because ghostty_surface_text is a paste API — newlines inside
+        // bracketed paste are treated as literal characters, not execution.
+        send(text: trimmed)
+        sendReturnKey()
+    }
+
+    /// Send a Return key press directly to Ghostty, bypassing paste encoding.
+    /// Used by the input bar to execute commands after pasting text.
+    private func sendReturnKey() {
+        guard let surface = surfaceView?.surface else { return }
+
+        var key_ev = ghostty_input_key_s()
+        key_ev.keycode = 0x24 // Return (macOS virtual keycode)
+        key_ev.mods = ghostty_input_mods_e(0)
+        key_ev.consumed_mods = ghostty_input_mods_e(0)
+        key_ev.composing = false
+        key_ev.unshifted_codepoint = 0x0D
+
+        key_ev.action = GHOSTTY_ACTION_PRESS
+        "\r".withCString { ptr in
+            key_ev.text = ptr
+            ghostty_surface_key(surface, key_ev)
         }
+
+        key_ev.action = GHOSTTY_ACTION_RELEASE
+        key_ev.text = nil
+        ghostty_surface_key(surface, key_ev)
     }
 
     func setupInputBar(theme: TerminalTheme, fontFamily: String, fontSize: Double, cursorConfig: EditorLayoutEngine.CursorConfig? = nil, cursorBlink: Bool = true) {
