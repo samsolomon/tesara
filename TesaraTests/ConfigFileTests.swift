@@ -66,14 +66,12 @@ final class ConfigFileTests: XCTestCase {
     // MARK: - Apply
 
     func testApplyBasicTypes() {
-        let parsed = ConfigFile.parse("font-family = JetBrains Mono\nfont-size = 16\ncursor-blink = false\nwindow-padding-x = 4\ncursor-glow-opacity = 0.6")
+        let parsed = ConfigFile.parse("font-family = JetBrains Mono\nfont-size = 16\nwindow-padding-x = 4")
         var s = AppSettings.default
         ConfigFile.applyParsedConfig(parsed, to: &s)
         XCTAssertEqual(s.fontFamily, "JetBrains Mono")
         XCTAssertEqual(s.fontSize, 16)
-        XCTAssertFalse(s.cursorBlink)
         XCTAssertEqual(s.windowPaddingX, 4)
-        XCTAssertEqual(s.cursorGlowOpacity, 0.6, accuracy: 0.001)
     }
 
     func testApplyEnums() {
@@ -88,11 +86,10 @@ final class ConfigFileTests: XCTestCase {
     }
 
     func testApplyInvalidValuesGetDefaults() {
-        let parsed = ConfigFile.parse("font-size = bad\ncursor-blink = maybe\ncursor-style = invalid\nscrollback-lines = abc")
+        let parsed = ConfigFile.parse("font-size = bad\ncursor-style = invalid\nscrollback-lines = abc")
         var s = AppSettings.default
         ConfigFile.applyParsedConfig(parsed, to: &s)
         XCTAssertEqual(s.fontSize, 13)
-        XCTAssertTrue(s.cursorBlink)
         XCTAssertEqual(s.cursorStyle, .bar)
         XCTAssertEqual(s.scrollbackLines, 10000)
     }
@@ -176,13 +173,6 @@ final class ConfigFileTests: XCTestCase {
         original.fontLigatures = false
         original.fontThicken = true
         original.cursorStyle = .block
-        original.cursorBarWidth = 5.0
-        original.cursorRounded = false
-        original.cursorBlink = false
-        original.cursorGlow = true
-        original.cursorGlowRadius = 10.0
-        original.cursorGlowOpacity = 0.6
-        original.cursorSmoothBlink = true
         original.windowOpacity = 0.85
         original.windowBlur = true
         original.windowPaddingX = 4
@@ -220,13 +210,6 @@ final class ConfigFileTests: XCTestCase {
         XCTAssertEqual(restored.fontLigatures, original.fontLigatures)
         XCTAssertEqual(restored.fontThicken, original.fontThicken)
         XCTAssertEqual(restored.cursorStyle, original.cursorStyle)
-        XCTAssertEqual(restored.cursorBarWidth, original.cursorBarWidth)
-        XCTAssertEqual(restored.cursorRounded, original.cursorRounded)
-        XCTAssertEqual(restored.cursorBlink, original.cursorBlink)
-        XCTAssertEqual(restored.cursorGlow, original.cursorGlow)
-        XCTAssertEqual(restored.cursorGlowRadius, original.cursorGlowRadius)
-        XCTAssertEqual(restored.cursorGlowOpacity, original.cursorGlowOpacity, accuracy: 0.001)
-        XCTAssertEqual(restored.cursorSmoothBlink, original.cursorSmoothBlink)
         XCTAssertEqual(restored.windowOpacity, original.windowOpacity, accuracy: 0.001)
         XCTAssertEqual(restored.windowBlur, original.windowBlur)
         XCTAssertEqual(restored.windowPaddingX, original.windowPaddingX)

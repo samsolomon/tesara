@@ -196,13 +196,12 @@ final class GhosttyConfigTests: XCTestCase {
     func testConfigStringContainsCursorStyleBlock() {
         var settings = makeTestSettings()
         settings.cursorStyle = .block
-        settings.cursorBlink = false
         let content = GhosttyConfig.buildConfigString(
             theme: makeTestTheme(),
             settings: settings
         )
         XCTAssertTrue(content.contains("cursor-style = block"))
-        XCTAssertTrue(content.contains("cursor-style-blink = false"))
+        XCTAssertTrue(content.contains("cursor-style-blink = true"))
     }
 
     func testConfigStringContainsCursorStyleUnderline() {
@@ -215,18 +214,7 @@ final class GhosttyConfigTests: XCTestCase {
         XCTAssertTrue(content.contains("cursor-style = underline"))
     }
 
-    func testConfigStringContainsCursorOpacityWhenGlowEnabled() {
-        var settings = makeTestSettings()
-        settings.cursorGlow = true
-        settings.cursorGlowOpacity = 0.4
-        let content = GhosttyConfig.buildConfigString(
-            theme: makeTestTheme(),
-            settings: settings
-        )
-        XCTAssertTrue(content.contains("cursor-opacity = "))
-    }
-
-    func testConfigStringOmitsCursorOpacityWhenGlowDisabled() {
+    func testConfigStringOmitsCursorOpacity() {
         let settings = makeTestSettings()
         let content = GhosttyConfig.buildConfigString(
             theme: makeTestTheme(),

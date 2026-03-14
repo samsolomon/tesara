@@ -189,7 +189,7 @@ private struct TerminalPaneLeafView: View {
     }
 
     @ViewBuilder
-    private func inputBarRegion(_ inputBarState: InputBarState) -> some View {
+    private func inputBarRegion(_ inputBarState: InputBarState, session: TerminalSession, surfaceView: GhosttySurfaceView) -> some View {
         VStack(spacing: 4) {
             if inputBarState.historyController.isSearchActive {
                 HistorySearchOverlayView(
@@ -214,10 +214,14 @@ private struct TerminalPaneLeafView: View {
                 fontSize: fontSize
             )
         }
-        .padding(.horizontal, 12)
-        .padding(.top, 4)
-        .padding(.bottom, 12)
         .transition(.move(edge: .bottom).combined(with: .opacity))
+        .onAppear {
+            focusInputBar(session: session, surfaceView: surfaceView)
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            focusInputBar(session: session, surfaceView: surfaceView)
+        }
     }
 
     private func syncInputBarPresentation(session: TerminalSession, surfaceView: GhosttySurfaceView) {
@@ -231,15 +235,8 @@ private struct TerminalPaneLeafView: View {
 
         if session.isAtPrompt && inputBarEnabled {
             let s = settingsStore.settings
-            let cursorCfg = EditorLayoutEngine.CursorConfig(
-                style: s.cursorStyle,
-                barWidth: s.cursorBarWidth,
-                rounded: s.cursorRounded,
-                color: hexToColorU8(settingsStore.activeTheme.cursor),
-                glowRadius: s.cursorGlow ? s.cursorGlowRadius : 0,
-                glowOpacity: s.cursorGlow ? s.cursorGlowOpacity : 0
-            )
-            session.setupInputBar(theme: theme, fontFamily: fontFamily, fontSize: fontSize, cursorConfig: cursorCfg, cursorBlink: s.cursorBlink)
+            let cursorCfg = s.cursorStyle.editorCursorConfig(color: hexToColorU8(settingsStore.activeTheme.cursor))
+            session.setupInputBar(theme: theme, fontFamily: fontFamily, fontSize: fontSize, cursorConfig: cursorCfg, cursorBlink: true)
             session.inputBarState?.editorView?.resumeDisplayLink()
             surfaceView.keyboardFocusDisabled = true
             focusInputBar(session: session, surfaceView: surfaceView)
@@ -256,14 +253,25 @@ private struct TerminalPaneLeafView: View {
 
     private func focusInputBar(session: TerminalSession, surfaceView: GhosttySurfaceView) {
         Task { @MainActor in
-            guard let editorView = session.inputBarState?.editorView else { return }
-            if editorView.window == nil {
+            var editorView = session.inputBarState?.editorView
+
+            for _ in 0..<8 {
+                guard session.isAtPrompt, let currentEditorView = editorView else { return }
+
+                if let window = currentEditorView.window {
+                    surfaceView.focusDidChange(false)
+                    if window.firstResponder === currentEditorView || window.makeFirstResponder(currentEditorView) {
+                        currentEditorView.focusDidChange(true)
+                        return
+                    }
+                    currentEditorView.focusDidChange(false)
+                }
+
                 try? await Task.sleep(for: .milliseconds(50))
+                editorView = session.inputBarState?.editorView
             }
-            guard session.isAtPrompt, let window = editorView.window else { return }
-            surfaceView.focusDidChange(false)
-            window.makeFirstResponder(editorView)
-            editorView.focusDidChange(true)
+
+            session.inputBarState?.editorView?.focusDidChange(false)
         }
     }
 
@@ -275,7 +283,7 @@ private struct TerminalPaneLeafView: View {
                         .layoutPriority(1)
 
                     if showInputBar, let inputBarState = session.inputBarState {
-                        inputBarRegion(inputBarState)
+                        inputBarRegion(inputBarState, session: session, surfaceView: surfaceView)
                     }
                 }
                 .id(session.id)

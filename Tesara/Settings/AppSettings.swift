@@ -3,7 +3,7 @@ import Foundation
 import SwiftUI
 
 struct AppSettings: Codable, Equatable {
-    static let currentSchemaVersion = 6
+    static let currentSchemaVersion = 7
 
     var schemaVersion: Int
     var fontFamily: String
@@ -23,13 +23,6 @@ struct AppSettings: Codable, Equatable {
     var inactiveSplitDimAmount: Double
     var inputBarEnabled: Bool
     var cursorStyle: CursorStyle
-    var cursorBarWidth: Double
-    var cursorRounded: Bool
-    var cursorBlink: Bool
-    var cursorGlow: Bool
-    var cursorGlowRadius: Double
-    var cursorGlowOpacity: Double
-    var cursorSmoothBlink: Bool
     var autoThemeSwitching: Bool
     var lightThemeID: String?
     var darkThemeID: String?
@@ -64,13 +57,6 @@ struct AppSettings: Codable, Equatable {
         inactiveSplitDimAmount: Double = 0.3,
         inputBarEnabled: Bool = true,
         cursorStyle: CursorStyle = .bar,
-        cursorBarWidth: Double = 3.0,
-        cursorRounded: Bool = true,
-        cursorBlink: Bool = true,
-        cursorGlow: Bool = false,
-        cursorGlowRadius: Double = 6.0,
-        cursorGlowOpacity: Double = 0.4,
-        cursorSmoothBlink: Bool = false,
         autoThemeSwitching: Bool = false,
         lightThemeID: String? = nil,
         darkThemeID: String? = nil,
@@ -104,13 +90,6 @@ struct AppSettings: Codable, Equatable {
         self.inactiveSplitDimAmount = inactiveSplitDimAmount
         self.inputBarEnabled = inputBarEnabled
         self.cursorStyle = cursorStyle
-        self.cursorBarWidth = cursorBarWidth
-        self.cursorRounded = cursorRounded
-        self.cursorBlink = cursorBlink
-        self.cursorGlow = cursorGlow
-        self.cursorGlowRadius = cursorGlowRadius
-        self.cursorGlowOpacity = cursorGlowOpacity
-        self.cursorSmoothBlink = cursorSmoothBlink
         self.autoThemeSwitching = autoThemeSwitching
         self.lightThemeID = lightThemeID
         self.darkThemeID = darkThemeID
@@ -172,13 +151,6 @@ struct AppSettings: Codable, Equatable {
         case inactiveSplitDimAmount
         case inputBarEnabled
         case cursorStyle
-        case cursorBarWidth
-        case cursorRounded
-        case cursorBlink
-        case cursorGlow
-        case cursorGlowRadius
-        case cursorGlowOpacity
-        case cursorSmoothBlink
         case autoThemeSwitching
         case lightThemeID
         case darkThemeID
@@ -216,13 +188,6 @@ struct AppSettings: Codable, Equatable {
         inactiveSplitDimAmount = try container.decodeIfPresent(Double.self, forKey: .inactiveSplitDimAmount) ?? 0.3
         inputBarEnabled = try container.decodeIfPresent(Bool.self, forKey: .inputBarEnabled) ?? true
         cursorStyle = try container.decodeIfPresent(CursorStyle.self, forKey: .cursorStyle) ?? .bar
-        cursorBarWidth = try container.decodeIfPresent(Double.self, forKey: .cursorBarWidth) ?? 3.0
-        cursorRounded = try container.decodeIfPresent(Bool.self, forKey: .cursorRounded) ?? true
-        cursorBlink = try container.decodeIfPresent(Bool.self, forKey: .cursorBlink) ?? true
-        cursorGlow = try container.decodeIfPresent(Bool.self, forKey: .cursorGlow) ?? false
-        cursorGlowRadius = try container.decodeIfPresent(Double.self, forKey: .cursorGlowRadius) ?? 6.0
-        cursorGlowOpacity = try container.decodeIfPresent(Double.self, forKey: .cursorGlowOpacity) ?? 0.4
-        cursorSmoothBlink = try container.decodeIfPresent(Bool.self, forKey: .cursorSmoothBlink) ?? false
         autoThemeSwitching = try container.decodeIfPresent(Bool.self, forKey: .autoThemeSwitching) ?? false
         lightThemeID = try container.decodeIfPresent(String.self, forKey: .lightThemeID)
         darkThemeID = try container.decodeIfPresent(String.self, forKey: .darkThemeID)
@@ -287,6 +252,32 @@ enum CursorStyle: String, Codable, CaseIterable, Identifiable {
             "Block"
         case .underline:
             "Underline"
+        }
+    }
+
+    func editorCursorConfig(color: SIMD4<UInt8>) -> EditorLayoutEngine.CursorConfig {
+        switch self {
+        case .bar:
+            EditorLayoutEngine.CursorConfig(
+                style: self,
+                barWidth: 2.5,
+                rounded: true,
+                color: color
+            )
+        case .block:
+            EditorLayoutEngine.CursorConfig(
+                style: self,
+                barWidth: 0,
+                rounded: false,
+                color: color
+            )
+        case .underline:
+            EditorLayoutEngine.CursorConfig(
+                style: self,
+                barWidth: 0,
+                rounded: true,
+                color: color
+            )
         }
     }
 }
@@ -495,13 +486,6 @@ enum ConfigKey {
     static let fontLigatures = "font-ligatures"
     static let fontThicken = "font-thicken"
     static let cursorStyle = "cursor-style"
-    static let cursorBarWidth = "cursor-bar-width"
-    static let cursorRounded = "cursor-rounded"
-    static let cursorBlink = "cursor-blink"
-    static let cursorGlow = "cursor-glow"
-    static let cursorGlowRadius = "cursor-glow-radius"
-    static let cursorGlowOpacity = "cursor-glow-opacity"
-    static let cursorSmoothBlink = "cursor-smooth-blink"
     static let windowOpacity = "window-opacity"
     static let windowBlur = "window-blur"
     static let windowPaddingX = "window-padding-x"

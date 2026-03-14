@@ -92,21 +92,14 @@ struct TesaraAppCommands: Commands {
 
             Button("New Editor") {
                 let s = settingsStore.settings
-                let cursorCfg = EditorLayoutEngine.CursorConfig(
-                    style: s.cursorStyle,
-                    barWidth: s.cursorBarWidth,
-                    rounded: s.cursorRounded,
-                    color: hexToColorU8(settingsStore.activeTheme.cursor),
-                    glowRadius: s.cursorGlow ? s.cursorGlowRadius : 0,
-                    glowOpacity: s.cursorGlow ? s.cursorGlowOpacity : 0
-                )
+                let cursorCfg = s.cursorStyle.editorCursorConfig(color: hexToColorU8(settingsStore.activeTheme.cursor))
                 manager.splitActivePaneWithEditor(
                     direction: .horizontal,
                     theme: settingsStore.activeTheme,
                     fontFamily: s.fontFamily,
                     fontSize: s.fontSize,
                     cursorConfig: cursorCfg,
-                    cursorBlink: s.cursorBlink
+                    cursorBlink: true
                 )
             }
             .keyboardShortcut("e", modifiers: [.command, .shift])

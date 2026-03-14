@@ -65,9 +65,6 @@ final class SettingsStore: ObservableObject {
         let fontFamily: String
         let fontSize: Double
         let cursorStyle: CursorStyle
-        let cursorBlink: Bool
-        let cursorGlow: Bool
-        let cursorGlowOpacity: Double
         let fontLigatures: Bool
         let fontThicken: Bool
         let optionAsAlt: OptionAsAlt
@@ -85,9 +82,6 @@ final class SettingsStore: ObservableObject {
             fontFamily: settings.fontFamily,
             fontSize: settings.fontSize,
             cursorStyle: settings.cursorStyle,
-            cursorBlink: settings.cursorBlink,
-            cursorGlow: settings.cursorGlow,
-            cursorGlowOpacity: settings.cursorGlowOpacity,
             fontLigatures: settings.fontLigatures,
             fontThicken: settings.fontThicken,
             optionAsAlt: settings.optionAsAlt,
@@ -102,25 +96,11 @@ final class SettingsStore: ObservableObject {
 
     struct CursorConfigInputs: Equatable {
         let cursorStyle: CursorStyle
-        let cursorBarWidth: Double
-        let cursorRounded: Bool
-        let cursorBlink: Bool
-        let cursorGlow: Bool
-        let cursorGlowRadius: Double
-        let cursorGlowOpacity: Double
-        let cursorSmoothBlink: Bool
     }
 
     var cursorConfigInputs: CursorConfigInputs {
         CursorConfigInputs(
-            cursorStyle: settings.cursorStyle,
-            cursorBarWidth: settings.cursorBarWidth,
-            cursorRounded: settings.cursorRounded,
-            cursorBlink: settings.cursorBlink,
-            cursorGlow: settings.cursorGlow,
-            cursorGlowRadius: settings.cursorGlowRadius,
-            cursorGlowOpacity: settings.cursorGlowOpacity,
-            cursorSmoothBlink: settings.cursorSmoothBlink
+            cursorStyle: settings.cursorStyle
         )
     }
 

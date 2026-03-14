@@ -284,47 +284,10 @@ private struct AppearanceSettingsPane: View {
                         Text(style.title).tag(style)
                     }
                 }
-
-                if settings.cursorStyle == .bar {
-                    HStack {
-                        Slider(value: $settings.cursorBarWidth, in: 1...6, step: 0.5)
-                        Text("\(settings.cursorBarWidth, specifier: "%.1f") px")
-                            .monospacedDigit()
-                            .frame(width: 48)
-                    }
-                }
-
-                if settings.cursorStyle != .underline {
-                    Toggle("Rounded corners", isOn: $settings.cursorRounded)
-                }
-
-                Toggle("Cursor blink", isOn: $settings.cursorBlink)
-
-                Toggle("Cursor glow", isOn: $settings.cursorGlow)
-
-                if settings.cursorGlow {
-                    HStack {
-                        Text("Glow radius")
-                        Slider(value: $settings.cursorGlowRadius, in: 2...12, step: 1)
-                        Text("\(Int(settings.cursorGlowRadius)) px")
-                            .monospacedDigit()
-                            .frame(width: 36)
-                    }
-
-                    HStack {
-                        Text("Glow opacity")
-                        Slider(value: $settings.cursorGlowOpacity, in: 0.1...0.8, step: 0.05)
-                        Text("\(Int(settings.cursorGlowOpacity * 100))%")
-                            .monospacedDigit()
-                            .frame(width: 40)
-                    }
-                }
-
-                Toggle("Smooth cursor pulse", isOn: $settings.cursorSmoothBlink)
             } header: {
                 Text("Cursor")
             } footer: {
-                Text("Glow and smooth pulse apply to the editor cursor. Style and blink settings are shared with the terminal cursor.")
+                Text("Cursor style is shared with the terminal and native input editor.")
             }
 
             Section {

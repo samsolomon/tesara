@@ -41,21 +41,14 @@ struct TerminalWorkspaceView: View {
             ) { result in
                 if case .success(let url) = result {
                     let s = settingsStore.settings
-                    let cursorCfg = EditorLayoutEngine.CursorConfig(
-                        style: s.cursorStyle,
-                        barWidth: s.cursorBarWidth,
-                        rounded: s.cursorRounded,
-                        color: hexToColorU8(settingsStore.activeTheme.cursor),
-                        glowRadius: s.cursorGlow ? s.cursorGlowRadius : 0,
-                        glowOpacity: s.cursorGlow ? s.cursorGlowOpacity : 0
-                    )
+                    let cursorCfg = s.cursorStyle.editorCursorConfig(color: hexToColorU8(settingsStore.activeTheme.cursor))
                     manager.openFileInEditor(
                         url: url,
                         theme: settingsStore.activeTheme,
                         fontFamily: s.fontFamily,
                         fontSize: s.fontSize,
                         cursorConfig: cursorCfg,
-                        cursorBlink: s.cursorBlink
+                        cursorBlink: true
                     )
                 }
             }
@@ -191,17 +184,10 @@ struct TerminalWorkspaceView: View {
         guard let activeTab = manager.activeTab else { return }
         let s = settingsStore.settings
         let theme = settingsStore.activeTheme
-        let config = EditorLayoutEngine.CursorConfig(
-            style: s.cursorStyle,
-            barWidth: s.cursorBarWidth,
-            rounded: s.cursorRounded,
-            color: hexToColorU8(theme.cursor),
-            glowRadius: s.cursorGlow ? s.cursorGlowRadius : 0,
-            glowOpacity: s.cursorGlow ? s.cursorGlowOpacity : 0
-        )
-        propagateCursorToEditors(in: activeTab.rootPane, config: config, blink: s.cursorBlink, smoothBlink: s.cursorSmoothBlink)
+        let config = s.cursorStyle.editorCursorConfig(color: hexToColorU8(theme.cursor))
+        propagateCursorToEditors(in: activeTab.rootPane, config: config, blink: true, smoothBlink: false)
         for (_, session) in activeTab.rootPane.allTerminalSessions() {
-            session.inputBarState?.editorView?.updateCursorConfig(config, blink: s.cursorBlink, smoothBlink: s.cursorSmoothBlink)
+            session.inputBarState?.editorView?.updateCursorConfig(config, blink: true, smoothBlink: false)
         }
     }
 

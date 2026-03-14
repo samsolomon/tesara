@@ -163,14 +163,15 @@ struct InputBarView: View {
     let fontFamily: String
     let fontSize: Double
 
-    private var isDarkTheme: Bool { theme.isDarkBackground }
+    private var dividerOpacity: Double {
+        theme.isDarkBackground ? 0.22 : 0.14
+    }
 
     var body: some View {
-        HStack(alignment: .top, spacing: 8) {
-            Text(">")
-                .font(.custom(fontFamily, size: fontSize))
-                .foregroundStyle(theme.swiftUIColor(from: theme.green))
-                .padding(.top, 6)
+        VStack(spacing: 0) {
+            Rectangle()
+                .fill(theme.swiftUIColor(from: theme.foreground).opacity(dividerOpacity))
+                .frame(height: 1)
 
             ZStack(alignment: .topLeading) {
                 if inputBarState.isEmpty {
@@ -191,43 +192,29 @@ struct InputBarView: View {
                             .onChange(of: geo.size) { _, newSize in
                                 editorView.setFrameSize(newSize)
                                 editorView.sizeDidChange(newSize)
-                            }
+                        }
                     }
                 }
             }
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, minHeight: textAreaHeight, maxHeight: textAreaHeight, alignment: .topLeading)
+            .padding(.horizontal, 12)
+            .padding(.top, 8)
+            .padding(.bottom, 10)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .frame(minHeight: editorHeight)
-        .background { inputBarBackground }
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .shadow(color: .black.opacity(isDarkTheme ? 0.4 : 0.15), radius: 8, y: 2)
+        .frame(height: totalHeight, alignment: .top)
+        .background(theme.swiftUIColor(from: theme.background))
     }
 
-    @ViewBuilder
-    private var inputBarBackground: some View {
-        if #available(macOS 26, *) {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(.regularMaterial)
-                .overlay {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .strokeBorder(.white.opacity(isDarkTheme ? 0.15 : 0.08), lineWidth: 0.5)
-                }
-                .glassEffect(.regular, in: .rect(cornerRadius: 12))
-        } else {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(.ultraThinMaterial)
-                .overlay {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .strokeBorder(.white.opacity(isDarkTheme ? 0.12 : 0.06), lineWidth: 0.5)
-                }
-        }
+    private var editorLineHeight: CGFloat {
+        max(inputBarState.editorView?.lineHeight ?? CGFloat(0), CGFloat(fontSize) * 1.5)
     }
 
-    private var editorHeight: CGFloat {
-        let lineHeight = inputBarState.editorView?.lineHeight ?? CGFloat(fontSize) * 1.5
+    private var textAreaHeight: CGFloat {
         let lines = min(max(inputBarState.displayLineCount, 1), 4)
-        return CGFloat(lines) * lineHeight + 12
+        return CGFloat(lines) * editorLineHeight
+    }
+
+    private var totalHeight: CGFloat {
+        textAreaHeight + 19
     }
 }

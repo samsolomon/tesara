@@ -24,13 +24,6 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(store.settings.inactiveSplitDimAmount, 0.3, accuracy: 0.0001)
         XCTAssertTrue(store.settings.inputBarEnabled)
         XCTAssertEqual(store.settings.cursorStyle, .bar)
-        XCTAssertEqual(store.settings.cursorBarWidth, 3.0)
-        XCTAssertTrue(store.settings.cursorRounded)
-        XCTAssertTrue(store.settings.cursorBlink)
-        XCTAssertFalse(store.settings.cursorGlow)
-        XCTAssertEqual(store.settings.cursorGlowRadius, 6.0)
-        XCTAssertEqual(store.settings.cursorGlowOpacity, 0.4, accuracy: 0.001)
-        XCTAssertFalse(store.settings.cursorSmoothBlink)
         XCTAssertFalse(store.settings.autoThemeSwitching)
         XCTAssertNil(store.settings.lightThemeID)
         XCTAssertNil(store.settings.darkThemeID)
@@ -64,13 +57,6 @@ final class SettingsStoreTests: XCTestCase {
         store1.settings.inactiveSplitDimAmount = 0.16
         store1.settings.inputBarEnabled = false
         store1.settings.cursorStyle = .block
-        store1.settings.cursorBarWidth = 5.0
-        store1.settings.cursorRounded = false
-        store1.settings.cursorBlink = false
-        store1.settings.cursorGlow = true
-        store1.settings.cursorGlowRadius = 10.0
-        store1.settings.cursorGlowOpacity = 0.6
-        store1.settings.cursorSmoothBlink = true
         store1.settings.autoThemeSwitching = true
         store1.settings.lightThemeID = "light-theme"
         store1.settings.darkThemeID = "dark-theme"
@@ -97,13 +83,6 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(store2.settings.inactiveSplitDimAmount, 0.16, accuracy: 0.0001)
         XCTAssertFalse(store2.settings.inputBarEnabled)
         XCTAssertEqual(store2.settings.cursorStyle, .block)
-        XCTAssertEqual(store2.settings.cursorBarWidth, 5.0)
-        XCTAssertFalse(store2.settings.cursorRounded)
-        XCTAssertFalse(store2.settings.cursorBlink)
-        XCTAssertTrue(store2.settings.cursorGlow)
-        XCTAssertEqual(store2.settings.cursorGlowRadius, 10.0)
-        XCTAssertEqual(store2.settings.cursorGlowOpacity, 0.6, accuracy: 0.001)
-        XCTAssertTrue(store2.settings.cursorSmoothBlink)
         XCTAssertTrue(store2.settings.autoThemeSwitching)
         XCTAssertEqual(store2.settings.lightThemeID, "light-theme")
         XCTAssertEqual(store2.settings.darkThemeID, "dark-theme")
@@ -144,13 +123,6 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(settings.inactiveSplitDimAmount, 0.3, accuracy: 0.0001)
         XCTAssertTrue(settings.inputBarEnabled)
         XCTAssertEqual(settings.cursorStyle, .bar)
-        XCTAssertEqual(settings.cursorBarWidth, 3.0)
-        XCTAssertTrue(settings.cursorRounded)
-        XCTAssertTrue(settings.cursorBlink)
-        XCTAssertFalse(settings.cursorGlow)
-        XCTAssertEqual(settings.cursorGlowRadius, 6.0)
-        XCTAssertEqual(settings.cursorGlowOpacity, 0.4, accuracy: 0.001)
-        XCTAssertFalse(settings.cursorSmoothBlink)
         XCTAssertFalse(settings.autoThemeSwitching)
         XCTAssertNil(settings.lightThemeID)
         XCTAssertNil(settings.darkThemeID)

@@ -247,6 +247,16 @@ class GhosttySurfaceView: NSView, NSTextInputClient {
     // MARK: - Keyboard Input
 
     override func keyDown(with event: NSEvent) {
+        if keyboardFocusDisabled, let editorView = session?.inputBarState?.editorView {
+            if let window, window.firstResponder !== editorView {
+                _ = window.makeFirstResponder(editorView)
+            }
+            focusDidChange(false)
+            editorView.focusDidChange(true)
+            editorView.keyDown(with: event)
+            return
+        }
+
         guard let surface else {
             self.interpretKeyEvents([event])
             return

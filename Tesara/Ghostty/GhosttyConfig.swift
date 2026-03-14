@@ -85,11 +85,7 @@ enum GhosttyConfig {
 
         // Cursor
         lines.append("cursor-style = \(settings.cursorStyle.rawValue)")
-        lines.append("cursor-style-blink = \(settings.cursorBlink)")
-        if settings.cursorGlow {
-            let terminalOpacity = max(0.5, 1.0 - settings.cursorGlowOpacity * 0.5)
-            lines.append("cursor-opacity = \(terminalOpacity)")
-        }
+        lines.append("cursor-style-blink = true")
 
         // Window
         if settings.windowOpacity < 1.0 {
