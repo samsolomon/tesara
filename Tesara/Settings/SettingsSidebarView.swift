@@ -18,5 +18,8 @@ struct SettingsSidebarView: View {
             }
         }
         .listStyle(.sidebar)
+        .safeAreaInset(edge: .top, spacing: 0) {
+            Color.clear.frame(height: 8)
+        }
     }
 }

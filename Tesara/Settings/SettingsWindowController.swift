@@ -64,7 +64,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         guard let settingsStore, let blockStore, let updater else { return }
 
         if window?.contentViewController == nil {
-            let splitVC = NSSplitViewController()
+            let splitVC = TrafficLightOffsetSplitViewController()
 
             let sidebarView = SettingsSidebarView(paneSelection: paneSelection)
             let sidebarHosting = NSHostingController(rootView: sidebarView)
@@ -94,5 +94,31 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
 
     func windowWillClose(_ notification: Notification) {
         window?.contentViewController = nil
+    }
+}
+
+private final class TrafficLightOffsetSplitViewController: NSSplitViewController {
+    private static let offset: CGFloat = 8
+    private var defaultButtonY: CGFloat?
+
+    override func viewDidLayout() {
+        super.viewDidLayout()
+        guard let window = view.window,
+              let close = window.standardWindowButton(.closeButton) else { return }
+
+        if defaultButtonY == nil {
+            defaultButtonY = close.frame.origin.y
+        }
+        guard let defaultY = defaultButtonY else { return }
+
+        let isFlipped = close.superview?.isFlipped ?? false
+        let targetY = isFlipped ? defaultY + Self.offset : defaultY - Self.offset
+
+        for type: NSWindow.ButtonType in [.closeButton, .miniaturizeButton, .zoomButton] {
+            guard let button = window.standardWindowButton(type) else { continue }
+            if abs(button.frame.origin.y - targetY) > 0.5 {
+                button.setFrameOrigin(NSPoint(x: button.frame.origin.x, y: targetY))
+            }
+        }
     }
 }
