@@ -543,6 +543,9 @@ private struct UpdatesPrivacySettingsPane: View {
     @Binding var settings: AppSettings
     let updater: SPUUpdater
 
+    @State private var confirmingClearHistory = false
+    @State private var confirmingClearLogs = false
+
     var body: some View {
         Form {
             Section {
@@ -559,27 +562,34 @@ private struct UpdatesPrivacySettingsPane: View {
             }
 
             Section {
-                settingRow("Capture command history locally", description: "Stores executed commands on this Mac for the history panel.") {
-                    Toggle("", isOn: $settings.historyCaptureEnabled)
-                        .labelsHidden()
+                settingRow("Command history", description: historyDescription) {
+                    HStack(spacing: 12) {
+                        Button("Clear", role: .destructive) {
+                            confirmingClearHistory = true
+                        }
+                        .disabled(blockStore.totalBlockCount == 0)
+
+                        Toggle("", isOn: $settings.historyCaptureEnabled)
+                            .labelsHidden()
+                    }
                 }
 
-                settingRow("Enable local logging", description: "Writes diagnostic logs to disk for troubleshooting.") {
-                    Toggle("", isOn: $settings.localLoggingEnabled)
-                        .labelsHidden()
-                }
+                settingRow("Local logging", description: "Diagnostic logs at \(LocalLogStore.shared.displayPath).") {
+                    HStack(spacing: 12) {
+                        Button("Show in Finder") {
+                            NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: LocalLogStore.shared.directoryURL.path)
+                        }
 
-                Button("Clear history", role: .destructive) {
-                    blockStore.clearHistory()
-                }
+                        Button("Clear", role: .destructive) {
+                            confirmingClearLogs = true
+                        }
 
-                Button("Clear local logs", role: .destructive) {
-                    LocalLogStore.shared.clearLogs()
+                        Toggle("", isOn: $settings.localLoggingEnabled)
+                            .labelsHidden()
+                    }
                 }
             } header: {
                 Text("Local data")
-            } footer: {
-                Text("Turning off history capture stops new commands from being stored. Existing history remains until you clear it. Tesara writes its own local diagnostics to \(LocalLogStore.shared.displayPath) when logging is enabled.")
             }
 
             Section {
@@ -590,6 +600,21 @@ private struct UpdatesPrivacySettingsPane: View {
             }
         }
         .formStyle(.grouped)
+        .confirmationDialog("Clear command history?", isPresented: $confirmingClearHistory, titleVisibility: .visible) {
+            Button("Delete \(blockStore.totalBlockCount) commands", role: .destructive) {
+                blockStore.clearHistory()
+            }
+        }
+        .confirmationDialog("Clear local logs?", isPresented: $confirmingClearLogs, titleVisibility: .visible) {
+            Button("Delete logs", role: .destructive) {
+                LocalLogStore.shared.clearLogs()
+            }
+        }
+    }
+
+    private var historyDescription: String {
+        let count = blockStore.totalBlockCount
+        return count == 0 ? "No commands stored." : "\(count) commands stored on this Mac."
     }
 
     private var versionString: String {

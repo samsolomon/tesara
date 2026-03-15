@@ -16,6 +16,7 @@ struct TerminalBlockSummary: Identifiable, FetchableRecord, Decodable {
 @MainActor
 final class BlockStore: ObservableObject {
     @Published private(set) var recentBlocks: [TerminalBlockSummary] = []
+    @Published private(set) var totalBlockCount: Int = 0
     @Published private(set) var startupErrorMessage: String?
 
     private let dbQueue: DatabaseQueue?
@@ -142,11 +143,12 @@ final class BlockStore: ObservableObject {
     func reloadRecentBlocks(limit: Int = 100) {
         guard let dbQueue else {
             recentBlocks = []
+            totalBlockCount = 0
             return
         }
 
-        recentBlocks = (try? dbQueue.read { db in
-            try TerminalBlockSummary.fetchAll(
+        let result = try? dbQueue.read { db -> ([TerminalBlockSummary], Int) in
+            let blocks = try TerminalBlockSummary.fetchAll(
                 db,
                 sql: """
                 SELECT
@@ -166,7 +168,11 @@ final class BlockStore: ObservableObject {
                 """,
                 arguments: [limit]
             )
-        }) ?? []
+            let count = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM terminal_blocks") ?? 0
+            return (blocks, count)
+        }
+        recentBlocks = result?.0 ?? []
+        totalBlockCount = result?.1 ?? 0
     }
 
     // MARK: - History Queries
