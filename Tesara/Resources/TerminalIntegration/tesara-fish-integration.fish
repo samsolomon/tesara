@@ -1,4 +1,14 @@
 # Tesara Fish Shell Integration
+
+# Ensure system PATH entries are present (non-login shell may be missing them)
+if test -f /etc/paths
+    for p in (cat /etc/paths /etc/paths.d/* 2>/dev/null)
+        if test -d $p; and not contains -- $p $PATH
+            set -gxa PATH $p
+        end
+    end
+end
+
 # Emits OSC 133 sequences for command block capture
 
 function __tesara_emit_osc133 --argument-names code

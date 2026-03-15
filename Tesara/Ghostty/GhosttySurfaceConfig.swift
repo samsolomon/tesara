@@ -74,6 +74,11 @@ struct GhosttySurfaceConfig {
             try FileManager.default.createDirectory(at: dotDirectory, withIntermediateDirectories: true)
 
             try writeFile(named: ".zshenv", in: dotDirectory, contents: """
+            # For non-login shells, source /etc/zprofile to get system PATH and LANG
+            # (login shells source it automatically; guard prevents double execution)
+            if [[ ! -o login ]] && [ -f /etc/zprofile ]; then
+              source /etc/zprofile
+            fi
             if [ -f \"$HOME/.zshenv\" ]; then
               source \"$HOME/.zshenv\"
             fi
