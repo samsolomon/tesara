@@ -8,7 +8,7 @@ struct PaneSplitView<First: View, Second: View>: View {
     let second: Second
 
     private let minSize: CGFloat = 10
-    private let visibleDividerSize: CGFloat = 4
+    private let visibleDividerSize: CGFloat = 1
     private let hitDividerSize: CGFloat = 18
 
     init(
