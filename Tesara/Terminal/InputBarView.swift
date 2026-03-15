@@ -33,8 +33,8 @@ final class InputBarState: ObservableObject {
 
         sessionCancellable = editorSession.$cursorPosition
             .removeDuplicates()
-            .sink { [weak self] _ in
-                self?.syncDerivedState()
+            .sink { [weak self] newPosition in
+                self?.syncDerivedState(cursorPosition: newPosition)
             }
     }
 
@@ -55,19 +55,24 @@ final class InputBarState: ObservableObject {
         editorSession.storage.entireString()
     }
 
-    private func syncDerivedState() {
+    private func syncDerivedState(cursorPosition: TextStorage.Position) {
         let lineCount = editorSession.storage.lineCount
         let newEmpty = lineCount == 1 && editorSession.storage.lineLength(0) == 0
         if isEmpty != newEmpty { isEmpty = newEmpty }
         if displayLineCount != lineCount { displayLineCount = lineCount }
 
         // Update ghost suggestion
-        updateGhostSuffix()
+        updateGhostSuffix(cursorPosition: cursorPosition)
     }
 
-    private func updateGhostSuffix() {
-        // Only show ghost when cursor is at document end
-        guard editorSession.isCursorAtDocumentEnd else {
+    private func updateGhostSuffix(cursorPosition: TextStorage.Position) {
+        // Only show ghost when cursor is at document end.
+        // Use the passed-in position because @Published fires on willSet,
+        // before the property is stored.
+        let storage = editorSession.storage
+        let lastLine = storage.lineCount - 1
+        let lastCol = storage.lineLength(lastLine)
+        guard cursorPosition.line == lastLine && cursorPosition.column == lastCol else {
             ghostSuffix = nil
             return
         }
@@ -78,7 +83,6 @@ final class InputBarState: ObservableObject {
             return
         }
 
-        let storage = editorSession.storage
         let text = storage.lineCount == 1 ? storage.lineContent(0) : storage.entireString()
         guard !text.isEmpty else {
             ghostSuffix = nil
