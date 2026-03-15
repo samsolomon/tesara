@@ -240,10 +240,12 @@ private struct TerminalPaneLeafView: View {
             session.setupInputBar(theme: theme, fontFamily: fontFamily, fontSize: fontSize, cursorConfig: cursorCfg, cursorBlink: true)
             session.inputBarState?.editorView?.resumeDisplayLink()
             surfaceView.keyboardFocusDisabled = true
+            surfaceView.setTerminalCursorHidden(true)
             focusInputBar(session: session, surfaceView: surfaceView)
         } else {
             // No input bar: terminal owns keyboard focus
             surfaceView.keyboardFocusDisabled = false
+            surfaceView.setTerminalCursorHidden(false)
             if let window = surfaceView.window {
                 window.makeFirstResponder(surfaceView)
                 surfaceView.focusDidChange(true)
