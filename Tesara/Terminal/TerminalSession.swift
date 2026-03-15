@@ -32,6 +32,8 @@ final class TerminalSession: ObservableObject, Identifiable {
     private var activeSessionID: UUID?
     private var activeCapture: TerminalBlockCapture?
     private var blockOrderIndex = 0
+    private var cachedHasForegroundProcess = false
+    private var lastForegroundProcessCheck: CFAbsoluteTime = 0
 
     /// Temporary files created for shell integration, cleaned up on stop/deinit.
     private var temporaryURLs: [URL] = []
@@ -142,12 +144,25 @@ final class TerminalSession: ObservableObject, Identifiable {
         // 1. Alternate screen buffer (vim, less, htop)
         // 2. Mouse capture enabled (some modern TUIs)
         // 3. Foreground process differs from shell (Claude Code, any child process)
+        //
+        // Signals 1 & 2 are cheap memory reads behind a mutex.
+        // Signal 3 calls tcgetpgrp (a syscall), so we cache it at ~1 Hz
+        // and invalidate in handleCommandFinished().
         let isTUI = ghostty_surface_is_alternate_screen(surface)
             || ghostty_surface_mouse_captured(surface)
-            || ghostty_surface_has_foreground_process(surface)
+            || cachedHasForegroundProcess(surface)
         if isTUI != isAlternateScreen {
             isAlternateScreen = isTUI
         }
+    }
+
+    private func cachedHasForegroundProcess(_ surface: ghostty_surface_t) -> Bool {
+        let now = CFAbsoluteTimeGetCurrent()
+        if now - lastForegroundProcessCheck > 1.0 {
+            lastForegroundProcessCheck = now
+            cachedHasForegroundProcess = ghostty_surface_has_foreground_process(surface)
+        }
+        return cachedHasForegroundProcess
     }
 
     // MARK: - Input Bar
@@ -252,6 +267,7 @@ final class TerminalSession: ObservableObject, Identifiable {
 
         finalizeActiveCaptureIfNeeded(exitCode: code)
         inputBarState?.suggestionEngine.invalidateCache()
+        lastForegroundProcessCheck = 0
         isAtPrompt = true
     }
 
