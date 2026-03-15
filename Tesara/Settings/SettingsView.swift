@@ -8,16 +8,11 @@ struct SettingsView: View {
     let updater: SPUUpdater
 
     @State private var selectedPane: SettingsPane? = .appearance
-    @State private var navigationHistory: [SettingsPane] = [.appearance]
-    @State private var historyIndex: Int = 0
     @State private var importedThemeDocument: ThemeDocument?
     @State private var isImporterPresented = false
     @State private var isExporterPresented = false
     @State private var isDirectoryPickerPresented = false
     @State private var importErrorMessage: String?
-
-    private var canGoBack: Bool { historyIndex > 0 }
-    private var canGoForward: Bool { historyIndex < navigationHistory.count - 1 }
 
     var body: some View {
         NavigationSplitView(columnVisibility: .constant(.all)) {
@@ -31,27 +26,8 @@ struct SettingsView: View {
             SettingsDetailContainer {
                 paneView(for: activePane)
             }
-            .safeAreaInset(edge: .top, spacing: 0) {
-                SettingsHeaderBar(
-                    title: activePane.title,
-                    description: activePane.description,
-                    canGoBack: canGoBack,
-                    canGoForward: canGoForward,
-                    onBack: goBack,
-                    onForward: goForward
-                )
-            }
         }
         .background { SettingsWindowConfigurator() }
-        .onChange(of: selectedPane) { _, newValue in
-            guard let pane = newValue, pane != navigationHistory[historyIndex] else { return }
-            // Truncate forward history and append
-            if historyIndex < navigationHistory.count - 1 {
-                navigationHistory.removeSubrange((historyIndex + 1)...)
-            }
-            navigationHistory.append(pane)
-            historyIndex = navigationHistory.count - 1
-        }
         .fileImporter(
             isPresented: $isImporterPresented,
             allowedContentTypes: [.json],
@@ -89,18 +65,6 @@ struct SettingsView: View {
 
     private var activePane: SettingsPane {
         selectedPane ?? .appearance
-    }
-
-    private func goBack() {
-        guard canGoBack else { return }
-        historyIndex -= 1
-        selectedPane = navigationHistory[historyIndex]
-    }
-
-    private func goForward() {
-        guard canGoForward else { return }
-        historyIndex += 1
-        selectedPane = navigationHistory[historyIndex]
     }
 
     @ViewBuilder
@@ -264,61 +228,6 @@ private struct SettingsDetailContainer<Content: View>: View {
             .padding(.horizontal, 24)
             .padding(.vertical, 20)
             .background(Color(nsColor: .windowBackgroundColor))
-    }
-}
-
-private struct SettingsHeaderBar: View {
-    let title: String
-    let description: String
-    let canGoBack: Bool
-    let canGoForward: Bool
-    let onBack: () -> Void
-    let onForward: () -> Void
-
-    var body: some View {
-        HStack(spacing: 8) {
-            HStack(spacing: 2) {
-                navButton(systemName: "chevron.left", enabled: canGoBack, action: onBack)
-                navButton(systemName: "chevron.right", enabled: canGoForward, action: onForward)
-            }
-
-            VStack(alignment: .leading, spacing: 1) {
-                Text(title)
-                    .font(.headline)
-                Text(description)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
-        .background { headerBackground }
-    }
-
-    private func navButton(systemName: String, enabled: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: systemName)
-                .font(.system(size: 13, weight: .semibold))
-                .frame(width: 24, height: 24)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .disabled(!enabled)
-        .opacity(enabled ? 1 : 0.3)
-    }
-
-    @ViewBuilder
-    private var headerBackground: some View {
-        if #available(macOS 26, *) {
-            Rectangle()
-                .fill(.regularMaterial)
-                .glassEffect(.regular, in: .rect)
-        } else {
-            Rectangle()
-                .fill(.ultraThinMaterial)
-        }
     }
 }
 
