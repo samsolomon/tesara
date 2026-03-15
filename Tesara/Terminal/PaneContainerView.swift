@@ -296,9 +296,11 @@ private struct TerminalPaneLeafView: View {
                     fontSize: fontSize,
                     onAccept: {
                         inputBarState.historyController.acceptSearchResult(inputBarState: inputBarState)
+                        focusInputBar(session: session, surfaceView: surfaceView)
                     },
                     onCancel: {
                         inputBarState.historyController.cancelSearch()
+                        focusInputBar(session: session, surfaceView: surfaceView)
                     }
                 )
                 .transition(.move(edge: .bottom).combined(with: .opacity))
