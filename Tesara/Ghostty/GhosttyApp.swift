@@ -169,10 +169,12 @@ final class GhosttyApp: @unchecked Sendable {
             return handleChildExited(target: target, action: action)
 
         case GHOSTTY_ACTION_MOUSE_SHAPE:
+            if let session = sessionFromTarget(target) {
+                session.checkAlternateScreen()
+            }
             return handleMouseShape(action: action)
 
-        case GHOSTTY_ACTION_RENDER:
-            print("[Tesara-DEBUG] RENDER action received")
+        case GHOSTTY_ACTION_RENDER, GHOSTTY_ACTION_SCROLLBAR:
             if let session = sessionFromTarget(target) {
                 session.checkAlternateScreen()
             }
@@ -206,7 +208,6 @@ final class GhosttyApp: @unchecked Sendable {
             return handleQuit()
 
         default:
-            print("[Tesara-DEBUG] unhandled action tag=\(action.tag.rawValue)")
             return false
         }
     }

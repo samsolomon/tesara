@@ -134,11 +134,13 @@ final class TerminalSession: ObservableObject, Identifiable {
 
     func checkAlternateScreen() {
         guard let surface = surfaceView?.surface else { return }
-        // A TUI app is running if the terminal is in alternate screen mode
-        // (vim, less, htop) OR has mouse capture enabled (Claude Code, other
-        // modern TUIs built with Ink/React that render inline).
+        // Detect TUI apps via three complementary signals:
+        // 1. Alternate screen buffer (vim, less, htop)
+        // 2. Mouse capture enabled (some modern TUIs)
+        // 3. Foreground process differs from shell (Claude Code, any child process)
         let isTUI = ghostty_surface_is_alternate_screen(surface)
             || ghostty_surface_mouse_captured(surface)
+            || ghostty_surface_has_foreground_process(surface)
         if isTUI != isAlternateScreen {
             isAlternateScreen = isTUI
         }
