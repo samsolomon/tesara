@@ -1,3 +1,5 @@
+<img src="icon.svg" width="128" height="128" alt="Tesara">
+
 # Tesara
 
 Tesara is an experimental macOS terminal built around a simple goal: make the terminal feel native, calm, and fast.
