@@ -236,6 +236,34 @@ EOF
   echo "" >> "$REPORT"
 fi
 
+# ── Scrollback Table ─────────────────────────────────────────────────
+scrollback_files=("${RESULTS_DIR}"/scrollback-*.json)
+if [[ -f "${scrollback_files[0]}" ]]; then
+  cat >> "$REPORT" << 'EOF'
+## Scrollback memory (MB)
+
+| Terminal | Baseline | 1K lines | 10K lines | 50K lines | 100K lines | 200K lines | Buffer cost |
+|----------|----------|----------|-----------|-----------|------------|------------|-------------|
+EOF
+
+  for f in "${RESULTS_DIR}"/scrollback-*.json; do
+    IFS=$'\t' read -r name baseline c1k c10k c50k c100k c200k buffer_cost < <(
+      jq -r '[
+        .terminal,
+        (.baseline_rss_kb / 1024 | round | tostring),
+        (if .checkpoints."1k" then (.checkpoints."1k".rss_kb / 1024 | round | tostring) else "—" end),
+        (if .checkpoints."10k" then (.checkpoints."10k".rss_kb / 1024 | round | tostring) else "—" end),
+        (if .checkpoints."50k" then (.checkpoints."50k".rss_kb / 1024 | round | tostring) else "—" end),
+        (if .checkpoints."100k" then (.checkpoints."100k".rss_kb / 1024 | round | tostring) else "—" end),
+        (if .checkpoints."200k" then (.checkpoints."200k".rss_kb / 1024 | round | tostring) else "—" end),
+        (.buffer_cost_kb / 1024 | round | tostring)
+      ] | @tsv' "$f"
+    )
+    echo "| ${name} | ${baseline} | ${c1k} | ${c10k} | ${c50k} | ${c100k} | ${c200k} | ${buffer_cost} |" >> "$REPORT"
+  done
+  echo "" >> "$REPORT"
+fi
+
 # ── Verdict Summary ─────────────────────────────────────────────────
 cat >> "$REPORT" << 'EOF'
 ## Verdict
@@ -284,6 +312,8 @@ idle_rss_winner=$(find_winner "resources" ".idle.rss_kb.mean" 1)
 latency_winner=$(find_winner "latency" ".stats.mean" 1)
 ctrlc_winner=$(find_winner "ctrlc" ".stats.mean" 1)
 
+scrollback_winner=$(find_winner "scrollback" ".buffer_cost_kb" 1)
+
 cat >> "$REPORT" << EOF
 | Category | Winner |
 |----------|--------|
@@ -292,6 +322,7 @@ cat >> "$REPORT" << EOF
 | Idle memory | ${idle_rss_winner} |
 | Input latency | ${latency_winner} |
 | Ctrl-C responsiveness | ${ctrlc_winner} |
+| Scrollback buffer cost | ${scrollback_winner} |
 
 EOF
 
@@ -349,6 +380,16 @@ for f in "${RESULTS_DIR}"/scaling-*.json; do
     .terminal as $t |
     .scaling | to_entries[] |
     [$t, "scaling", .key + "_rss_kb", (.value.rss_kb|tostring)] | @csv
+  ' "$f" >> "$CSV"
+done
+
+for f in "${RESULTS_DIR}"/scrollback-*.json; do
+  [[ -f "$f" ]] || continue
+  jq -r '
+    .terminal as $t |
+    (.checkpoints | to_entries[] | [$t, "scrollback", .key + "_rss_kb", (.value.rss_kb|tostring)]),
+    [$t, "scrollback", "buffer_cost_kb", (.buffer_cost_kb|tostring)]
+    | @csv
   ' "$f" >> "$CSV"
 done
 

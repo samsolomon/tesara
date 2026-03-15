@@ -67,6 +67,7 @@ SUITES=(
   "ctrlc/bench-ctrlc.sh"
   "parser/bench-parser.sh"
   "scaling/bench-scaling.sh"
+  "scrollback/bench-scrollback.sh"
 )
 
 for suite in "${SUITES[@]}"; do
