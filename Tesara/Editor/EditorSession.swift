@@ -21,6 +21,11 @@ final class EditorSession: ObservableObject, Identifiable {
     /// Set by EditorView in 5C. Nil until `createView()` is called.
     @Published private(set) var editorView: NSView?
 
+    var isCursorAtDocumentEnd: Bool {
+        let lastLine = storage.lineCount - 1
+        return cursorPosition.line == lastLine && cursorPosition.column == storage.lineLength(lastLine)
+    }
+
     /// Called after any mutation to signal the view needs redraw. Set by EditorView.
     var needsRenderCallback: (() -> Void)?
 

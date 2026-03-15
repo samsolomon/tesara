@@ -193,6 +193,7 @@ final class TerminalSession: ObservableObject, Identifiable {
         let state = InputBarState()
         state.keyHandler.terminalSession = self
         state.historyController.blockStore = blockStore
+        state.suggestionEngine.blockStore = blockStore
         inputBarState = state
 
         searchStateCancellable = state.historyController.$isSearchActive
@@ -249,6 +250,7 @@ final class TerminalSession: ObservableObject, Identifiable {
         }
 
         finalizeActiveCaptureIfNeeded(exitCode: code)
+        inputBarState?.suggestionEngine.invalidateCache()
         isAtPrompt = true
     }
 
@@ -309,6 +311,21 @@ final class TerminalSession: ObservableObject, Identifiable {
         temporaryURLs.removeAll()
     }
 
+    // MARK: - Bottom Align
+
+    /// Creates a signal file that the shell integration's WINCH handler reads.
+    /// When the input bar appears, the terminal surface resizes, triggering
+    /// SIGWINCH. The shell sees the file and moves the cursor to the bottom row.
+    func requestBottomAlign() {
+        guard status == .running else { return }
+        let path = NSTemporaryDirectory() + "tesara-ba-\(shellSessionID)"
+        FileManager.default.createFile(atPath: path, contents: nil)
+        // Clean up after a few seconds in case SIGWINCH didn't fire.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [path] in
+            try? FileManager.default.removeItem(atPath: path)
+        }
+    }
+
     // MARK: - Stale Temp File Cleanup
 
     /// Removes Tesara temp files older than the given threshold (default 24 hours).
@@ -318,7 +335,7 @@ final class TerminalSession: ObservableObject, Identifiable {
         let fm = FileManager.default
         let cutoff = Date().addingTimeInterval(-threshold)
         guard let contents = try? fm.contentsOfDirectory(atPath: tmpDir) else { return }
-        let prefixes = ["tesara-cmd-", "tesara-zsh-", "tesara-bash-", "tesara-fish-"]
+        let prefixes = ["tesara-cmd-", "tesara-ba-", "tesara-zsh-", "tesara-bash-", "tesara-fish-"]
         for entry in contents where prefixes.contains(where: { entry.hasPrefix($0) }) {
             let path = (tmpDir as NSString).appendingPathComponent(entry)
             guard let attrs = try? fm.attributesOfItem(atPath: path),

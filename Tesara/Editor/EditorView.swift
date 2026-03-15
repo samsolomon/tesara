@@ -83,6 +83,12 @@ class EditorView: NSView, NSTextInputClient {
     private var scrollbarOpacity: Float = 0.0
     private var scrollbarFadeTimer: Timer?
 
+    // MARK: - Ghost Text
+
+    var ghostSuffixProvider: (() -> String?)?
+    private var cachedGhostSuffix: String?
+    private var cachedGhostResult: EditorLayoutEngine.GlyphBuildResult?
+
     // MARK: - Word Wrap State
 
     private var lastLayoutWidth: CGFloat = 0
@@ -192,6 +198,8 @@ class EditorView: NSView, NSTextInputClient {
 
     func documentDidChange() {
         guard let session else { return }
+        cachedGhostSuffix = nil
+        cachedGhostResult = nil
 
         if session.wordWrapEnabled {
             let viewportWidth = contentSize.width > 0 ? contentSize.width : bounds.width
@@ -301,7 +309,7 @@ class EditorView: NSView, NSTextInputClient {
             syntaxTokensByLine = tokenMap
         }
 
-        let glyphResult = layoutEngine.buildGlyphInstances(
+        var glyphResult = layoutEngine.buildGlyphInstances(
             from: layoutLines,
             cache: glyphCache,
             scale: scale,
@@ -309,6 +317,32 @@ class EditorView: NSView, NSTextInputClient {
             syntaxTokens: syntaxTokensByLine,
             syntaxColors: syntaxColors
         )
+
+        // Ghost text (autosuggestion)
+        let ghostSuffix = ghostSuffixProvider?()
+        if let ghostSuffix, !ghostSuffix.isEmpty {
+            let ghostResult: EditorLayoutEngine.GlyphBuildResult
+            if ghostSuffix == cachedGhostSuffix, let cached = cachedGhostResult {
+                ghostResult = cached
+            } else {
+                ghostResult = layoutEngine.buildGhostGlyphInstances(
+                    suffix: ghostSuffix,
+                    cursorPosition: session.cursorPosition,
+                    layoutLines: layoutLines,
+                    cache: glyphCache,
+                    scale: scale,
+                    foregroundColor: themeColors.foreground,
+                    viewportWidth: viewport.width
+                )
+                cachedGhostSuffix = ghostSuffix
+                cachedGhostResult = ghostResult
+            }
+            glyphResult.monochrome.append(contentsOf: ghostResult.monochrome)
+            glyphResult.color.append(contentsOf: ghostResult.color)
+        } else if cachedGhostSuffix != nil {
+            cachedGhostSuffix = nil
+            cachedGhostResult = nil
+        }
 
         // Build marked text info for IME underline
         let markedTextInfo: EditorLayoutEngine.MarkedTextInfo?
@@ -391,6 +425,8 @@ class EditorView: NSView, NSTextInputClient {
 
     func sizeDidChange(_ size: CGSize) {
         contentSize = size
+        cachedGhostSuffix = nil
+        cachedGhostResult = nil
         guard let metalLayer else { return }
 
         CATransaction.begin()
@@ -728,12 +764,16 @@ class EditorView: NSView, NSTextInputClient {
     func updateTheme(_ theme: TerminalTheme) {
         applyTheme(theme)
         glyphCache.invalidateAll()
+        cachedGhostSuffix = nil
+        cachedGhostResult = nil
         needsRender = true
     }
 
     func updateFont(family: String, size: CGFloat) {
         layoutEngine.updateFont(family: family, size: size)
         glyphCache.invalidateAll()
+        cachedGhostSuffix = nil
+        cachedGhostResult = nil
         if let session, session.wordWrapEnabled {
             layoutEngine.recomputeWrapCounts(storage: session.storage, viewportWidth: contentSize.width > 0 ? contentSize.width : bounds.width)
         }

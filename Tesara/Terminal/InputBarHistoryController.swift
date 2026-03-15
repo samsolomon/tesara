@@ -9,6 +9,8 @@ final class InputBarHistoryController: ObservableObject {
     @Published private(set) var searchResults: [String] = []
     @Published var selectedSearchIndex = 0
 
+    var isNavigatingHistory: Bool { historyIndex >= 0 }
+
     private var historyIndex = -1
     private var savedCurrentInput = ""
     private var cachedHistory: [String] = []

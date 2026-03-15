@@ -10,9 +10,13 @@ final class InputBarState: ObservableObject {
     @Published private(set) var editorView: EditorView?
     let keyHandler = InputBarKeyHandler()
     let historyController = InputBarHistoryController()
+    let suggestionEngine = SuggestionEngine()
 
     @Published private(set) var isEmpty: Bool = true
     @Published private(set) var displayLineCount: Int = 1
+
+    /// Ghost text suffix for autosuggestion (not @Published — drives Metal, not SwiftUI).
+    fileprivate(set) var ghostSuffix: String?
 
     private var sessionCancellable: AnyCancellable?
 
@@ -23,10 +27,12 @@ final class InputBarState: ObservableObject {
         if let view = editorSession.editorView as? EditorView {
             view.delegate = keyHandler
             view.scrollbarDisabled = true
+            view.ghostSuffixProvider = { [weak self] in self?.ghostSuffix }
             editorView = view
         }
 
         sessionCancellable = editorSession.$cursorPosition
+            .removeDuplicates()
             .sink { [weak self] _ in
                 self?.syncDerivedState()
             }
@@ -54,6 +60,36 @@ final class InputBarState: ObservableObject {
         let newEmpty = lineCount == 1 && editorSession.storage.lineLength(0) == 0
         if isEmpty != newEmpty { isEmpty = newEmpty }
         if displayLineCount != lineCount { displayLineCount = lineCount }
+
+        // Update ghost suggestion
+        updateGhostSuffix()
+    }
+
+    private func updateGhostSuffix() {
+        // Only show ghost when cursor is at document end
+        guard editorSession.isCursorAtDocumentEnd else {
+            ghostSuffix = nil
+            return
+        }
+
+        // No ghost during history navigation or search
+        guard !historyController.isSearchActive && !historyController.isNavigatingHistory else {
+            ghostSuffix = nil
+            return
+        }
+
+        let storage = editorSession.storage
+        let text = storage.lineCount == 1 ? storage.lineContent(0) : storage.entireString()
+        guard !text.isEmpty else {
+            ghostSuffix = nil
+            return
+        }
+
+        if let match = suggestionEngine.suggest(prefix: text) {
+            ghostSuffix = String(match.dropFirst(text.count))
+        } else {
+            ghostSuffix = nil
+        }
     }
 }
 
@@ -66,11 +102,15 @@ final class InputBarKeyHandler: EditorViewDelegate {
     func editorView(_ editorView: EditorView, handleKeyDown event: NSEvent) -> Bool {
         let mods = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
 
-        // Escape — cancel search if active, otherwise clear text
+        // Escape — cancel search, dismiss ghost text, or clear input
         if let chars = event.charactersIgnoringModifiers, chars == "\u{1b}" {
             if let state = terminalSession?.inputBarState,
                state.historyController.isSearchActive {
                 state.historyController.cancelSearch()
+            } else if let state = terminalSession?.inputBarState,
+                      state.ghostSuffix != nil {
+                state.ghostSuffix = nil
+                editorView.setNeedsRender()
             } else {
                 terminalSession?.inputBarState?.clear()
             }
@@ -148,9 +188,38 @@ final class InputBarKeyHandler: EditorViewDelegate {
             }
             return false
 
+        case .rightArrow:
+            if let state = terminalSession?.inputBarState,
+               let ghostSuffix = state.ghostSuffix,
+               !ghostSuffix.isEmpty,
+               session.isCursorAtDocumentEnd {
+                if mods.contains(.option) {
+                    session.insertText(firstWord(of: ghostSuffix))
+                } else if mods.isDisjoint(with: [.shift, .control, .option, .command]) {
+                    session.insertText(ghostSuffix)
+                } else {
+                    return false
+                }
+                return true
+            }
+            return false
+
         default:
             return false
         }
+    }
+
+    private func firstWord(of text: String) -> String {
+        var index = text.startIndex
+        // Advance past word characters
+        while index < text.endIndex && !text[index].isWhitespace {
+            index = text.index(after: index)
+        }
+        // Include trailing whitespace
+        while index < text.endIndex && text[index].isWhitespace {
+            index = text.index(after: index)
+        }
+        return index > text.startIndex ? String(text[text.startIndex..<index]) : text
     }
 }
 

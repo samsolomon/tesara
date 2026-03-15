@@ -379,6 +379,87 @@ final class EditorLayoutEngine {
         return fallback
     }
 
+    // MARK: - Ghost Text (Autosuggestion)
+
+    func buildGhostGlyphInstances(
+        suffix: String,
+        cursorPosition: TextStorage.Position,
+        layoutLines: [LayoutLine],
+        cache: GlyphCache,
+        scale: CGFloat,
+        foregroundColor: SIMD4<UInt8>,
+        viewportWidth: CGFloat
+    ) -> GlyphBuildResult {
+        var monoInstances: [EditorRenderer.GlyphInstance] = []
+        var colorInstances: [EditorRenderer.GlyphInstance] = []
+
+        // Find the layout line containing the cursor
+        guard let cursorLayoutLine = layoutLines.last(where: { $0.lineIndex == cursorPosition.line }) else {
+            return GlyphBuildResult(monochrome: monoInstances, color: colorInstances)
+        }
+
+        // Compute cursor X position
+        let cursorCol = cursorPosition.column - cursorLayoutLine.stringOffset
+        let cursorX = CGFloat(offsetForColumn(cursorCol, in: cursorLayoutLine.ctLine, scale: scale))
+
+        // Truncate suffix to remaining line width
+        let remainingWidth = Double(viewportWidth * scale - cursorX) / Double(scale)
+        guard remainingWidth > 0 else {
+            return GlyphBuildResult(monochrome: monoInstances, color: colorInstances)
+        }
+
+        let attributes: [NSAttributedString.Key: Any] = [.font: font]
+        let attrStr = NSAttributedString(string: suffix, attributes: attributes)
+        let typesetter = CTTypesetterCreateWithAttributedString(attrStr)
+        let fitCount = CTTypesetterSuggestLineBreak(typesetter, 0, remainingWidth)
+        guard fitCount > 0 else {
+            return GlyphBuildResult(monochrome: monoInstances, color: colorInstances)
+        }
+
+        let ghostLine = CTTypesetterCreateLine(typesetter, CFRange(location: 0, length: fitCount))
+
+        // Ghost color: foreground RGB with 30% alpha
+        let ghostColor = SIMD4<UInt8>(foregroundColor.x, foregroundColor.y, foregroundColor.z, 77)
+
+        let rasterFont = scale > 1 ? scaledRasterFont(scale: scale) : font
+        let runs = CTLineGetGlyphRuns(ghostLine) as! [CTRun]
+        let baselineY = cursorLayoutLine.origin.y + cursorLayoutLine.ascent
+
+        for run in runs {
+            let glyphCount = CTRunGetGlyphCount(run)
+            guard glyphCount > 0 else { continue }
+
+            var glyphs = [CGGlyph](repeating: 0, count: glyphCount)
+            var positions = [CGPoint](repeating: .zero, count: glyphCount)
+            CTRunGetGlyphs(run, CFRange(location: 0, length: glyphCount), &glyphs)
+            CTRunGetPositions(run, CFRange(location: 0, length: glyphCount), &positions)
+
+            for j in 0..<glyphCount {
+                let cached = cache.rasterize(glyph: glyphs[j], font: rasterFont)
+                guard cached.region.width > 0, cached.region.height > 0 else { continue }
+
+                let screenX = Float(cursorX) + Float(positions[j].x * scale)
+                let screenY = Float(baselineY)
+
+                let instance = EditorRenderer.GlyphInstance(
+                    atlasPos: SIMD2<UInt16>(cached.region.x, cached.region.y),
+                    atlasSize: SIMD2<UInt16>(cached.region.width, cached.region.height),
+                    screenPos: SIMD2<Float>(screenX, screenY),
+                    bearings: SIMD2<Int16>(cached.bearingX, cached.bearingY),
+                    color: ghostColor
+                )
+
+                if cached.isColor {
+                    colorInstances.append(instance)
+                } else {
+                    monoInstances.append(instance)
+                }
+            }
+        }
+
+        return GlyphBuildResult(monochrome: monoInstances, color: colorInstances)
+    }
+
     // MARK: - Rect Instances
 
     struct MarkedTextInfo {
