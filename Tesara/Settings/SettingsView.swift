@@ -284,11 +284,13 @@ private struct AppearanceSettingsPane: View {
             Section {
                 FixedPitchFontPicker(selection: $settings.fontFamily, previewSize: settings.fontSize)
 
-                HStack {
-                    Slider(value: $settings.fontSize, in: 10...24, step: 1)
-                    Text("\(Int(settings.fontSize)) pt")
-                        .monospacedDigit()
-                        .frame(width: 48)
+                LabeledContent("Font size") {
+                    HStack(spacing: 6) {
+                        Text("\(Int(settings.fontSize)) pt")
+                            .monospacedDigit()
+                        Stepper("", value: $settings.fontSize, in: 10...24, step: 1)
+                            .labelsHidden()
+                    }
                 }
 
                 settingRow("Font ligatures", description: "Combines character sequences like -> into single glyphs.") {
