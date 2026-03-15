@@ -13,7 +13,6 @@ final class KeyBindingDispatcher: ObservableObject {
     private weak var settingsStore: SettingsStore?
     private weak var workspaceManager: WorkspaceManager?
     private weak var blockStore: BlockStore?
-    private weak var settingsOpenCoordinator: SettingsOpenCoordinator?
 
     struct KeyCombo: Hashable {
         let key: String
@@ -32,13 +31,11 @@ final class KeyBindingDispatcher: ObservableObject {
     func configure(
         settingsStore: SettingsStore,
         workspaceManager: WorkspaceManager,
-        blockStore: BlockStore,
-        settingsOpenCoordinator: SettingsOpenCoordinator
+        blockStore: BlockStore
     ) {
         self.settingsStore = settingsStore
         self.workspaceManager = workspaceManager
         self.blockStore = blockStore
-        self.settingsOpenCoordinator = settingsOpenCoordinator
 
         rebuildLookupTable()
 
@@ -95,11 +92,6 @@ final class KeyBindingDispatcher: ObservableObject {
             return event
         }
 
-        if isOpenSettingsShortcut(event) {
-            settingsOpenCoordinator?.openSettings()
-            return nil
-        }
-
         if let direction = paneNavigationDirection(for: event),
            let responder = event.window?.firstResponder,
            (responder is GhosttySurfaceView || responder is EditorView),
@@ -126,12 +118,6 @@ final class KeyBindingDispatcher: ObservableObject {
 
         execute(action)
         return nil // consume the event
-    }
-
-    private func isOpenSettingsShortcut(_ event: NSEvent) -> Bool {
-        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
-        guard flags == [.command] else { return false }
-        return event.charactersIgnoringModifiers == ","
     }
 
     private func paneNavigationDirection(for event: NSEvent) -> PaneNode.NavigationDirection? {
@@ -182,7 +168,7 @@ final class KeyBindingDispatcher: ObservableObject {
             NSApp.sendAction(NSSelectorFromString("performFindPanelAction:"), to: nil, from: nil)
 
         case .openSettings:
-            settingsOpenCoordinator?.openSettings()
+            SettingsWindowController.shared.showWindow(nil)
 
         case .toggleInputBar:
             settingsStore?.settings.inputBarEnabled.toggle()

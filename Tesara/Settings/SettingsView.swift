@@ -2,12 +2,12 @@ import Sparkle
 import SwiftUI
 import UniformTypeIdentifiers
 
-struct SettingsView: View {
+struct SettingsDetailView: View {
     @EnvironmentObject private var settingsStore: SettingsStore
     @EnvironmentObject private var blockStore: BlockStore
+    @ObservedObject var paneSelection: SettingsPaneSelection
     let updater: SPUUpdater
 
-    @SceneStorage("settings.selectedPane") private var selectedPaneRaw: String = SettingsPane.appearance.rawValue
     @State private var importedThemeDocument: ThemeDocument?
     @State private var isImporterPresented = false
     @State private var isExporterPresented = false
@@ -15,21 +15,9 @@ struct SettingsView: View {
     @State private var importErrorMessage: String?
 
     var body: some View {
-        NavigationSplitView(columnVisibility: .constant(.all)) {
-            List(SettingsPane.allCases, selection: selectedPaneBinding) { pane in
-                Label(pane.title, systemImage: pane.systemImage)
-                    .tag(pane)
-            }
-            .listStyle(.sidebar)
-            .navigationSplitViewColumnWidth(min: 180, ideal: 210)
-        } detail: {
-            SettingsDetailContainer {
-                paneView(for: activePane)
-            }
+        SettingsDetailContainer {
+            paneView(for: paneSelection.pane)
         }
-        .toolbar(removing: .sidebarToggle)
-        .toolbar(removing: .title)
-        .toolbarBackgroundVisibility(.hidden, for: .windowToolbar)
         .fileImporter(
             isPresented: $isImporterPresented,
             allowedContentTypes: [.json],
@@ -63,17 +51,6 @@ struct SettingsView: View {
         }, message: {
             Text(importErrorMessage ?? "")
         })
-    }
-
-    private var selectedPaneBinding: Binding<SettingsPane?> {
-        Binding(
-            get: { SettingsPane(rawValue: selectedPaneRaw) },
-            set: { selectedPaneRaw = ($0 ?? .appearance).rawValue }
-        )
-    }
-
-    private var activePane: SettingsPane {
-        SettingsPane(rawValue: selectedPaneRaw) ?? .appearance
     }
 
     @ViewBuilder
@@ -133,7 +110,7 @@ struct SettingsView: View {
     }
 }
 
-private enum SettingsPane: String, CaseIterable, Identifiable {
+enum SettingsPane: String, CaseIterable, Identifiable {
     case appearance
     case terminal
     case workspace
@@ -448,7 +425,7 @@ private struct KeyboardSettingsPane: View {
     var body: some View {
         Form {
             Section {
-                ForEach(KeyBindingAction.allCases) { action in
+                ForEach(KeyBindingAction.customizableCases) { action in
                     LabeledContent(action.title) {
                         KeyRecorderView(
                             action: action,

@@ -7,6 +7,13 @@ struct TesaraAppCommands: Commands {
     let updater: SPUUpdater
 
     var body: some Commands {
+        CommandGroup(replacing: .appSettings) {
+            Button("Settings...") {
+                SettingsWindowController.shared.showWindow(nil)
+            }
+            .keyboardShortcut(",", modifiers: [.command])
+        }
+
         CommandGroup(after: .appInfo) {
             CheckForUpdatesView(updater: updater)
         }

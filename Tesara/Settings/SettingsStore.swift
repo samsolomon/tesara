@@ -51,6 +51,8 @@ final class SettingsStore: ObservableObject {
             persist()
         }
 
+        removeNonRemappableKeyBindings()
+
         watcher = ConfigFileWatcher(directory: configDirectory) { [weak self] in
             self?.reloadFromDisk()
         }
@@ -154,6 +156,7 @@ final class SettingsStore: ObservableObject {
     }
 
     func updateKeyBinding(action: KeyBindingAction, shortcut: KeyShortcut) {
+        guard action != .openSettings else { return }
         settings.keyBindingOverrides.removeAll { $0.action != action && $0.shortcut == shortcut }
         if let index = settings.keyBindingOverrides.firstIndex(where: { $0.action == action }) {
             settings.keyBindingOverrides[index].shortcut = shortcut
@@ -227,6 +230,13 @@ final class SettingsStore: ObservableObject {
         isSuppressingPersist = true
         settings = s
         isSuppressingPersist = false
+        removeNonRemappableKeyBindings()
+    }
+
+    private func removeNonRemappableKeyBindings() {
+        let filtered = settings.keyBindingOverrides.filter { $0.action != .openSettings }
+        guard filtered != settings.keyBindingOverrides else { return }
+        settings.keyBindingOverrides = filtered
     }
 
     private func migrateFromUserDefaults(_ decoded: AppSettings) {

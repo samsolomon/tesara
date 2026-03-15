@@ -88,5 +88,4 @@ private struct WindowConfigurator: NSViewRepresentable {
         .environmentObject(SettingsStore())
         .environmentObject(BlockStore())
         .environmentObject(WorkspaceManager())
-        .environmentObject(SettingsOpenCoordinator())
 }

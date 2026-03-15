@@ -416,6 +416,10 @@ enum KeyBindingAction: String, Codable, CaseIterable, Identifiable {
     case focusNextPane
     case focusPrevPane
 
+    static var customizableCases: [KeyBindingAction] {
+        allCases.filter { $0 != .openSettings }
+    }
+
     var id: String { rawValue }
 
     var title: String {

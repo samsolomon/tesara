@@ -8,7 +8,6 @@ final class KeyBindingDispatcherTests: XCTestCase {
     private var settingsStore: SettingsStore!
     private var manager: WorkspaceManager!
     private var blockStore: BlockStore!
-    private var coordinator: SettingsOpenCoordinator!
 
     override func setUp() async throws {
         try await super.setUp()
@@ -19,12 +18,10 @@ final class KeyBindingDispatcherTests: XCTestCase {
         manager.sessionFactory = { TerminalSession() }
         manager.setConfirmOnCloseRunningSessionEnabled(false)
         blockStore = try BlockStore(dbQueue: DatabaseQueue())
-        coordinator = SettingsOpenCoordinator()
         dispatcher.configure(
             settingsStore: settingsStore,
             workspaceManager: manager,
-            blockStore: blockStore,
-            settingsOpenCoordinator: coordinator
+            blockStore: blockStore
         )
     }
 
@@ -33,7 +30,6 @@ final class KeyBindingDispatcherTests: XCTestCase {
         settingsStore = nil
         manager = nil
         blockStore = nil
-        coordinator = nil
         try await super.tearDown()
     }
 
@@ -45,8 +41,7 @@ final class KeyBindingDispatcherTests: XCTestCase {
         dispatcher.configure(
             settingsStore: settingsStore,
             workspaceManager: manager,
-            blockStore: blockStore,
-            settingsOpenCoordinator: coordinator
+            blockStore: blockStore
         )
         // No key combos should be intercepted — verified by action tests below
     }
@@ -60,8 +55,7 @@ final class KeyBindingDispatcherTests: XCTestCase {
         dispatcher.configure(
             settingsStore: settingsStore,
             workspaceManager: manager,
-            blockStore: blockStore,
-            settingsOpenCoordinator: coordinator
+            blockStore: blockStore
         )
 
         // The lookup table is private, but we can verify behavior:
@@ -78,8 +72,7 @@ final class KeyBindingDispatcherTests: XCTestCase {
         dispatcher.configure(
             settingsStore: settingsStore,
             workspaceManager: manager,
-            blockStore: blockStore,
-            settingsOpenCoordinator: coordinator
+            blockStore: blockStore
         )
         // Verified via action execution tests
     }
@@ -92,8 +85,7 @@ final class KeyBindingDispatcherTests: XCTestCase {
         dispatcher.configure(
             settingsStore: settingsStore,
             workspaceManager: manager,
-            blockStore: blockStore,
-            settingsOpenCoordinator: coordinator
+            blockStore: blockStore
         )
 
         // Replace with different override — table should rebuild via Combine sink
@@ -104,8 +96,7 @@ final class KeyBindingDispatcherTests: XCTestCase {
         dispatcher.configure(
             settingsStore: settingsStore,
             workspaceManager: manager,
-            blockStore: blockStore,
-            settingsOpenCoordinator: coordinator
+            blockStore: blockStore
         )
     }
 
@@ -349,8 +340,7 @@ final class KeyBindingDispatcherTests: XCTestCase {
         dispatcher.configure(
             settingsStore: settingsStore,
             workspaceManager: manager,
-            blockStore: blockStore,
-            settingsOpenCoordinator: coordinator
+            blockStore: blockStore
         )
 
         XCTAssertEqual(manager.tabs.count, 0)
@@ -464,37 +454,6 @@ final class KeyBindingDispatcherTests: XCTestCase {
 
         manager.selectPreviousPane()
         XCTAssertEqual(manager.activePaneID, secondPaneID)
-    }
-
-    // MARK: - Open Settings Coordinator
-
-    func testOpenSettingsCoordinatorCallsAction() {
-        var settingsOpened = false
-        coordinator.setAction { settingsOpened = true }
-        coordinator.openSettings()
-        XCTAssertTrue(settingsOpened)
-    }
-
-    func testOpenSettingsCoordinatorWithoutActionIsNoOp() {
-        // No action set — should not crash
-        let coord = SettingsOpenCoordinator()
-        coord.openSettings()
-    }
-
-    // MARK: - isOpenSettingsShortcut
-
-    func testCommandCommaIsOpenSettingsShortcut() {
-        let event = makeKeyEvent(chars: ",", modifiers: [.command])
-        // Verify the modifier pattern matches what isOpenSettingsShortcut checks
-        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
-        XCTAssertEqual(flags, [.command])
-        XCTAssertEqual(event.charactersIgnoringModifiers, ",")
-    }
-
-    func testCommandShiftCommaIsNotSettingsShortcut() {
-        let event = makeKeyEvent(chars: ",", modifiers: [.command, .shift])
-        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
-        XCTAssertNotEqual(flags, NSEvent.ModifierFlags.command)
     }
 
     // MARK: - Helpers

@@ -10,7 +10,6 @@ struct TesaraApp: App {
     @StateObject private var blockStore = BlockStore()
     @StateObject private var workspaceManager = WorkspaceManager()
     @StateObject private var keyBindingDispatcher = KeyBindingDispatcher()
-    @StateObject private var settingsOpenCoordinator = SettingsOpenCoordinator()
 
     var body: some Scene {
         WindowGroup {
@@ -18,7 +17,6 @@ struct TesaraApp: App {
                 .environmentObject(settingsStore)
                 .environmentObject(blockStore)
                 .environmentObject(workspaceManager)
-                .environmentObject(settingsOpenCoordinator)
                 .frame(minWidth: minimumWindowSize.width, minHeight: minimumWindowSize.height)
                 .onAppear {
                     updaterController.updater.automaticallyChecksForUpdates = settingsStore.settings.updateChecksEnabled
@@ -37,8 +35,12 @@ struct TesaraApp: App {
                     keyBindingDispatcher.configure(
                         settingsStore: settingsStore,
                         workspaceManager: workspaceManager,
+                        blockStore: blockStore
+                    )
+                    SettingsWindowController.shared.configure(
+                        settingsStore: settingsStore,
                         blockStore: blockStore,
-                        settingsOpenCoordinator: settingsOpenCoordinator
+                        updater: updaterController.updater
                     )
                 }
                 .onChange(of: settingsStore.settings.updateChecksEnabled) {
@@ -78,14 +80,6 @@ struct TesaraApp: App {
             )
         }
 
-        Settings {
-            SettingsView(updater: updaterController.updater)
-                .environmentObject(settingsStore)
-                .environmentObject(blockStore)
-                .frame(minWidth: 840, minHeight: 560)
-        }
-        .windowResizability(.contentSize)
-        .defaultSize(width: 840, height: 560)
     }
 
 }
