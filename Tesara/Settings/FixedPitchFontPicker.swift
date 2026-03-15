@@ -117,45 +117,30 @@ struct FixedPitchFontPicker: View {
         selection.isEmpty ? "SF Mono" : selection
     }
 
-    private var selectedFamilyAvailable: Bool {
-        FixedPitchFontLibrary.contains(selectedFamilyLabel, in: availableFamilies)
-    }
-
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            LabeledContent("Font Family") {
-                Button {
-                    isPresented = true
-                } label: {
-                    HStack(spacing: 10) {
-                        VStack(alignment: .trailing, spacing: 2) {
-                            Text(selectedFamilyLabel)
-                                .foregroundStyle(.primary)
-                            Text(selectedFamilyAvailable ? "Fixed-pitch font" : "Unavailable on this Mac")
-                                .font(.caption)
-                                .foregroundStyle(selectedFamilyAvailable ? .secondary : Color.orange)
-                        }
+        LabeledContent("Font family") {
+            Button {
+                isPresented = true
+            } label: {
+                HStack(spacing: 10) {
+                    Text(selectedFamilyLabel)
+                        .foregroundStyle(.primary)
 
-                        Image(systemName: "chevron.up.chevron.down")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .buttonStyle(.plain)
-                .popover(isPresented: $isPresented, arrowEdge: .bottom) {
-                    FixedPitchFontPickerPopover(
-                        selection: $selection,
-                        searchText: $searchText,
-                        availableFamilies: availableFamilies,
-                        previewSize: previewSize,
-                        dismiss: dismissPicker
-                    )
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
                 }
             }
-
-            Text("Choose from installed fixed-pitch fonts with live search.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            .buttonStyle(.plain)
+            .popover(isPresented: $isPresented, arrowEdge: .bottom) {
+                FixedPitchFontPickerPopover(
+                    selection: $selection,
+                    searchText: $searchText,
+                    availableFamilies: availableFamilies,
+                    previewSize: previewSize,
+                    dismiss: dismissPicker
+                )
+            }
         }
         .onChange(of: isPresented) { _, newValue in
             if !newValue {
