@@ -202,7 +202,17 @@ private struct SettingsWindowConfigurator: NSViewRepresentable {
     }
 
     private static func configure(from view: NSView) {
-        guard let window = view.window, !window.titlebarAppearsTransparent else { return }
+        guard let window = view.window else { return }
+
+        // Hide the sidebar toggle toolbar item in-place rather than removing it —
+        // removing causes SwiftUI to re-inject it on its next pass.
+        if let toolbar = window.toolbar {
+            for item in toolbar.items where item.itemIdentifier == .toggleSidebar {
+                item.isHidden = true
+            }
+        }
+
+        guard !window.titlebarAppearsTransparent else { return }
 
         // Prevent sidebar collapse on the underlying NSSplitViewController
         var responder: NSResponder? = view
@@ -217,8 +227,6 @@ private struct SettingsWindowConfigurator: NSViewRepresentable {
 
         // Make the sidebar extend behind the titlebar so traffic lights
         // sit on the sidebar surface (like macOS System Settings).
-        // The toolbar is kept visible (items removed via SwiftUI modifiers)
-        // so the titlebar has proper height for the traffic lights.
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
         window.titlebarSeparatorStyle = .none
