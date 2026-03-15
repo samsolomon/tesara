@@ -94,6 +94,7 @@ final class TerminalSession: ObservableObject, Identifiable {
             view.sizeDidChange(initialSize)
         }
 
+        prepareInputBar()
         status = .running
     }
 
@@ -185,10 +186,11 @@ final class TerminalSession: ObservableObject, Identifiable {
         ghostty_surface_key(surface, key_ev)
     }
 
-    func setupInputBar(theme: TerminalTheme, fontFamily: String, fontSize: Double, cursorConfig: EditorLayoutEngine.CursorConfig? = nil, cursorBlink: Bool = true) {
+    /// Create the InputBarState eagerly (no editor view yet) so the input bar
+    /// region is present in the layout from the very first frame.
+    func prepareInputBar() {
         guard inputBarState == nil else { return }
         let state = InputBarState()
-        state.createView(theme: theme, fontFamily: fontFamily, fontSize: fontSize, cursorConfig: cursorConfig, cursorBlink: cursorBlink)
         state.keyHandler.terminalSession = self
         state.historyController.blockStore = blockStore
         inputBarState = state
@@ -202,9 +204,18 @@ final class TerminalSession: ObservableObject, Identifiable {
             }
     }
 
+    /// Create the editor view inside the existing InputBarState once theme info
+    /// is available from the view layer.
+    func setupInputBar(theme: TerminalTheme, fontFamily: String, fontSize: Double, cursorConfig: EditorLayoutEngine.CursorConfig? = nil, cursorBlink: Bool = true) {
+        prepareInputBar()
+        inputBarState?.createView(theme: theme, fontFamily: fontFamily, fontSize: fontSize, cursorConfig: cursorConfig, cursorBlink: cursorBlink)
+    }
+
     private func teardownInputBar() {
         inputBarState?.editorView?.pauseDisplayLink()
+        searchStateCancellable = nil
         inputBarState = nil
+        isHistorySearchActive = false
     }
 
     // MARK: - Action Handlers

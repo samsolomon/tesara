@@ -58,7 +58,6 @@ final class InputBarHistoryController: ObservableObject {
     // MARK: - Search (Ctrl+R)
 
     func beginSearch() {
-        print("[Tesara-DEBUG] beginSearch: setting isSearchActive=true")
         isSearchActive = true
         searchQuery = ""
         searchResults = []

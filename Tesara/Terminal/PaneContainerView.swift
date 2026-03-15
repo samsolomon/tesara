@@ -260,7 +260,7 @@ private struct TerminalPaneLeafView: View {
     let onSelectPane: (UUID) -> Void
 
     private var showInputBar: Bool {
-        inputBarEnabled && !session.isAlternateScreen && session.inputBarState?.editorView != nil
+        inputBarEnabled && !session.isAlternateScreen && session.inputBarState != nil
     }
 
     @ViewBuilder

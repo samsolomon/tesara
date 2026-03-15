@@ -216,6 +216,13 @@ private struct SettingsWindowConfigurator: NSViewRepresentable {
         window.titleVisibility = .hidden
         window.titlebarSeparatorStyle = .none
         window.styleMask.insert(.fullSizeContentView)
+        window.styleMask.insert(.miniaturizable)
+        window.styleMask.insert(.resizable)
+
+        // Enable all three traffic light buttons (Settings scene disables yellow/green)
+        window.standardWindowButton(.miniaturizeButton)?.isEnabled = true
+        window.standardWindowButton(.zoomButton)?.isEnabled = true
+
     }
 }
 
