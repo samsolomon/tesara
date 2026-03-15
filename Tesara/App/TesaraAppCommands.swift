@@ -4,18 +4,9 @@ import SwiftUI
 struct TesaraAppCommands: Commands {
     @ObservedObject var manager: WorkspaceManager
     @ObservedObject var settingsStore: SettingsStore
-    @ObservedObject var blockStore: BlockStore
-    @ObservedObject var settingsOpenCoordinator: SettingsOpenCoordinator
     let updater: SPUUpdater
 
     var body: some Commands {
-        CommandGroup(replacing: .appSettings) {
-            Button("Settings...") {
-                settingsOpenCoordinator.openSettings()
-            }
-            .keyboardShortcut(",", modifiers: [.command])
-        }
-
         CommandGroup(after: .appInfo) {
             CheckForUpdatesView(updater: updater)
         }

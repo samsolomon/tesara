@@ -74,8 +74,6 @@ struct TesaraApp: App {
             TesaraAppCommands(
                 manager: workspaceManager,
                 settingsStore: settingsStore,
-                blockStore: blockStore,
-                settingsOpenCoordinator: settingsOpenCoordinator,
                 updater: updaterController.updater
             )
         }
