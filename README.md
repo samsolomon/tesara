@@ -1,4 +1,4 @@
-<img src="icon.svg" width="128" height="128" alt="Tesara">
+<img src="icon.png" width="128" height="128" alt="Tesara">
 
 # Tesara
 
