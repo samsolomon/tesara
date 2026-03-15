@@ -42,7 +42,7 @@ struct SettingsView: View {
                 )
             }
         }
-        .background { SidebarCollapseDisabler() }
+        .background { SettingsWindowConfigurator() }
         .onChange(of: selectedPane) { _, newValue in
             guard let pane = newValue, pane != navigationHistory[historyIndex] else { return }
             // Truncate forward history and append
@@ -215,7 +215,7 @@ private enum SettingsPane: String, CaseIterable, Identifiable {
     }
 }
 
-private struct SidebarCollapseDisabler: NSViewRepresentable {
+private struct SettingsWindowConfigurator: NSViewRepresentable {
     func makeNSView(context: Context) -> NSView {
         let view = NSView()
         view.setFrameSize(.zero)
@@ -241,8 +241,13 @@ private struct SidebarCollapseDisabler: NSViewRepresentable {
             responder = current.nextResponder
         }
 
-        // Hide the toolbar entirely — the window title bar still shows "Tesara Settings"
+        // Make the sidebar extend behind the titlebar so traffic lights
+        // sit on the sidebar surface (like macOS System Settings)
         window.toolbar?.isVisible = false
+        window.titleVisibility = .hidden
+        window.titlebarAppearsTransparent = true
+        window.titlebarSeparatorStyle = .none
+        window.styleMask.insert(.fullSizeContentView)
     }
 }
 
