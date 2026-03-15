@@ -14,7 +14,6 @@ struct PaneContainerView: View {
     let onSelectPane: (UUID) -> Void
     let onUpdateRatio: (UUID, CGFloat) -> Void
     var onClosePane: ((UUID) -> Void)?
-    var onSwapPane: ((UUID, UUID) -> Void)?
     var isSplit: Bool = false
 
     var body: some View {
@@ -64,7 +63,7 @@ struct PaneContainerView: View {
     @ViewBuilder
     private func paneWithHeader<Content: View>(id: UUID, session: TerminalSession, @ViewBuilder content: () -> Content) -> some View {
         if isSplit {
-            PaneDropTarget(paneID: id, onSwapPane: onSwapPane) {
+            PaneDropTarget(paneID: id) {
                 VStack(spacing: 0) {
                     PaneHeaderView(
                         paneID: id,
@@ -89,7 +88,7 @@ struct PaneContainerView: View {
     @ViewBuilder
     private func editorWithHeader<Content: View>(id: UUID, session: EditorSession, @ViewBuilder content: () -> Content) -> some View {
         if isSplit {
-            PaneDropTarget(paneID: id, onSwapPane: onSwapPane) {
+            PaneDropTarget(paneID: id) {
                 VStack(spacing: 0) {
                     PaneHeaderView(
                         paneID: id,
@@ -132,7 +131,6 @@ struct PaneContainerView: View {
                     onSelectPane: onSelectPane,
                     onUpdateRatio: onUpdateRatio,
                     onClosePane: onClosePane,
-                    onSwapPane: onSwapPane,
                     isSplit: true
                 )
             },
@@ -150,7 +148,6 @@ struct PaneContainerView: View {
                     onSelectPane: onSelectPane,
                     onUpdateRatio: onUpdateRatio,
                     onClosePane: onClosePane,
-                    onSwapPane: onSwapPane,
                     isSplit: true
                 )
             }
@@ -159,34 +156,32 @@ struct PaneContainerView: View {
 }
 
 private struct PaneDropTarget<Content: View>: View {
-    static var paneDragPrefix: String { "tesara-pane:" }
+    @EnvironmentObject private var dragState: PaneDragState
 
     let paneID: UUID
-    let onSwapPane: ((UUID, UUID) -> Void)?
     @ViewBuilder let content: Content
     @State private var isDropTargeted = false
 
     var body: some View {
         content
             .overlay {
-                if isDropTargeted {
+                if isDropTargeted, dragState.activeDragSourceID != nil {
                     RoundedRectangle(cornerRadius: 4)
                         .fill(Color.accentColor.opacity(0.1))
                         .allowsHitTesting(false)
                 }
             }
-            .onDrop(of: [.plainText], isTargeted: $isDropTargeted) { providers in
-                guard let provider = providers.first else { return false }
-                provider.loadObject(ofClass: NSString.self) { reading, _ in
-                    guard let string = reading as? String,
-                          string.hasPrefix(Self.paneDragPrefix),
-                          let sourceID = UUID(uuidString: String(string.dropFirst(Self.paneDragPrefix.count))),
-                          sourceID != paneID else { return }
-                    DispatchQueue.main.async {
-                        onSwapPane?(sourceID, paneID)
-                    }
-                }
+            .onDrop(of: [.plainText], isTargeted: $isDropTargeted) { _ in
+                guard dragState.activeDragSourceID != nil else { return false }
+                dragState.dropPerformed()
                 return true
+            }
+            .onChange(of: isDropTargeted) { _, isTargeted in
+                if isTargeted {
+                    dragState.targetEntered(paneID)
+                } else {
+                    dragState.targetExited(paneID)
+                }
             }
     }
 }

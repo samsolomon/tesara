@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct PaneHeaderView: View {
+    @EnvironmentObject private var dragState: PaneDragState
+
     let paneID: UUID
     let title: String
     let isActive: Bool
@@ -35,7 +37,10 @@ struct PaneHeaderView: View {
                 .fill(Color.gray.opacity(0.3))
                 .frame(height: 1)
         }
-        .onDrag { NSItemProvider(object: "tesara-pane:\(paneID.uuidString)" as NSString) }
+        .onDrag {
+            dragState.dragStarted(sourceID: paneID)
+            return NSItemProvider(object: "tesara-pane:\(paneID.uuidString)" as NSString)
+        }
     }
 }
 

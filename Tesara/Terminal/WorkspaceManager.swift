@@ -325,6 +325,12 @@ final class WorkspaceManager: ObservableObject {
         refreshWorkspaceMetadata()
     }
 
+    func restoreRootPane(_ rootPane: PaneNode) {
+        guard let tabIndex = tabs.firstIndex(where: { $0.id == activeTabID }) else { return }
+        tabs[tabIndex].rootPane = rootPane
+        refreshWorkspaceMetadata()
+    }
+
     func updatePaneRatio(splitID: UUID, ratio: CGFloat) {
         guard let tabIndex = tabs.firstIndex(where: { $0.id == activeTabID }) else { return }
         #if DEBUG

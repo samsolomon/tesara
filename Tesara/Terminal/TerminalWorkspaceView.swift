@@ -6,6 +6,7 @@ struct TerminalWorkspaceView: View {
     @EnvironmentObject private var blockStore: BlockStore
     @ObservedObject var manager: WorkspaceManager
 
+    @StateObject private var dragState = PaneDragState()
     @State private var showFileError = false
     @State private var showCloseConfirmation = false
     @State private var showStaleReload = false
@@ -87,9 +88,6 @@ struct TerminalWorkspaceView: View {
                     },
                     onClosePane: { paneID in
                         manager.closePane(id: paneID)
-                    },
-                    onSwapPane: { sourceID, targetID in
-                        manager.swapPanes(sourceID: sourceID, targetID: targetID)
                     }
                 )
                 .opacity(isActive ? 1 : 0)
@@ -97,6 +95,18 @@ struct TerminalWorkspaceView: View {
                 .onChange(of: isActive) { _, nowActive in
                     setOcclusion(for: tab.rootPane, occluded: !nowActive)
                 }
+            }
+        }
+        .environmentObject(dragState)
+        .onAppear {
+            dragState.swapHandler = { [weak manager] sourceID, targetID in
+                manager?.swapPanes(sourceID: sourceID, targetID: targetID)
+            }
+            dragState.snapshotProvider = { [weak manager] in
+                manager?.activeTab?.rootPane
+            }
+            dragState.restoreHandler = { [weak manager] rootPane in
+                manager?.restoreRootPane(rootPane)
             }
         }
     }
