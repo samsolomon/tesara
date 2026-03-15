@@ -50,6 +50,11 @@ final class EditorSession: ObservableObject, Identifiable {
 
     private(set) var syntaxHighlighter: SyntaxHighlighter?
 
+    func setSyntaxHighlighter(_ highlighter: SyntaxHighlighter) {
+        syntaxHighlighter = highlighter
+        highlighter.fullTokenize(storage: storage)
+    }
+
     private func documentDidChange() {
         syntaxHighlighter?.fullTokenize(storage: storage)
         objectWillChange.send()

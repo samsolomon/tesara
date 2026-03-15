@@ -23,6 +23,7 @@ final class InputBarState: ObservableObject {
     func createView(theme: TerminalTheme, fontFamily: String, fontSize: Double, cursorConfig: EditorLayoutEngine.CursorConfig? = nil, cursorBlink: Bool = true) {
         guard editorView == nil else { return }
         editorSession.wordWrapEnabled = true
+        editorSession.setSyntaxHighlighter(SyntaxHighlighter(tokenizer: ShellTokenizer()))
         editorSession.createView(theme: theme, fontFamily: fontFamily, fontSize: fontSize, cursorConfig: cursorConfig, cursorBlink: cursorBlink)
         if let view = editorSession.editorView as? EditorView {
             view.delegate = keyHandler

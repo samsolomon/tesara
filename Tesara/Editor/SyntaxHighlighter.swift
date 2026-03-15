@@ -43,6 +43,10 @@ final class SyntaxHighlighter {
         self.tokenizer = Self.tokenizerForExtension(fileExtension)
     }
 
+    init(tokenizer: SyntaxTokenizer) {
+        self.tokenizer = tokenizer
+    }
+
     var isActive: Bool { tokenizer != nil }
 
     func tokens(forLine lineIndex: Int) -> [SyntaxToken]? {
@@ -136,6 +140,8 @@ final class SyntaxHighlighter {
             return CLikeTokenizer(config: .java)
         case "json":
             return JSONTokenizer()
+        case "sh", "bash", "zsh":
+            return ShellTokenizer()
         default:
             return nil
         }
