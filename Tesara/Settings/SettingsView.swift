@@ -545,24 +545,30 @@ private struct UpdatesPrivacySettingsPane: View {
 
     var body: some View {
         Form {
-            settingRow("Check for updates automatically", description: "Periodically checks for new versions using Sparkle.") {
-                Toggle("", isOn: $settings.updateChecksEnabled)
-                    .labelsHidden()
-            }
+            Section {
+                settingRow("Check for updates automatically", description: "Periodically checks for new versions using Sparkle.") {
+                    Toggle("", isOn: $settings.updateChecksEnabled)
+                        .labelsHidden()
+                }
 
-            CheckForUpdatesView(updater: updater)
-
-            settingRow("Capture command history locally", description: "Stores executed commands on this Mac for the history panel.") {
-                Toggle("", isOn: $settings.historyCaptureEnabled)
-                    .labelsHidden()
-            }
-
-            settingRow("Enable local logging", description: "Writes diagnostic logs to disk for troubleshooting.") {
-                Toggle("", isOn: $settings.localLoggingEnabled)
-                    .labelsHidden()
+                settingRow("Version", description: versionString) {
+                    CheckForUpdatesView(updater: updater)
+                }
+            } header: {
+                Text("Updates")
             }
 
             Section {
+                settingRow("Capture command history locally", description: "Stores executed commands on this Mac for the history panel.") {
+                    Toggle("", isOn: $settings.historyCaptureEnabled)
+                        .labelsHidden()
+                }
+
+                settingRow("Enable local logging", description: "Writes diagnostic logs to disk for troubleshooting.") {
+                    Toggle("", isOn: $settings.localLoggingEnabled)
+                        .labelsHidden()
+                }
+
                 Button("Clear history", role: .destructive) {
                     blockStore.clearHistory()
                 }
@@ -571,7 +577,7 @@ private struct UpdatesPrivacySettingsPane: View {
                     LocalLogStore.shared.clearLogs()
                 }
             } header: {
-                Text("Local Data")
+                Text("Local data")
             } footer: {
                 Text("Turning off history capture stops new commands from being stored. Existing history remains until you clear it. Tesara writes its own local diagnostics to \(LocalLogStore.shared.displayPath) when logging is enabled.")
             }
@@ -580,10 +586,16 @@ private struct UpdatesPrivacySettingsPane: View {
                 Text("Tesara should make no network requests except Sparkle update checks and update downloads, and those remain user-controllable.")
                 Text("Crash reporting stays disabled by default. Local logs stay on this Mac and are never uploaded.")
             } header: {
-                Text("Network Policy")
+                Text("Network policy")
             }
         }
         .formStyle(.grouped)
+    }
+
+    private var versionString: String {
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
+        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? ""
+        return "\(version) (\(build))"
     }
 }
 
