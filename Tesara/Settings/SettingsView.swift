@@ -349,10 +349,13 @@ private struct TerminalSettingsPane: View {
     var body: some View {
         Form {
             Section("Startup") {
-                settingRow("Shell path", description: "The shell to launch in new terminal sessions.") {
-                    TextField("", text: $settings.shellPath)
-                        .labelsHidden()
-                        .multilineTextAlignment(.trailing)
+                settingRow("Shell", description: "The shell to launch in new terminal sessions.") {
+                    Picker("", selection: $settings.shellPath) {
+                        ForEach(availableShells, id: \.self) { shell in
+                            Text(shell).tag(shell)
+                        }
+                    }
+                    .labelsHidden()
                 }
 
                 settingRow("Working directory", description: "The starting directory for new terminal sessions.") {
@@ -379,9 +382,12 @@ private struct TerminalSettingsPane: View {
 
             Section("Scrollback") {
                 settingRow("Scrollback lines", description: "Maximum number of lines kept in the scrollback buffer.") {
-                    TextField("", value: $settings.scrollbackLines, format: .number)
-                        .frame(width: 80)
-                        .multilineTextAlignment(.trailing)
+                    Picker("", selection: $settings.scrollbackLines) {
+                        ForEach(scrollbackPresets, id: \.self) { value in
+                            Text(value.formatted()).tag(value)
+                        }
+                    }
+                    .labelsHidden()
                 }
             }
 
@@ -437,6 +443,26 @@ private struct TerminalSettingsPane: View {
             }
         }
         .formStyle(.grouped)
+    }
+
+    private var availableShells: [String] {
+        let etcShells = (try? String(contentsOfFile: "/etc/shells", encoding: .utf8))?
+            .components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty && !$0.hasPrefix("#") } ?? ["/bin/zsh"]
+
+        if !etcShells.contains(settings.shellPath) {
+            return etcShells + [settings.shellPath]
+        }
+        return etcShells
+    }
+
+    private var scrollbackPresets: [Int] {
+        let presets = [500, 1_000, 2_000, 5_000, 10_000, 25_000, 50_000, 100_000]
+        if !presets.contains(settings.scrollbackLines) {
+            return (presets + [settings.scrollbackLines]).sorted()
+        }
+        return presets
     }
 }
 
