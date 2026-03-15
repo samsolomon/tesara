@@ -18,8 +18,7 @@ struct TerminalWorkspaceView: View {
                     manager.newTab(
                         shellPath: settingsStore.settings.shellPath,
                         workingDirectory: settingsStore.settings.defaultWorkingDirectory,
-                        blockStore: blockStore,
-                        inputBarEnabled: settingsStore.settings.inputBarEnabled
+                        blockStore: blockStore
                     )
                 }
             }

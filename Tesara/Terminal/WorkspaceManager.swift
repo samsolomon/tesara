@@ -69,7 +69,7 @@ final class WorkspaceManager: ObservableObject {
         case closeTab(UUID, remainingEditorSessionIDs: [UUID])
     }
 
-    func newTab(shellPath: String, workingDirectory: URL, blockStore: BlockStore, inputBarEnabled: Bool = false) {
+    func newTab(shellPath: String, workingDirectory: URL, blockStore: BlockStore) {
         let session = sessionFactory()
         session.configure(blockStore: blockStore)
         let paneID = UUID()
@@ -77,7 +77,8 @@ final class WorkspaceManager: ObservableObject {
         tabs.append(tab)
         activeTabID = tab.id
         activePaneID = paneID
-        session.start(shellPath: shellPath, workingDirectory: workingDirectory, bottomAlign: inputBarEnabled)
+        let bottomAlign = settingsStore?.settings.inputBarEnabled ?? false
+        session.start(shellPath: shellPath, workingDirectory: workingDirectory, bottomAlign: bottomAlign)
         refreshWorkspaceMetadata()
     }
 
@@ -226,7 +227,7 @@ final class WorkspaceManager: ObservableObject {
         )
     }
 
-    private func performSplit(tabIndex: Int, paneID: UUID, direction: PaneNode.SplitDirection, position: PaneNode.PanePosition, shellPath: String, workingDirectory: URL, blockStore: BlockStore, inputBarEnabled: Bool = false) {
+    private func performSplit(tabIndex: Int, paneID: UUID, direction: PaneNode.SplitDirection, position: PaneNode.PanePosition, shellPath: String, workingDirectory: URL, blockStore: BlockStore) {
         let newSession = sessionFactory()
         newSession.configure(blockStore: blockStore)
         let newPaneID = UUID()
@@ -240,7 +241,8 @@ final class WorkspaceManager: ObservableObject {
         )
         tabs[tabIndex].selectedPaneID = newPaneID
         activePaneID = newPaneID
-        newSession.start(shellPath: shellPath, workingDirectory: workingDirectory, bottomAlign: inputBarEnabled)
+        let bottomAlign = settingsStore?.settings.inputBarEnabled ?? false
+        newSession.start(shellPath: shellPath, workingDirectory: workingDirectory, bottomAlign: bottomAlign)
         refreshWorkspaceMetadata()
     }
 

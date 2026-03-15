@@ -183,9 +183,13 @@ class GhosttySurfaceView: NSView, NSTextInputClient {
         ghostty_surface_set_focus(surface, isFocused)
     }
 
+    private var cursorHidden = false
+
     /// Force-hide or show the terminal cursor.
     /// Used by the input bar to suppress the hollow outline cursor when unfocused.
     func setTerminalCursorHidden(_ hidden: Bool) {
+        guard cursorHidden != hidden else { return }
+        cursorHidden = hidden
         guard let surface else { return }
         ghostty_surface_set_cursor_hidden(surface, hidden)
     }
