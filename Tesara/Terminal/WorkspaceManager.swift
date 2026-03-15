@@ -233,8 +233,8 @@ final class WorkspaceManager: ObservableObject {
         let initialSize: NSSize? = tabs[tabIndex].rootPane
             .findSession(forPaneID: paneID)?.surfaceView.map { view in
                 switch direction {
-                case .horizontal: NSSize(width: view.contentSize.width, height: view.contentSize.height / 2)
-                case .vertical: NSSize(width: view.contentSize.width / 2, height: view.contentSize.height)
+                case .horizontal: NSSize(width: view.contentSize.width / 2, height: view.contentSize.height)
+                case .vertical: NSSize(width: view.contentSize.width, height: view.contentSize.height / 2)
                 }
             }
 

@@ -163,7 +163,7 @@ private struct TerminalPaneLeafView: View {
     let onSelectPane: (UUID) -> Void
 
     private var showInputBar: Bool {
-        inputBarEnabled && session.inputBarState?.editorView != nil
+        inputBarEnabled && !session.isAlternateScreen && session.inputBarState?.editorView != nil
     }
 
     @ViewBuilder
@@ -226,14 +226,15 @@ private struct TerminalPaneLeafView: View {
 
     private func syncInputBarPresentation(session: TerminalSession, surfaceView: GhosttySurfaceView) {
         guard isActive else {
-            session.inputBarState?.editorView?.pauseDisplayLink()
             session.inputBarState?.editorView?.focusDidChange(false)
+            session.inputBarState?.editorView?.renderOneFrame()
+            session.inputBarState?.editorView?.pauseDisplayLink()
             surfaceView.keyboardFocusDisabled = false
             surfaceView.focusDidChange(false)
             return
         }
 
-        if inputBarEnabled {
+        if inputBarEnabled && !session.isAlternateScreen {
             // Ensure the input bar editor exists and always owns keyboard focus
             let s = settingsStore.settings
             let cursorCfg = s.cursorStyle.editorCursorConfig(color: hexToColorU8(settingsStore.activeTheme.cursor))
@@ -303,6 +304,9 @@ private struct TerminalPaneLeafView: View {
                     syncInputBarPresentation(session: session, surfaceView: surfaceView)
                 }
                 .onChange(of: inputBarEnabled) { _, _ in
+                    syncInputBarPresentation(session: session, surfaceView: surfaceView)
+                }
+                .onChange(of: session.isAlternateScreen) { _, _ in
                     syncInputBarPresentation(session: session, surfaceView: surfaceView)
                 }
             } else {

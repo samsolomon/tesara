@@ -218,6 +218,11 @@ class EditorView: NSView, NSTextInputClient {
         needsRender = true
     }
 
+    func renderOneFrame() {
+        needsRender = true
+        renderFrame()
+    }
+
     // MARK: - Cursor Blink
 
     private func startCursorBlink() {
