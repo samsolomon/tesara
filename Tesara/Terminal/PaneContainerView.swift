@@ -359,7 +359,6 @@ private struct TerminalPaneLeafView: View {
                 session.inputBarState?.editorView?.pauseDisplayLink()
             }
             surfaceView.keyboardFocusDisabled = true
-            surfaceView.setTerminalCursorHidden(true)
             focusInputBar(session: session, surfaceView: surfaceView)
         } else {
             // No input bar: terminal owns keyboard focus
@@ -385,6 +384,8 @@ private struct TerminalPaneLeafView: View {
                     // may already be false — call the Ghostty API directly.
                     surfaceView.setGhosttyFocus(false)
                     if window.firstResponder === currentEditorView || window.makeFirstResponder(currentEditorView) {
+                        surfaceView.setTerminalCursorHidden(true)
+                        currentEditorView.resumeDisplayLink()
                         currentEditorView.focusDidChange(true)
                         return
                     }
@@ -395,6 +396,12 @@ private struct TerminalPaneLeafView: View {
                 editorView = session.inputBarState?.editorView
             }
 
+            // All retries exhausted — restore the terminal to a usable state.
+            surfaceView.keyboardFocusDisabled = false
+            if let window = surfaceView.window {
+                window.makeFirstResponder(surfaceView)
+                surfaceView.focusDidChange(true)
+            }
             session.inputBarState?.editorView?.focusDidChange(false)
         }
     }
