@@ -175,8 +175,7 @@ private struct SettingsDetailContainer<Content: View>: View {
     var body: some View {
         content
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .padding(.horizontal, 24)
-            .padding(.vertical, 20)
+            .contentMargins(.top, 38, for: .scrollContent)
             .background(Color(nsColor: .windowBackgroundColor))
     }
 }
