@@ -16,6 +16,9 @@ final class GlyphCache {
         let region: GlyphAtlas.Region
         let bearingX: Int16
         let bearingY: Int16
+        /// Sub-pixel baseline correction: Float(bearingY) − exact bearing.
+        /// Add to screenPos.y so the shader's integer subtraction lands on the true baseline.
+        let baselineOffset: Float
         let advance: Float
         let isPlaceholder: Bool
         let isColor: Bool
@@ -68,6 +71,7 @@ final class GlyphCache {
                 region: GlyphAtlas.Region(x: 0, y: 0, width: 0, height: 0),
                 bearingX: 0,
                 bearingY: 0,
+                baselineOffset: 0,
                 advance: Float(advance.width),
                 isPlaceholder: false,
                 isColor: false
@@ -89,6 +93,7 @@ final class GlyphCache {
                 region: GlyphAtlas.Region(x: 0, y: 0, width: 0, height: 0),
                 bearingX: 0,
                 bearingY: 0,
+                baselineOffset: 0,
                 advance: Float(advance.width),
                 isPlaceholder: false,
                 isColor: false
@@ -111,10 +116,16 @@ final class GlyphCache {
 
         monoAtlas.write(data: bitmapData, to: region)
 
+        // Exact bearing: distance from baseline to top of bitmap = bitmapHeight − drawY
+        let drawY = -boundingRect.origin.y + CGFloat(padding)
+        let exactBearingY = Float(CGFloat(height) - drawY)
+        let bearingYInt = Int16(ceil(boundingRect.origin.y + boundingRect.height)) + Int16(padding)
+
         let cached = CachedGlyph(
             region: region,
             bearingX: Int16(floor(boundingRect.origin.x)) - Int16(padding),
-            bearingY: Int16(ceil(boundingRect.origin.y + boundingRect.height)) + Int16(padding),
+            bearingY: bearingYInt,
+            baselineOffset: Float(bearingYInt) - exactBearingY,
             advance: Float(advance.width),
             isPlaceholder: false,
             isColor: false
@@ -173,6 +184,7 @@ final class GlyphCache {
                 region: GlyphAtlas.Region(x: 0, y: 0, width: 0, height: 0),
                 bearingX: 0,
                 bearingY: 0,
+                baselineOffset: 0,
                 advance: Float(advance.width),
                 isPlaceholder: true,
                 isColor: true
@@ -209,10 +221,15 @@ final class GlyphCache {
 
         colorAtlas.write(data: pixelData, to: region)
 
+        let colorDrawY = -boundingRect.origin.y + CGFloat(padding)
+        let colorExactBearingY = Float(CGFloat(height) - colorDrawY)
+        let colorBearingYInt = Int16(ceil(boundingRect.origin.y + boundingRect.height)) + Int16(padding)
+
         return CachedGlyph(
             region: region,
             bearingX: Int16(floor(boundingRect.origin.x)) - Int16(padding),
-            bearingY: Int16(ceil(boundingRect.origin.y + boundingRect.height)) + Int16(padding),
+            bearingY: colorBearingYInt,
+            baselineOffset: Float(colorBearingYInt) - colorExactBearingY,
             advance: Float(advance.width),
             isPlaceholder: false,
             isColor: true

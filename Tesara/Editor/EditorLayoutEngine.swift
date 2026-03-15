@@ -312,7 +312,7 @@ final class EditorLayoutEngine {
 
         for layoutLine in layoutLines {
             let runs = CTLineGetGlyphRuns(layoutLine.ctLine) as! [CTRun]
-            let baselineY = layoutLine.origin.y + layoutLine.ascent
+            let baselineY = round(layoutLine.origin.y + layoutLine.ascent)
 
             // Get syntax tokens for this storage line
             let tokens = syntaxTokens?[layoutLine.lineIndex]
@@ -333,7 +333,7 @@ final class EditorLayoutEngine {
                     guard cached.region.width > 0, cached.region.height > 0 else { continue }
 
                     let screenX = Float(positions[j].x * scale)
-                    let screenY = Float(baselineY)
+                    let screenY = Float(baselineY) + cached.baselineOffset
 
                     // Determine color from syntax tokens
                     var glyphColor = colors.foreground
@@ -423,7 +423,7 @@ final class EditorLayoutEngine {
 
         let rasterFont = scale > 1 ? scaledRasterFont(scale: scale) : font
         let runs = CTLineGetGlyphRuns(ghostLine) as! [CTRun]
-        let baselineY = cursorLayoutLine.origin.y + cursorLayoutLine.ascent
+        let baselineY = round(cursorLayoutLine.origin.y + cursorLayoutLine.ascent)
 
         for run in runs {
             let glyphCount = CTRunGetGlyphCount(run)
@@ -439,7 +439,7 @@ final class EditorLayoutEngine {
                 guard cached.region.width > 0, cached.region.height > 0 else { continue }
 
                 let screenX = Float(cursorX) + Float(positions[j].x * scale)
-                let screenY = Float(baselineY)
+                let screenY = Float(baselineY) + cached.baselineOffset
 
                 let instance = EditorRenderer.GlyphInstance(
                     atlasPos: SIMD2<UInt16>(cached.region.x, cached.region.y),
