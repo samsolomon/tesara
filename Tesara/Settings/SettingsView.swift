@@ -173,6 +173,8 @@ private struct SettingsDetailContainer<Content: View>: View {
     let title: String
     let content: Content
 
+    @State private var isScrolled = false
+
     init(title: String, @ViewBuilder content: () -> Content) {
         self.title = title
         self.content = content()
@@ -181,14 +183,26 @@ private struct SettingsDetailContainer<Content: View>: View {
     var body: some View {
         content
             .contentMargins(.top, Self.topInset, for: .scrollContent)
+            .onScrollGeometryChange(for: Bool.self) { geo in
+                geo.contentOffset.y > 1
+            } action: { _, newValue in
+                isScrolled = newValue
+            }
             .background(Color(nsColor: .windowBackgroundColor))
             .overlay(alignment: .top) {
-                Text(title)
-                    .font(.headline)
-                    .frame(height: Self.titlebarHeight)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.leading, 20)
-                    .allowsHitTesting(false)
+                VStack(spacing: 0) {
+                    Text(title)
+                        .font(.system(size: 15, weight: .semibold))
+                        .frame(height: Self.titlebarHeight)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.leading, 20)
+
+                    Divider()
+                        .opacity(isScrolled ? 1 : 0)
+                        .animation(.easeInOut(duration: 0.15), value: isScrolled)
+                }
+                .background(Color(nsColor: .windowBackgroundColor))
+                .allowsHitTesting(false)
             }
     }
 }
