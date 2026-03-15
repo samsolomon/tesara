@@ -7,7 +7,7 @@ struct SettingsView: View {
     @EnvironmentObject private var blockStore: BlockStore
     let updater: SPUUpdater
 
-    @State private var selectedPane: SettingsPane? = .appearance
+    @SceneStorage("settings.selectedPane") private var selectedPaneRaw: String = SettingsPane.appearance.rawValue
     @State private var importedThemeDocument: ThemeDocument?
     @State private var isImporterPresented = false
     @State private var isExporterPresented = false
@@ -16,7 +16,7 @@ struct SettingsView: View {
 
     var body: some View {
         NavigationSplitView(columnVisibility: .constant(.all)) {
-            List(SettingsPane.allCases, selection: $selectedPane) { pane in
+            List(SettingsPane.allCases, selection: selectedPaneBinding) { pane in
                 Label(pane.title, systemImage: pane.systemImage)
                     .tag(pane)
             }
@@ -66,8 +66,15 @@ struct SettingsView: View {
         })
     }
 
+    private var selectedPaneBinding: Binding<SettingsPane?> {
+        Binding(
+            get: { SettingsPane(rawValue: selectedPaneRaw) },
+            set: { selectedPaneRaw = ($0 ?? .appearance).rawValue }
+        )
+    }
+
     private var activePane: SettingsPane {
-        selectedPane ?? .appearance
+        SettingsPane(rawValue: selectedPaneRaw) ?? .appearance
     }
 
     @ViewBuilder
@@ -216,13 +223,6 @@ private struct SettingsWindowConfigurator: NSViewRepresentable {
         window.titleVisibility = .hidden
         window.titlebarSeparatorStyle = .none
         window.styleMask.insert(.fullSizeContentView)
-        window.styleMask.insert(.miniaturizable)
-        window.styleMask.insert(.resizable)
-
-        // Enable all three traffic light buttons (Settings scene disables yellow/green)
-        window.standardWindowButton(.miniaturizeButton)?.isEnabled = true
-        window.standardWindowButton(.zoomButton)?.isEnabled = true
-
     }
 }
 

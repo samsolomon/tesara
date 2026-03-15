@@ -6,7 +6,7 @@ struct MainWindowView: View {
     @EnvironmentObject private var blockStore: BlockStore
     @EnvironmentObject private var workspaceManager: WorkspaceManager
     @EnvironmentObject private var settingsOpenCoordinator: SettingsOpenCoordinator
-    @Environment(\.openSettings) private var openSettings
+    @Environment(\.openWindow) private var openWindow
 
     private var showTabBar: Bool {
         workspaceManager.tabs.count > 1
@@ -42,7 +42,7 @@ struct MainWindowView: View {
                     .frame(width: 0, height: 0)
                     .onAppear {
                         settingsOpenCoordinator.setAction {
-                            openSettings()
+                            openWindow(id: "settings")
                         }
                     }
             }
