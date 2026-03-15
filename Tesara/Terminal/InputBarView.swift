@@ -90,7 +90,7 @@ final class InputBarState: ObservableObject {
         }
 
         if let match = suggestionEngine.suggest(prefix: text) {
-            ghostSuffix = String(match.dropFirst(text.count))
+            ghostSuffix = String(match.dropFirst(text.count)) + " →"
         } else {
             ghostSuffix = nil
         }
@@ -197,10 +197,12 @@ final class InputBarKeyHandler: EditorViewDelegate {
                let ghostSuffix = state.ghostSuffix,
                !ghostSuffix.isEmpty,
                session.isCursorAtDocumentEnd {
+                let suggestion = String(ghostSuffix.dropLast(2)) // strip " →"
+                guard !suggestion.isEmpty else { return false }
                 if mods.contains(.option) {
-                    session.insertText(firstWord(of: ghostSuffix))
+                    session.insertText(firstWord(of: suggestion))
                 } else if mods.isDisjoint(with: [.shift, .control, .option, .command]) {
-                    session.insertText(ghostSuffix)
+                    session.insertText(suggestion)
                 } else {
                     return false
                 }
