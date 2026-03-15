@@ -355,13 +355,15 @@ private struct TerminalSettingsPane: View {
                         .multilineTextAlignment(.trailing)
                 }
 
-                LabeledContent("Default working directory") {
-                    Text(settings.defaultWorkingDirectory.path)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
+                settingRow("Working directory", description: "The starting directory for new terminal sessions.") {
+                    HStack {
+                        Text(settings.defaultWorkingDirectory.path)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                            .foregroundStyle(.secondary)
+                        Button("Choose…", action: onChooseDirectory)
+                    }
                 }
-
-                Button("Choose directory", action: onChooseDirectory)
             }
 
             Section("macOS") {
