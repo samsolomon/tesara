@@ -62,38 +62,16 @@ private struct ThemePickerPopover: View {
     @State private var hoveredThemeID: String?
     @State private var previewTask: Task<Void, Never>?
 
-    private var builtInThemes: [TerminalTheme] {
-        themes.filter { !$0.id.hasPrefix("ghostty-") && !importedIDs.contains($0.id) }
-    }
+    // Cached theme categories — stable for the popover's lifetime
+    @State private var cachedBuiltIn: [TerminalTheme] = []
+    @State private var cachedGhostty: [TerminalTheme] = []
+    @State private var cachedImported: [TerminalTheme] = []
 
-    private var ghosttyThemes: [TerminalTheme] {
-        themes.filter { $0.id.hasPrefix("ghostty-") }
-    }
-
-    private var importedThemes: [TerminalTheme] {
-        themes.filter { importedIDs.contains($0.id) }
-    }
-
-    private var importedIDs: Set<String> {
-        let builtInIDs = Set(BuiltInTheme.allCases.map(\.id))
-        return Set(themes.filter { !$0.id.hasPrefix("ghostty-") && !builtInIDs.contains($0.id) }.map(\.id))
-    }
-
-    private var filteredBuiltIn: [TerminalTheme] {
-        filterThemes(builtInThemes)
-    }
-
-    private var filteredGhostty: [TerminalTheme] {
-        filterThemes(ghosttyThemes)
-    }
-
-    private var filteredImported: [TerminalTheme] {
-        filterThemes(importedThemes)
-    }
-
-    private var allFilteredIDs: [String] {
-        filteredBuiltIn.map(\.id) + filteredGhostty.map(\.id) + filteredImported.map(\.id)
-    }
+    // Cached filtered results — only recomputed on search text change
+    @State private var filteredBuiltIn: [TerminalTheme] = []
+    @State private var filteredGhostty: [TerminalTheme] = []
+    @State private var filteredImported: [TerminalTheme] = []
+    @State private var allFilteredIDs: [String] = []
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -114,24 +92,18 @@ private struct ThemePickerPopover: View {
                 ScrollViewReader { proxy in
                     ScrollView {
                         LazyVStack(alignment: .leading, spacing: 4) {
-                            if !filteredBuiltIn.isEmpty {
-                                sectionHeader("Tesara")
-                                ForEach(filteredBuiltIn) { theme in
-                                    themeRow(for: theme).id(theme.id)
-                                }
-                            }
-
-                            if !filteredGhostty.isEmpty {
-                                sectionHeader("Community")
-                                ForEach(filteredGhostty) { theme in
-                                    themeRow(for: theme).id(theme.id)
-                                }
-                            }
-
-                            if !filteredImported.isEmpty {
-                                sectionHeader("Imported")
-                                ForEach(filteredImported) { theme in
-                                    themeRow(for: theme).id(theme.id)
+                            ForEach(themeSections, id: \.title) { section in
+                                sectionHeader(section.title)
+                                ForEach(section.themes) { theme in
+                                    ThemeRowView(
+                                        theme: theme,
+                                        isSelected: theme.id == selection,
+                                        isHighlighted: theme.id == highlightedThemeID,
+                                        isHovered: theme.id == hoveredThemeID,
+                                        onSelect: { commitTheme(theme.id) },
+                                        onHover: { handleHover(theme.id, hovering: $0) }
+                                    )
+                                    .id(theme.id)
                                 }
                             }
                         }
@@ -151,14 +123,63 @@ private struct ThemePickerPopover: View {
         .padding(16)
         .frame(width: 360, height: 480)
         .onAppear {
+            categorizeThemes()
+            refilter()
             highlightedThemeID = reconciledHighlight(current: nil)
         }
-        .onChange(of: allFilteredIDs) { _, _ in
+        .onChange(of: searchText) { _, _ in
+            refilter()
             highlightedThemeID = reconciledHighlight(current: highlightedThemeID)
         }
         .onChange(of: highlightedThemeID) { _, newID in
             schedulePreview(for: newID)
         }
+        .onDisappear {
+            previewTask?.cancel()
+        }
+    }
+
+    private var themeSections: [(title: String, themes: [TerminalTheme])] {
+        [("Tesara", filteredBuiltIn), ("Community", filteredGhostty), ("Imported", filteredImported)]
+            .filter { !$0.themes.isEmpty }
+    }
+
+    // MARK: - Theme categorization (computed once)
+
+    private func categorizeThemes() {
+        let builtInIDs = Set(BuiltInTheme.allCases.map(\.id))
+        var builtIn: [TerminalTheme] = []
+        var ghostty: [TerminalTheme] = []
+        var imported: [TerminalTheme] = []
+
+        for theme in themes {
+            if theme.id.hasPrefix("ghostty-") {
+                ghostty.append(theme)
+            } else if builtInIDs.contains(theme.id) {
+                builtIn.append(theme)
+            } else {
+                imported.append(theme)
+            }
+        }
+
+        cachedBuiltIn = builtIn
+        cachedGhostty = ghostty
+        cachedImported = imported
+    }
+
+    // MARK: - Filtering (recomputed only on search text change)
+
+    private func refilter() {
+        let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        filteredBuiltIn = filterThemes(cachedBuiltIn, query: trimmed)
+        filteredGhostty = filterThemes(cachedGhostty, query: trimmed)
+        filteredImported = filterThemes(cachedImported, query: trimmed)
+        allFilteredIDs = filteredBuiltIn.map(\.id) + filteredGhostty.map(\.id) + filteredImported.map(\.id)
+    }
+
+    private func filterThemes(_ list: [TerminalTheme], query: String) -> [TerminalTheme] {
+        guard !query.isEmpty else { return list }
+        return list.filter { $0.name.localizedCaseInsensitiveContains(query) }
     }
 
     private func sectionHeader(_ title: String) -> some View {
@@ -170,74 +191,19 @@ private struct ThemePickerPopover: View {
             .padding(.bottom, 2)
     }
 
-    private func themeRow(for theme: TerminalTheme) -> some View {
-        let isSelected = theme.id == selection
-        let isHovered = theme.id == hoveredThemeID
-        let isHighlighted = theme.id == highlightedThemeID
-
-        return Button {
-            selection = theme.id
-            settingsStore.previewThemeID = nil
-            dismiss()
-        } label: {
-            HStack(spacing: 10) {
-                colorSwatches(for: theme)
-
-                Text(theme.name)
-                    .fontWeight(isSelected ? .semibold : .regular)
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-
-                Spacer(minLength: 8)
-
-                if isSelected {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(Color.accentColor)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
-            .background {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(backgroundColor(isSelected: isSelected, isHighlighted: isHighlighted, isHovered: isHovered))
-            }
-            .overlay {
-                RoundedRectangle(cornerRadius: 8)
-                    .strokeBorder(borderColor(isSelected: isSelected, isHovered: isHovered), lineWidth: borderWidth(isSelected: isSelected, isHovered: isHovered))
-            }
-        }
-        .buttonStyle(.plain)
-        .contentShape(Rectangle())
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .onHover { hovering in
-            if hovering {
-                hoveredThemeID = theme.id
-                highlightedThemeID = theme.id
-            } else if hoveredThemeID == theme.id {
-                hoveredThemeID = nil
-            }
-        }
+    private func commitTheme(_ id: String) {
+        selection = id
+        settingsStore.previewThemeID = nil
+        dismiss()
     }
 
-    private func colorSwatches(for theme: TerminalTheme) -> some View {
-        HStack(spacing: 3) {
-            swatchCircle(hex: theme.background)
-            swatchCircle(hex: theme.foreground)
-            swatchCircle(hex: theme.red)
-            swatchCircle(hex: theme.green)
-            swatchCircle(hex: theme.blue)
+    private func handleHover(_ id: String, hovering: Bool) {
+        if hovering {
+            hoveredThemeID = id
+            highlightedThemeID = id
+        } else if hoveredThemeID == id {
+            hoveredThemeID = nil
         }
-    }
-
-    private func swatchCircle(hex: String) -> some View {
-        Circle()
-            .fill(Color(hex: hex) ?? .gray)
-            .frame(width: 12, height: 12)
-            .overlay {
-                Circle()
-                    .strokeBorder(Color.primary.opacity(0.15), lineWidth: 0.5)
-            }
     }
 
     private func handleSearchCommand(_ command: ThemeSearchField.Command) {
@@ -251,9 +217,7 @@ private struct ThemePickerPopover: View {
                 NSSound.beep()
                 return
             }
-            selection = id
-            settingsStore.previewThemeID = nil
-            dismiss()
+            commitTheme(id)
         case .cancel:
             settingsStore.previewThemeID = nil
             dismiss()
@@ -308,10 +272,85 @@ private struct ThemePickerPopover: View {
             }
         }
     }
+}
 
-    // MARK: - Styling
+// MARK: - ThemeRowView (Equatable for skip-rendering optimization)
 
-    private func backgroundColor(isSelected: Bool, isHighlighted: Bool, isHovered: Bool) -> Color {
+private struct ThemeRowView: View, Equatable {
+    let theme: TerminalTheme
+    let isSelected: Bool
+    let isHighlighted: Bool
+    let isHovered: Bool
+    let onSelect: () -> Void
+    let onHover: (Bool) -> Void
+
+    static func == (lhs: ThemeRowView, rhs: ThemeRowView) -> Bool {
+        lhs.theme.id == rhs.theme.id
+            && lhs.isSelected == rhs.isSelected
+            && lhs.isHighlighted == rhs.isHighlighted
+            && lhs.isHovered == rhs.isHovered
+    }
+
+    var body: some View {
+        Button {
+            onSelect()
+        } label: {
+            HStack(spacing: 10) {
+                colorSwatches
+
+                Text(theme.name)
+                    .fontWeight(isSelected ? .semibold : .regular)
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+
+                Spacer(minLength: 8)
+
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(Color.accentColor)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .background {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(backgroundColor)
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: 8)
+                    .strokeBorder(borderColor, lineWidth: borderWidth)
+            }
+        }
+        .buttonStyle(.plain)
+        .contentShape(Rectangle())
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .onHover { hovering in
+            onHover(hovering)
+        }
+    }
+
+    private var colorSwatches: some View {
+        HStack(spacing: 3) {
+            swatchCircle(hex: theme.background)
+            swatchCircle(hex: theme.foreground)
+            swatchCircle(hex: theme.red)
+            swatchCircle(hex: theme.green)
+            swatchCircle(hex: theme.blue)
+        }
+    }
+
+    private func swatchCircle(hex: String) -> some View {
+        Circle()
+            .fill(Color(hex: hex) ?? .gray)
+            .frame(width: 12, height: 12)
+            .overlay {
+                Circle()
+                    .strokeBorder(Color.primary.opacity(0.15), lineWidth: 0.5)
+            }
+    }
+
+    private var backgroundColor: Color {
         if isSelected {
             return Color.accentColor.opacity(isHovered || isHighlighted ? 0.20 : 0.12)
         }
@@ -324,7 +363,7 @@ private struct ThemePickerPopover: View {
         return .clear
     }
 
-    private func borderColor(isSelected: Bool, isHovered: Bool) -> Color {
+    private var borderColor: Color {
         if isSelected {
             return Color.accentColor.opacity(0.45)
         }
@@ -334,16 +373,8 @@ private struct ThemePickerPopover: View {
         return .clear
     }
 
-    private func borderWidth(isSelected: Bool, isHovered: Bool) -> CGFloat {
+    private var borderWidth: CGFloat {
         (isSelected || isHovered) ? 1 : 0
-    }
-
-    // MARK: - Filtering
-
-    private func filterThemes(_ list: [TerminalTheme]) -> [TerminalTheme] {
-        let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return list }
-        return list.filter { $0.name.localizedCaseInsensitiveContains(trimmed) }
     }
 }
 
