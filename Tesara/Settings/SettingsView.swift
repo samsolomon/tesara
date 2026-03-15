@@ -337,7 +337,10 @@ private struct AppearanceSettingsPane: View {
                 Text("Window")
             }
 
-            SettingsFooter()
+            Section {
+            } footer: {
+                SettingsFooter()
+            }
         }
         .formStyle(.grouped)
     }
@@ -443,7 +446,10 @@ private struct TerminalSettingsPane: View {
                 .disabled(!settings.inputBarEnabled)
             }
 
-            SettingsFooter()
+            Section {
+            } footer: {
+                SettingsFooter()
+            }
         }
         .formStyle(.grouped)
     }
@@ -497,7 +503,10 @@ private struct KeyboardSettingsPane: View {
                 settingsStore.resetKeyBindings()
             }
 
-            SettingsFooter()
+            Section {
+            } footer: {
+                SettingsFooter()
+            }
         }
         .formStyle(.grouped)
     }
@@ -538,7 +547,10 @@ private struct WorkspaceSettingsPane: View {
                 .disabled(!settings.dimInactiveSplits)
             }
 
-            SettingsFooter()
+            Section {
+            } footer: {
+                SettingsFooter()
+            }
         }
         .formStyle(.grouped)
     }
@@ -606,7 +618,10 @@ private struct UpdatesPrivacySettingsPane: View {
                 Text("Network policy")
             }
 
-            SettingsFooter()
+            Section {
+            } footer: {
+                SettingsFooter()
+            }
         }
         .formStyle(.grouped)
         .confirmationDialog("Clear command history?", isPresented: $confirmingClearHistory, titleVisibility: .visible) {
@@ -634,6 +649,8 @@ private struct UpdatesPrivacySettingsPane: View {
 }
 
 private struct SettingsFooter: View {
+    @State private var isHovering = false
+
     private var version: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0.0"
     }
@@ -650,10 +667,17 @@ private struct SettingsFooter: View {
 
             Text("Tesara v\(version)")
 
-            Text("·")
+            Text("\u{00B7}")
 
-            Link("\u{00A9} \(year) Sam Solomon", destination: URL(string: "https://solomon.io/")!)
-                .foregroundStyle(.tertiary)
+            Button {
+                NSWorkspace.shared.open(URL(string: "https://solomon.io/")!)
+            } label: {
+                Text("\u{00A9} \(year) Sam Solomon")
+                    .underline(isHovering)
+                    .foregroundStyle(isHovering ? .secondary : .tertiary)
+            }
+            .buttonStyle(.plain)
+            .onHover { isHovering = $0 }
         }
         .font(.subheadline)
         .foregroundStyle(.tertiary)
