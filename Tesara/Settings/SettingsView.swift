@@ -349,7 +349,7 @@ private struct TerminalSettingsPane: View {
     var body: some View {
         Form {
             Section("Startup") {
-                settingRow("Shell", description: "The shell to launch in new terminal sessions.") {
+                settingRow("Shell", description: "The shell to launch in new terminal sessions. Custom shells can be set in the config file.") {
                     Picker("", selection: $settings.shellPath) {
                         ForEach(availableShells, id: \.self) { shell in
                             Text(shell).tag(shell)
