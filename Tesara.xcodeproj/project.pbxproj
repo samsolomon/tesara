@@ -15,6 +15,7 @@
 		17A1E6F4A360BF5C97590C6E /* PaneContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57E292C9A04F867FABB9662E /* PaneContainerView.swift */; };
 		18519D4339772CD5A30CCECA /* ConfigFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF1B9F8F03276266294D2F0B /* ConfigFile.swift */; };
 		1851A4083C58F1F7361DB04C /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17E46BFDCDCA182651723141 /* SettingsView.swift */; };
+		1851A408AAEE0001BBBBB001 /* ThemePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17E46BFDAAEE0001BBBBB001 /* ThemePicker.swift */; };
 		1A68BB74DD68235FD70B8CC8 /* EditorFileIOTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 701EC8B00AF61720A7DECCDE /* EditorFileIOTests.swift */; };
 		1CED6DD8299D1750E4C66631 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BA08886415B515EB410905D /* SettingsStore.swift */; };
 		1D208652A6CF443FFD84D919 /* BlockStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D89D726E46FBCEF09C9F3737 /* BlockStore.swift */; };
@@ -119,6 +120,7 @@
 		17224DA6FD3857B58A8F2C64 /* WorkspaceManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceManagerTests.swift; sourceTree = "<group>"; };
 		17813D398B505968462B467F /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		17E46BFDCDCA182651723141 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		17E46BFDAAEE0001BBBBB001 /* ThemePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemePicker.swift; sourceTree = "<group>"; };
 		184475D4AC3B8EEBA142F5C1 /* EditorLayoutEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorLayoutEngine.swift; sourceTree = "<group>"; };
 		194C23B007577944F607E3A3 /* CommandCaptureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandCaptureTests.swift; sourceTree = "<group>"; };
 		1C6234624E5534716267294D /* FixedPitchFontPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FixedPitchFontPicker.swift; sourceTree = "<group>"; };
@@ -289,6 +291,7 @@
 				15BAB1F3E9696D3A5AC6E4AB /* LocalLogStore.swift */,
 				4BA08886415B515EB410905D /* SettingsStore.swift */,
 				17E46BFDCDCA182651723141 /* SettingsView.swift */,
+				17E46BFDAAEE0001BBBBB001 /* ThemePicker.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -564,6 +567,7 @@
 				F450422C045AE78E7D5486FA /* SettingsOpenCoordinator.swift in Sources */,
 				1CED6DD8299D1750E4C66631 /* SettingsStore.swift in Sources */,
 				1851A4083C58F1F7361DB04C /* SettingsView.swift in Sources */,
+				1851A408AAEE0001BBBBB001 /* ThemePicker.swift in Sources */,
 				240E9E873F51A10E1909C148 /* SyntaxColorMap.swift in Sources */,
 				F75BBFA5351351FD98A4759A /* SyntaxHighlighter.swift in Sources */,
 				E9CC8D1BFE1AFC349433C4B4 /* TabBarView.swift in Sources */,

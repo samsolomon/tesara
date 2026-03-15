@@ -10,6 +10,7 @@ final class SettingsStore: ObservableObject {
         }
     }
 
+    @Published var previewThemeID: String?
     @Published var isDark: Bool = NSApp?.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
 
     let configDirectory: URL
@@ -76,15 +77,21 @@ final class SettingsStore: ObservableObject {
     }
 
     var activeTheme: TerminalTheme {
-        let id: String = switch settings.colorMode {
-        case .light: settings.lightThemeID
-        case .dark: settings.darkThemeID
-        case .system: isDark ? settings.darkThemeID : settings.lightThemeID
+        let id: String
+        if let previewThemeID {
+            id = previewThemeID
+        } else {
+            id = switch settings.colorMode {
+            case .light: settings.lightThemeID
+            case .dark: settings.darkThemeID
+            case .system: isDark ? settings.darkThemeID : settings.lightThemeID
+            }
         }
         return availableThemes.first { $0.id == id } ?? BuiltInTheme.tesaraDark.theme
     }
 
     struct GhosttyConfigInputs: Equatable {
+        let previewThemeID: String?
         let colorMode: ColorMode
         let lightThemeID: String
         let darkThemeID: String
@@ -106,6 +113,7 @@ final class SettingsStore: ObservableObject {
 
     var ghosttyConfigInputs: GhosttyConfigInputs {
         GhosttyConfigInputs(
+            previewThemeID: previewThemeID,
             colorMode: settings.colorMode,
             lightThemeID: settings.lightThemeID,
             darkThemeID: settings.darkThemeID,

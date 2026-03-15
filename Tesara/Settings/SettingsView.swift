@@ -78,6 +78,7 @@ struct SettingsView: View {
                 settings: $settingsStore.settings,
                 themes: settingsStore.availableThemes,
                 activeTheme: settingsStore.activeTheme,
+                settingsStore: settingsStore,
                 onImportTheme: { isImporterPresented = true },
                 onExportTheme: exportTheme
             )
@@ -236,51 +237,14 @@ private struct AppearanceSettingsPane: View {
     @Binding var settings: AppSettings
     let themes: [TerminalTheme]
     let activeTheme: TerminalTheme
+    @ObservedObject var settingsStore: SettingsStore
     let onImportTheme: () -> Void
     let onExportTheme: () -> Void
-
-    private var builtInThemes: [TerminalTheme] {
-        themes.filter { !$0.id.hasPrefix("ghostty-") && !importedIDs.contains($0.id) }
-    }
-
-    private var ghosttyThemes: [TerminalTheme] {
-        themes.filter { $0.id.hasPrefix("ghostty-") }
-    }
-
-    private var importedThemes: [TerminalTheme] {
-        themes.filter { importedIDs.contains($0.id) }
-    }
-
-    private var importedIDs: Set<String> {
-        Set(themes.filter { !$0.id.hasPrefix("ghostty-") && !BuiltInTheme.allCases.map(\.id).contains($0.id) }.map(\.id))
-    }
-
-    private var themePickerOptions: some View {
-        Group {
-            Section("Tesara") {
-                ForEach(builtInThemes) { theme in
-                    Text(theme.name).tag(theme.id)
-                }
-            }
-            Section("Community") {
-                ForEach(ghosttyThemes) { theme in
-                    Text(theme.name).tag(theme.id)
-                }
-            }
-            if !importedThemes.isEmpty {
-                Section("Imported") {
-                    ForEach(importedThemes) { theme in
-                        Text(theme.name).tag(theme.id)
-                    }
-                }
-            }
-        }
-    }
 
     var body: some View {
         Form {
             Section {
-                settingRow("Color Mode", description: "Use a fixed light or dark theme, or follow your system appearance.") {
+                settingRow("Color mode", description: "Use a fixed light or dark theme, or follow your system appearance.") {
                     Picker("", selection: $settings.colorMode) {
                         ForEach(ColorMode.allCases) { mode in
                             Text(mode.title).tag(mode)
@@ -291,18 +255,20 @@ private struct AppearanceSettingsPane: View {
                     .fixedSize()
                 }
 
-                settingRow("Light Theme", description: "Used when color mode is Light, or System in light appearance.") {
-                    Picker("", selection: $settings.lightThemeID) {
-                        themePickerOptions
-                    }
-                    .labelsHidden()
+                settingRow("Light theme", description: "Used when color mode is Light, or System in light appearance.") {
+                    ThemePicker(
+                        selection: $settings.lightThemeID,
+                        themes: themes,
+                        settingsStore: settingsStore
+                    )
                 }
 
-                settingRow("Dark Theme", description: "Used when color mode is Dark, or System in dark appearance.") {
-                    Picker("", selection: $settings.darkThemeID) {
-                        themePickerOptions
-                    }
-                    .labelsHidden()
+                settingRow("Dark theme", description: "Used when color mode is Dark, or System in dark appearance.") {
+                    ThemePicker(
+                        selection: $settings.darkThemeID,
+                        themes: themes,
+                        settingsStore: settingsStore
+                    )
                 }
 
                 settingRow("Import and export", description: "Import a JSON theme file or export the current theme.") {
