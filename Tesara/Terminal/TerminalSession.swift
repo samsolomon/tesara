@@ -19,6 +19,7 @@ final class TerminalSession: ObservableObject, Identifiable {
     @Published private(set) var shellTitle: String?
     @Published private(set) var surfaceView: GhosttySurfaceView?
     @Published private(set) var isAtPrompt = false
+    @Published private(set) var isAlternateScreen = false
 
     /// Published so prompt-driven presentation updates can react when the input
     /// bar is created or torn down outside the same render pass.
@@ -53,7 +54,7 @@ final class TerminalSession: ObservableObject, Identifiable {
 
     // MARK: - Start
 
-    func start(shellPath: String, workingDirectory: URL, bottomAlign: Bool = false) {
+    func start(shellPath: String, workingDirectory: URL, bottomAlign: Bool = false, initialSize: NSSize? = nil) {
         guard surfaceView == nil else { return }
 
         status = .starting
@@ -79,10 +80,16 @@ final class TerminalSession: ObservableObject, Identifiable {
         )
         temporaryURLs = config.temporaryURLs
 
-        let view = GhosttySurfaceView(app: app, config: config)
+        let view = GhosttySurfaceView(app: app, config: config, initialSize: initialSize)
         view.session = self
         view.registerWithApp()
         surfaceView = view
+
+        // Set the PTY size immediately so tput/LINES reflect the correct
+        // dimensions before the shell's first prompt fires.
+        if let initialSize {
+            view.sizeDidChange(initialSize)
+        }
 
         status = .running
     }
@@ -114,11 +121,22 @@ final class TerminalSession: ObservableObject, Identifiable {
         }
         surfaceView = nil
         isAtPrompt = false
+        isAlternateScreen = false
         teardownInputBar()
         cleanupTemporaryFiles()
 
         if status != .failed {
             status = .stopped
+        }
+    }
+
+    // MARK: - Alternate Screen
+
+    func checkAlternateScreen() {
+        guard let surface = surfaceView?.surface else { return }
+        let alt = ghostty_surface_is_alternate_screen(surface)
+        if alt != isAlternateScreen {
+            isAlternateScreen = alt
         }
     }
 
@@ -217,6 +235,7 @@ final class TerminalSession: ObservableObject, Identifiable {
     func handleChildExited(exitCode: UInt32) {
         surfaceView = nil
         isAtPrompt = false
+        isAlternateScreen = false
         teardownInputBar()
         cleanupTemporaryFiles()
         finalizeActiveCaptureIfNeeded(exitCode: Int(exitCode))

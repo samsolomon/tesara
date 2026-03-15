@@ -31,7 +31,7 @@ class GhosttySurfaceView: NSView, NSTextInputClient {
     private var eventMonitor: Any?
 
     // Stored content size for backing property changes
-    private var contentSize: CGSize = .zero
+    private(set) var contentSize: CGSize = .zero
 
     // Cached userdata pointer — stored at init time so deinit doesn't use Unmanaged on a deallocating object
     private var surfaceUserdata: UnsafeRawPointer?
@@ -40,8 +40,9 @@ class GhosttySurfaceView: NSView, NSTextInputClient {
 
     // MARK: - Init
 
-    init(app: ghostty_app_t, config: GhosttySurfaceConfig) {
-        super.init(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
+    init(app: ghostty_app_t, config: GhosttySurfaceConfig, initialSize: NSSize? = nil) {
+        let size = initialSize ?? NSSize(width: 800, height: 600)
+        super.init(frame: NSRect(origin: .zero, size: size))
         wantsLayer = true
         setContentHuggingPriority(.defaultLow, for: .horizontal)
         setContentHuggingPriority(.defaultLow, for: .vertical)

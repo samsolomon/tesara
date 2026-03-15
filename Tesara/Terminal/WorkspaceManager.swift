@@ -228,6 +228,16 @@ final class WorkspaceManager: ObservableObject {
     }
 
     private func performSplit(tabIndex: Int, paneID: UUID, direction: PaneNode.SplitDirection, position: PaneNode.PanePosition, shellPath: String, workingDirectory: URL, blockStore: BlockStore) {
+        // Estimate the new pane's size from the existing pane so the PTY
+        // starts with the correct dimensions before SwiftUI lays out the view.
+        let initialSize: NSSize? = tabs[tabIndex].rootPane
+            .findSession(forPaneID: paneID)?.surfaceView.map { view in
+                switch direction {
+                case .horizontal: NSSize(width: view.contentSize.width, height: view.contentSize.height / 2)
+                case .vertical: NSSize(width: view.contentSize.width / 2, height: view.contentSize.height)
+                }
+            }
+
         let newSession = sessionFactory()
         newSession.configure(blockStore: blockStore)
         let newPaneID = UUID()
@@ -242,7 +252,7 @@ final class WorkspaceManager: ObservableObject {
         tabs[tabIndex].selectedPaneID = newPaneID
         activePaneID = newPaneID
         let bottomAlign = settingsStore?.settings.inputBarEnabled ?? false
-        newSession.start(shellPath: shellPath, workingDirectory: workingDirectory, bottomAlign: bottomAlign)
+        newSession.start(shellPath: shellPath, workingDirectory: workingDirectory, bottomAlign: bottomAlign, initialSize: initialSize)
         refreshWorkspaceMetadata()
     }
 

@@ -10,8 +10,11 @@ __tesara_prompt_command() {
     printf '\033]133;D;%d\a' "$last_status"
   else
     TESARA_HAS_SEEN_PROMPT=1
-    # On first prompt, push cursor to bottom of terminal for bottom-aligned output
+    # On first prompt, push cursor to bottom of terminal for bottom-aligned output.
+    # Brief sleep lets the app's layout pass set the correct PTY dimensions
+    # before we query with tput (split panes resize after shell start).
     if [[ "${TESARA_BOTTOM_ALIGN:-}" == "1" ]]; then
+      sleep 0.15
       printf '\033[%d;1H' "$(tput lines)"
     fi
   fi

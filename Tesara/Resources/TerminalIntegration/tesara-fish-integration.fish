@@ -21,8 +21,11 @@ function __tesara_fish_prompt --on-event fish_prompt
     if test $__tesara_has_seen_prompt -eq 1
         __tesara_emit_osc133 "D;$status"
     else
-        # On first prompt, push cursor to bottom of terminal for bottom-aligned output
+        # On first prompt, push cursor to bottom of terminal for bottom-aligned output.
+        # Brief sleep lets the app's layout pass set the correct PTY dimensions
+        # before we query with tput (split panes resize after shell start).
         if test "$TESARA_BOTTOM_ALIGN" = 1
+            sleep 0.15
             printf '\033[%d;1H' (tput lines)
         end
     end
