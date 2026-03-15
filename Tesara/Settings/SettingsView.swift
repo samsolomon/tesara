@@ -20,12 +20,11 @@ struct SettingsView: View {
     private var canGoForward: Bool { historyIndex < navigationHistory.count - 1 }
 
     var body: some View {
-        NavigationSplitView {
+        NavigationSplitView(columnVisibility: .constant(.all)) {
             List(SettingsPane.allCases, selection: $selectedPane) { pane in
                 Label(pane.title, systemImage: pane.systemImage)
                     .tag(pane)
             }
-            .navigationTitle("Settings")
             .listStyle(.sidebar)
             .navigationSplitViewColumnWidth(min: 180, ideal: 210)
         } detail: {
@@ -44,6 +43,7 @@ struct SettingsView: View {
             }
         }
         .toolbar(removing: .sidebarToggle)
+        .background { SidebarCollapseDisabler() }
         .onChange(of: selectedPane) { _, newValue in
             guard let pane = newValue, pane != navigationHistory[historyIndex] else { return }
             // Truncate forward history and append
@@ -213,6 +213,37 @@ private enum SettingsPane: String, CaseIterable, Identifiable {
         case .privacy:
             "lock.shield"
         }
+    }
+}
+
+private struct SidebarCollapseDisabler: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        view.setFrameSize(.zero)
+        DispatchQueue.main.async { Self.configure(from: view) }
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        Self.configure(from: nsView)
+    }
+
+    private static func configure(from view: NSView) {
+        guard let window = view.window else { return }
+
+        // Prevent sidebar collapse on the underlying NSSplitViewController
+        var responder: NSResponder? = view
+        while let current = responder {
+            if let splitVC = current as? NSSplitViewController,
+               let sidebarItem = splitVC.splitViewItems.first {
+                sidebarItem.canCollapse = false
+                break
+            }
+            responder = current.nextResponder
+        }
+
+        // Hide the toolbar entirely — the window title bar still shows "Tesara Settings"
+        window.toolbar?.isVisible = false
     }
 }
 
