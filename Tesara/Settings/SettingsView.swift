@@ -15,7 +15,7 @@ struct SettingsDetailView: View {
     @State private var importErrorMessage: String?
 
     var body: some View {
-        SettingsDetailContainer {
+        SettingsDetailContainer(title: paneSelection.pane.title) {
             paneView(for: paneSelection.pane)
         }
         .fileImporter(
@@ -168,10 +168,13 @@ enum SettingsPane: String, CaseIterable, Identifiable {
 private struct SettingsDetailContainer<Content: View>: View {
     /// Titlebar (28) + traffic-light offset (8) + visual gutter (2).
     private static var topInset: CGFloat { 38 }
+    private static var titlebarHeight: CGFloat { 28 }
 
+    let title: String
     let content: Content
 
-    init(@ViewBuilder content: () -> Content) {
+    init(title: String, @ViewBuilder content: () -> Content) {
+        self.title = title
         self.content = content()
     }
 
@@ -179,6 +182,14 @@ private struct SettingsDetailContainer<Content: View>: View {
         content
             .contentMargins(.top, Self.topInset, for: .scrollContent)
             .background(Color(nsColor: .windowBackgroundColor))
+            .overlay(alignment: .top) {
+                Text(title)
+                    .font(.headline)
+                    .frame(height: Self.titlebarHeight)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.leading, 20)
+                    .allowsHitTesting(false)
+            }
     }
 }
 
