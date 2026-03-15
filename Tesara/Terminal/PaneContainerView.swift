@@ -286,7 +286,7 @@ private struct TerminalPaneLeafView: View {
     }
 
     @ViewBuilder
-    private func inputBarRegion(_ inputBarState: InputBarState, session: TerminalSession, surfaceView: GhosttySurfaceView) -> some View {
+    private func inputBarRegion(_ inputBarState: InputBarState, session: TerminalSession, surfaceView: GhosttySurfaceView, maxInputBarHeight: CGFloat = 0) -> some View {
         VStack(spacing: 4) {
             if session.isHistorySearchActive {
                 HistorySearchOverlayView(
@@ -311,7 +311,8 @@ private struct TerminalPaneLeafView: View {
                 theme: theme,
                 fontFamily: fontFamily,
                 fontSize: fontSize,
-                showPromptInfo: settingsStore.settings.inputBarPromptInfoEnabled
+                showPromptInfo: settingsStore.settings.inputBarPromptInfoEnabled,
+                maxHeight: maxInputBarHeight
             )
         }
         .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -384,12 +385,15 @@ private struct TerminalPaneLeafView: View {
     var body: some View {
         Group {
             if let surfaceView = session.surfaceView {
-                VStack(spacing: 0) {
-                    terminalSurface(surfaceView)
-                        .layoutPriority(1)
+                GeometryReader { geo in
+                    VStack(spacing: 0) {
+                        terminalSurface(surfaceView)
+                            .layoutPriority(1)
 
-                    if showInputBar, let inputBarState = session.inputBarState {
-                        inputBarRegion(inputBarState, session: session, surfaceView: surfaceView)
+                        if showInputBar, let inputBarState = session.inputBarState {
+                            inputBarRegion(inputBarState, session: session, surfaceView: surfaceView,
+                                           maxInputBarHeight: geo.size.height * 0.5)
+                        }
                     }
                 }
                 .id(session.id)

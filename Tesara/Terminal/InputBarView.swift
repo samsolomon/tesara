@@ -275,6 +275,7 @@ struct InputBarView: View {
     let fontFamily: String
     let fontSize: Double
     let showPromptInfo: Bool
+    var maxHeight: CGFloat = 0
 
     var body: some View {
         VStack(spacing: 0) {
@@ -322,8 +323,18 @@ struct InputBarView: View {
         max(inputBarState.editorView?.lineHeight ?? CGFloat(0), CGFloat(fontSize) * 1.5)
     }
 
+    /// Fixed vertical overhead: divider (1) + top padding (8) + bottom padding (10).
+    private static let fixedOverhead: CGFloat = 19
+
+    private var maxLines: Int {
+        guard maxHeight > 0 else { return 4 }
+        let overhead = Self.fixedOverhead + promptInfoHeight
+        let available = maxHeight - overhead
+        return max(1, Int(available / editorLineHeight))
+    }
+
     private var textAreaHeight: CGFloat {
-        let lines = min(max(inputBarState.displayLineCount, 1), 4)
+        let lines = min(max(inputBarState.displayLineCount, 1), maxLines)
         return CGFloat(lines) * editorLineHeight
     }
 
@@ -334,7 +345,7 @@ struct InputBarView: View {
     }
 
     private var totalHeight: CGFloat {
-        textAreaHeight + 19 + promptInfoHeight
+        textAreaHeight + Self.fixedOverhead + promptInfoHeight
     }
 
     private func promptInfoRow(path: String, branch: String?) -> some View {
