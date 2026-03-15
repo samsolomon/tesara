@@ -33,6 +33,8 @@ run_throughput_bench() {
   local bundle_id
   bundle_id=$(get_bundle_id "$name")
   local all_results="{}"
+  local grid_logged=false
+  local grid_sentinel="${SENTINEL_PREFIX}-grid-$$"
 
   echo "  Benchmarking throughput: ${name}"
 
@@ -74,10 +76,12 @@ run_throughput_bench() {
       local bench_script="/tmp/tesara-bench-tp-$$.sh"
       cat > "$bench_script" << BENCHEOF
 #!/bin/bash
-T0=\$(python3 -c 'import time;print(time.time())')
+stty rows 24 cols 80
+[ ! -f ${grid_sentinel} ] && echo "\$(tput cols)x\$(tput lines)" > ${grid_sentinel}
+T0=\$(perl -MTime::HiRes -e 'print Time::HiRes::time()')
 cat ${payload_file}
-T1=\$(python3 -c 'import time;print(time.time())')
-python3 -c "print(\$T1 - \$T0)" > ${sentinel}
+T1=\$(perl -MTime::HiRes -e 'print Time::HiRes::time()')
+perl -e "print \$T1 - \$T0" > ${sentinel}
 clear
 BENCHEOF
       chmod +x "$bench_script"
@@ -91,14 +95,20 @@ BENCHEOF
         elapsed=$((elapsed + 1))
       done
 
+      # Log grid size once per terminal (verification that stty normalization worked)
+      if [[ "$grid_logged" == "false" && -f "$grid_sentinel" ]]; then
+        echo "    Grid: $(cat "$grid_sentinel" | tr -d '[:space:]')"
+        grid_logged=true
+      fi
+
       if [[ -f "$sentinel" ]]; then
         local duration
         duration=$(cat "$sentinel" | tr -d '[:space:]')
         if [[ -n "$duration" && "$duration" != "0" ]]; then
           local bytes_per_sec
-          bytes_per_sec=$(python3 -c "print(round(${payload_size} / ${duration}, 2))")
+          bytes_per_sec=$(perl -e "printf '%.2f', ${payload_size} / ${duration}")
           results+=("$bytes_per_sec")
-          printf "      Run %2d: %.2f sec (%.2f MB/s)\n" "$i" "$duration" "$(python3 -c "print(round(${bytes_per_sec}/1048576, 2))")"
+          printf "      Run %2d: %.2f sec (%.2f MB/s)\n" "$i" "$duration" "$(perl -e "printf '%.2f', ${bytes_per_sec}/1048576")"
         fi
       else
         echo "      Run ${i}: TIMEOUT" >&2
@@ -120,6 +130,8 @@ BENCHEOF
         '. + {($key): {payload_bytes: $size, unit: "bytes/sec", stats: $stats, raw: $raw}}')
     fi
   done
+
+  rm -f "$grid_sentinel"
 
   local outfile="${RESULTS_DIR}/throughput-${name}.json"
   jq -n \

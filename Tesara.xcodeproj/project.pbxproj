@@ -98,6 +98,7 @@
 		F227A4A268E498BF2908489A /* JSONTokenizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E39854B1C496305D79BACA62 /* JSONTokenizer.swift */; };
 		F3A965F6F8A10320AB0FA888 /* CoreText.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 025C0C0CA0E7477A899440FC /* CoreText.framework */; };
 		F75BBFA5351351FD98A4759A /* SyntaxHighlighter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 924C14E8FC639F5AB09E6153 /* SyntaxHighlighter.swift */; };
+		A1C3D4E5F6A7B8C901234601 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1C3D4E5F6A7B8C901234600 /* Assets.xcassets */; };
 		FA96111B4FCCEF18236CA364 /* TerminalIntegration in Resources */ = {isa = PBXBuildFile; fileRef = 2292F5BCC3AC767DAD9619D7 /* TerminalIntegration */; };
 		AABB001122334455GHOSTTY01 /* GhosttyThemeLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB001122334455GHOSTTY02 /* GhosttyThemeLoader.swift */; };
 		AABB001122334455GHOSTTY03 /* GhosttyThemes in Resources */ = {isa = PBXBuildFile; fileRef = AABB001122334455GHOSTTY04 /* GhosttyThemes */; };
@@ -220,6 +221,7 @@
 		EDDA22FF0E3CCF02CE8BCD05 /* TerminalWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalWorkspaceView.swift; sourceTree = "<group>"; };
 		F3E6DBF6FBE09F48C83448BD /* TesaraTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TesaraTests.swift; sourceTree = "<group>"; };
 		F52B6FCC6732906AA75CFDBF /* GlyphCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlyphCacheTests.swift; sourceTree = "<group>"; };
+		A1C3D4E5F6A7B8C901234600 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F55C30259BAA845533624745 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		F7D656612F1AA5C6D7C0A0F2 /* TesaraTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TesaraTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F964C1A41A90CF9F4FFD4D42 /* CLikeTokenizerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLikeTokenizerTests.swift; sourceTree = "<group>"; };
@@ -331,6 +333,7 @@
 		C2D544A7AD3135CE00E10F2F /* Tesara */ = {
 			isa = PBXGroup;
 			children = (
+				A1C3D4E5F6A7B8C901234600 /* Assets.xcassets */,
 				230B62F5C9074F2BEC567B40 /* Info.plist */,
 				B8CF6564CD0AF8278F222619 /* MainWindowView.swift */,
 				47AE7A424F00C8FA129FC9B7 /* Tesara-Bridging-Header.h */,
@@ -541,6 +544,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A1C3D4E5F6A7B8C901234601 /* Assets.xcassets in Resources */,
 				AABB001122334455GHOSTTY03 /* GhosttyThemes in Resources */,
 				FA96111B4FCCEF18236CA364 /* TerminalIntegration in Resources */,
 			);
@@ -919,6 +923,7 @@
 				MARKETING_VERSION = 0.1.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;
