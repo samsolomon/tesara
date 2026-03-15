@@ -59,7 +59,7 @@ struct AppSettings: Codable, Equatable {
         confirmOnCloseRunningSession: Bool = false,
         tabTitleMode: TabTitleMode = .shellTitle,
         dimInactiveSplits: Bool = true,
-        inactiveSplitDimAmount: Double = 0.3,
+        inactiveSplitDimAmount: Double = 0.5,
         inputBarEnabled: Bool = true,
         inputBarPromptInfoEnabled: Bool = false,
         cursorStyle: CursorStyle = .bar,
@@ -200,7 +200,7 @@ struct AppSettings: Codable, Equatable {
         confirmOnCloseRunningSession = try container.decodeIfPresent(Bool.self, forKey: .confirmOnCloseRunningSession) ?? false
         tabTitleMode = try container.decodeIfPresent(TabTitleMode.self, forKey: .tabTitleMode) ?? .shellTitle
         dimInactiveSplits = try container.decodeIfPresent(Bool.self, forKey: .dimInactiveSplits) ?? true
-        inactiveSplitDimAmount = try container.decodeIfPresent(Double.self, forKey: .inactiveSplitDimAmount) ?? 0.3
+        inactiveSplitDimAmount = try container.decodeIfPresent(Double.self, forKey: .inactiveSplitDimAmount) ?? 0.5
         inputBarEnabled = try container.decodeIfPresent(Bool.self, forKey: .inputBarEnabled) ?? true
         inputBarPromptInfoEnabled = try container.decodeIfPresent(Bool.self, forKey: .inputBarPromptInfoEnabled) ?? false
         cursorStyle = try container.decodeIfPresent(CursorStyle.self, forKey: .cursorStyle) ?? .bar

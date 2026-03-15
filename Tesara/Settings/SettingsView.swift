@@ -520,15 +520,17 @@ private struct WorkspaceSettingsPane: View {
                         .labelsHidden()
                 }
 
-                HStack {
-                    Slider(value: $settings.inactiveSplitDimAmount, in: 0.04...0.75, step: 0.01)
-                        .disabled(!settings.dimInactiveSplits)
+                settingRow("Dim amount", description: "How much to dim unfocused panes.") {
+                    HStack {
+                        Slider(value: $settings.inactiveSplitDimAmount, in: 0.04...0.75)
 
-                    Text("\(Int(settings.inactiveSplitDimAmount * 100))%")
-                        .monospacedDigit()
-                        .foregroundStyle(settings.dimInactiveSplits ? .secondary : .tertiary)
-                        .frame(width: 40, alignment: .trailing)
+                        Text("\(Int(settings.inactiveSplitDimAmount * 100))%")
+                            .monospacedDigit()
+                            .foregroundStyle(settings.dimInactiveSplits ? .secondary : .tertiary)
+                            .frame(width: 40, alignment: .trailing)
+                    }
                 }
+                .disabled(!settings.dimInactiveSplits)
             }
         }
         .formStyle(.grouped)
