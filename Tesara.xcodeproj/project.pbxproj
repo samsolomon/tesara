@@ -109,6 +109,7 @@
 		TABCOMP001A00000000000002 /* CompletionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = TABCOMP001B00000000000002 /* CompletionProvider.swift */; };
 		TABCOMP001A00000000000003 /* TabCompletionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = TABCOMP001B00000000000003 /* TabCompletionController.swift */; };
 		TABCOMP001A00000000000004 /* CompletionOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TABCOMP001B00000000000004 /* CompletionOverlayView.swift */; };
+		TABCOMP001A00000000000010 /* TabCompletionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TABCOMP001B00000000000010 /* TabCompletionTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -163,6 +164,7 @@
 		TABCOMP001B00000000000002 /* CompletionProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompletionProvider.swift; sourceTree = "<group>"; };
 		TABCOMP001B00000000000003 /* TabCompletionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabCompletionController.swift; sourceTree = "<group>"; };
 		TABCOMP001B00000000000004 /* CompletionOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompletionOverlayView.swift; sourceTree = "<group>"; };
+		TABCOMP001B00000000000010 /* TabCompletionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabCompletionTests.swift; sourceTree = "<group>"; };
 		5563A901A8F611AC6D01A419 /* BlockStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockStoreTests.swift; sourceTree = "<group>"; };
 		55C3D9E0E1A4305FC7BC9C6E /* EditorLayoutEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorLayoutEngineTests.swift; sourceTree = "<group>"; };
 		570AAE7A2F968564CCF33133 /* GlyphAtlasTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlyphAtlasTests.swift; sourceTree = "<group>"; };
@@ -424,6 +426,7 @@
 				C0913B2DEDB933D3E3356B83 /* SettingsStoreTests.swift */,
 				E9AFE0628E390F064A0F5476 /* SyntaxColorMapTests.swift */,
 				C1ECA0C36B15092EB9B6D368 /* SyntaxHighlighterTests.swift */,
+				TABCOMP001B00000000000010 /* TabCompletionTests.swift */,
 				B9098467F6B5E13AF93A1ECD /* TerminalBlockCaptureTests.swift */,
 				99905701CAB7B5AB4F5558C2 /* TerminalSessionTests.swift */,
 				692291F83027B0F2F4CA76BF /* TerminalThemeTests.swift */,
@@ -663,6 +666,7 @@
 				7C4EC6EB70E96401AD27AFB9 /* SettingsStoreTests.swift in Sources */,
 				2C67001BE8159765D72AAA76 /* SyntaxColorMapTests.swift in Sources */,
 				4E0D6A7833B8D0D29A262ADE /* SyntaxHighlighterTests.swift in Sources */,
+				TABCOMP001A00000000000010 /* TabCompletionTests.swift in Sources */,
 				406A4786F958C46D88472E0F /* TerminalBlockCaptureTests.swift in Sources */,
 				37429BDCCFCD0878073F997A /* TerminalSessionTests.swift in Sources */,
 				81F684B3EE723B89F0976D5E /* TerminalThemeTests.swift in Sources */,
