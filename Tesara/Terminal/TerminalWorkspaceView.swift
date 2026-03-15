@@ -83,6 +83,9 @@ struct TerminalWorkspaceView: View {
                     },
                     onClosePane: { paneID in
                         manager.closePane(id: paneID)
+                    },
+                    onSwapPane: { sourceID, targetID in
+                        manager.swapPanes(sourceID: sourceID, targetID: targetID)
                     }
                 )
                 .opacity(isActive ? 1 : 0)

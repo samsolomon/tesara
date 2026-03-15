@@ -91,6 +91,15 @@ indirect enum PaneNode: Identifiable {
         }
     }
 
+    /// Swaps two leaf nodes in the tree. Moves entire nodes (ID + session)
+    /// to preserve SwiftUI view identity via .id(session.id).
+    func swappingPanes(id1: UUID, id2: UUID) -> PaneNode {
+        guard id1 != id2,
+              let node1 = findLeafNode(id: id1),
+              let node2 = findLeafNode(id: id2) else { return self }
+        return replacingPanes(id1: id1, with: node2, id2: id2, with: node1)
+    }
+
     func replacingPane(id targetID: UUID, with newNode: PaneNode) -> PaneNode {
         switch self {
         case .leaf(let id, _):
@@ -348,5 +357,32 @@ indirect enum PaneNode: Identifiable {
 
     private func overlapLength(_ lhs: ClosedRange<CGFloat>, _ rhs: ClosedRange<CGFloat>) -> CGFloat {
         max(0, min(lhs.upperBound, rhs.upperBound) - max(lhs.lowerBound, rhs.lowerBound))
+    }
+
+    // Single-pass: replaces both IDs in one tree walk (avoids double-ID corruption)
+    private func replacingPanes(id1: UUID, with new1: PaneNode, id2: UUID, with new2: PaneNode) -> PaneNode {
+        switch self {
+        case .leaf(let id, _), .editor(let id, _):
+            if id == id1 { return new1 }
+            if id == id2 { return new2 }
+            return self
+        case .split(let id, let dir, let first, let second, let ratio):
+            return .split(
+                id: id,
+                direction: dir,
+                first: first.replacingPanes(id1: id1, with: new1, id2: id2, with: new2),
+                second: second.replacingPanes(id1: id1, with: new1, id2: id2, with: new2),
+                ratio: ratio
+            )
+        }
+    }
+
+    private func findLeafNode(id targetID: UUID) -> PaneNode? {
+        switch self {
+        case .leaf(let id, _):  return id == targetID ? self : nil
+        case .editor(let id, _): return id == targetID ? self : nil
+        case .split(_, _, let first, let second, _):
+            return first.findLeafNode(id: targetID) ?? second.findLeafNode(id: targetID)
+        }
     }
 }

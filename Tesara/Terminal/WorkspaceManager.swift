@@ -318,6 +318,13 @@ final class WorkspaceManager: ObservableObject {
         }
     }
 
+    func swapPanes(sourceID: UUID, targetID: UUID) {
+        guard sourceID != targetID,
+              let tabIndex = tabs.firstIndex(where: { $0.id == activeTabID }) else { return }
+        tabs[tabIndex].rootPane = tabs[tabIndex].rootPane.swappingPanes(id1: sourceID, id2: targetID)
+        refreshWorkspaceMetadata()
+    }
+
     func updatePaneRatio(splitID: UUID, ratio: CGFloat) {
         guard let tabIndex = tabs.firstIndex(where: { $0.id == activeTabID }) else { return }
         #if DEBUG

@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct PaneHeaderView: View {
+    let paneID: UUID
     let title: String
     let isActive: Bool
     let theme: TerminalTheme
@@ -34,6 +35,7 @@ struct PaneHeaderView: View {
                 .fill(Color.gray.opacity(0.3))
                 .frame(height: 1)
         }
+        .onDrag { NSItemProvider(object: "tesara-pane:\(paneID.uuidString)" as NSString) }
     }
 }
 
