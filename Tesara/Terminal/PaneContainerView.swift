@@ -409,7 +409,13 @@ private struct TerminalPaneLeafView: View {
                 }
                 .id(session.id)
                 .onAppear {
+                    surfaceView.onPaneFocusRequest = { [id = id] in
+                        onSelectPane(id)
+                    }
                     syncInputBarPresentation(session: session, surfaceView: surfaceView)
+                }
+                .onDisappear {
+                    surfaceView.onPaneFocusRequest = nil
                 }
                 .onChange(of: isActive) { _, _ in
                     syncInputBarPresentation(session: session, surfaceView: surfaceView)

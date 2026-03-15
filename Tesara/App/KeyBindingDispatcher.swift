@@ -9,6 +9,7 @@ final class KeyBindingDispatcher: ObservableObject {
     private var eventMonitor: Any?
     private var cancellable: AnyCancellable?
     private var lookupTable: [KeyCombo: KeyBindingAction] = [:]
+    private var lastKeyBindingOverrides: [KeyBindingOverride]?
 
     private weak var settingsStore: SettingsStore?
     private weak var workspaceManager: WorkspaceManager?
@@ -40,9 +41,7 @@ final class KeyBindingDispatcher: ObservableObject {
         rebuildLookupTable()
 
         if cancellable == nil {
-            cancellable = settingsStore.$settings
-                .map(\.keyBindingOverrides)
-                .removeDuplicates()
+            cancellable = settingsStore.objectWillChange
                 .sink { [weak self] _ in
                     self?.rebuildLookupTable()
                 }
@@ -63,9 +62,12 @@ final class KeyBindingDispatcher: ObservableObject {
 
     private func rebuildLookupTable() {
         guard let settingsStore else { return }
+        let overrides = settingsStore.settings.keyBindingOverrides
+        guard overrides != lastKeyBindingOverrides else { return }
+        lastKeyBindingOverrides = overrides
 
         var table: [KeyCombo: KeyBindingAction] = [:]
-        for override in settingsStore.settings.keyBindingOverrides {
+        for override in overrides {
             let combo = KeyCombo(
                 key: override.shortcut.key,
                 modifiers: override.shortcut.eventModifierFlags

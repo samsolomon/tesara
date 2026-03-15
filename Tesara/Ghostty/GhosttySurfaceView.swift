@@ -15,6 +15,9 @@ class GhosttySurfaceView: NSView, NSTextInputClient {
     private(set) var surface: ghostty_surface_t?
     weak var session: TerminalSession?
 
+    /// Called when a mouse click transfers focus to this surface from another pane.
+    var onPaneFocusRequest: (() -> Void)?
+
     // MARK: - Private State
 
     // IME / keyboard
@@ -248,11 +251,14 @@ class GhosttySurfaceView: NSView, NSTextInputClient {
 
         // When input bar owns focus, allow mouse events but don't claim first responder
         if keyboardFocusDisabled {
+            onPaneFocusRequest?()
             return event
         }
 
         // Already first responder — normal click
         guard window.firstResponder !== self else { return event }
+
+        onPaneFocusRequest?()
 
         // Window already focused — this click is only for focus transfer
         if NSApp.isActive && window.isKeyWindow {

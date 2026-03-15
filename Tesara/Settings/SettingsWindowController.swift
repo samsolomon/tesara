@@ -5,12 +5,19 @@ import SwiftUI
 @MainActor
 final class SettingsPaneSelection: ObservableObject {
     private static let defaultsKey = "settings.selectedPane"
+    private var notifyWorkItem: DispatchWorkItem?
 
-    @Published var pane: SettingsPane {
+    var pane: SettingsPane {
         didSet {
-            Task { @MainActor in
-                UserDefaults.standard.set(self.pane.rawValue, forKey: Self.defaultsKey)
+            guard pane != oldValue else { return }
+            notifyWorkItem?.cancel()
+            let item = DispatchWorkItem { [weak self] in
+                self?.notifyWorkItem = nil
+                self?.objectWillChange.send()
             }
+            notifyWorkItem = item
+            DispatchQueue.main.async(execute: item)
+            UserDefaults.standard.set(pane.rawValue, forKey: Self.defaultsKey)
         }
     }
 

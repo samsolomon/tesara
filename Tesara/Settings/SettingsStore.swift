@@ -3,8 +3,10 @@ import SwiftUI
 
 @MainActor
 final class SettingsStore: ObservableObject {
-    @Published var settings: AppSettings {
+    var settings: AppSettings = .default {
         didSet {
+            guard settings != oldValue else { return }
+            deferNotification()
             guard !isSuppressingPersist else { return }
             schedulePersist()
         }
@@ -17,6 +19,7 @@ final class SettingsStore: ObservableObject {
     private var watcher: ConfigFileWatcher?
     private var appearanceObserver: NSObjectProtocol?
     private var isSuppressingPersist = false
+    private var notifyWorkItem: DispatchWorkItem?
     private var persistWorkItem: DispatchWorkItem?
     private let defaults: UserDefaults
     private let legacyStorageKey = "tesara.app-settings"
@@ -205,6 +208,18 @@ final class SettingsStore: ObservableObject {
         try JSONEncoder().encode(activeTheme)
     }
 
+
+    /// Defers `objectWillChange` to the next run-loop turn so SwiftUI bindings
+    /// can write without triggering "publishing during view update" warnings.
+    private func deferNotification() {
+        notifyWorkItem?.cancel()
+        let item = DispatchWorkItem { [weak self] in
+            self?.notifyWorkItem = nil
+            self?.objectWillChange.send()
+        }
+        notifyWorkItem = item
+        DispatchQueue.main.async(execute: item)
+    }
 
     /// Coalesces rapid mutations into a single disk write.
     private func schedulePersist() {
