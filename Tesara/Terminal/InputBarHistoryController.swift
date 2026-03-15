@@ -21,13 +21,7 @@ final class InputBarHistoryController: ObservableObject {
             savedCurrentInput = currentText
         }
 
-        let candidates: [String]
-        if !savedCurrentInput.isEmpty {
-            candidates = cachedHistory.filter { $0.hasPrefix(savedCurrentInput) }
-        } else {
-            candidates = cachedHistory
-        }
-
+        let candidates = filteredCandidates
         guard !candidates.isEmpty else { return }
 
         let nextIndex = historyIndex + 1
@@ -39,13 +33,7 @@ final class InputBarHistoryController: ObservableObject {
     func navigateDown(currentText: String, inputBarState: InputBarState) {
         guard historyIndex >= 0 else { return }
 
-        let candidates: [String]
-        if !savedCurrentInput.isEmpty {
-            candidates = cachedHistory.filter { $0.hasPrefix(savedCurrentInput) }
-        } else {
-            candidates = cachedHistory
-        }
-
+        let candidates = filteredCandidates
         historyIndex -= 1
         if historyIndex < 0 {
             historyIndex = -1
@@ -104,6 +92,10 @@ final class InputBarHistoryController: ObservableObject {
     }
 
     // MARK: - Private
+
+    private var filteredCandidates: [String] {
+        savedCurrentInput.isEmpty ? cachedHistory : cachedHistory.filter { $0.hasPrefix(savedCurrentInput) }
+    }
 
     private func refreshHistory() {
         cachedHistory = blockStore?.recentCommandTexts() ?? []

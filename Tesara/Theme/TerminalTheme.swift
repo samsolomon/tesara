@@ -44,6 +44,10 @@ extension TerminalTheme {
         Color(hex: hex) ?? .black
     }
 
+    var dividerOpacity: Double {
+        isDarkBackground ? 0.22 : 0.14
+    }
+
     var isDarkBackground: Bool {
         luminance(of: background) < 0.5
     }

@@ -196,7 +196,6 @@ final class TerminalSession: ObservableObject, Identifiable {
         inputBarState = state
 
         searchStateCancellable = state.historyController.$isSearchActive
-            .receive(on: RunLoop.main)
             .sink { [weak self] active in
                 if self?.isHistorySearchActive != active {
                     self?.isHistorySearchActive = active
@@ -212,6 +211,7 @@ final class TerminalSession: ObservableObject, Identifiable {
     }
 
     private func teardownInputBar() {
+        inputBarState?.editorView?.focusDidChange(false)
         inputBarState?.editorView?.pauseDisplayLink()
         searchStateCancellable = nil
         inputBarState = nil

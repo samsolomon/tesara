@@ -10,21 +10,17 @@ struct HistorySearchOverlayView: View {
 
     @FocusState private var isSearchFieldFocused: Bool
 
-    private var dividerOpacity: Double {
-        theme.isDarkBackground ? 0.22 : 0.14
-    }
-
     var body: some View {
         VStack(spacing: 0) {
             Rectangle()
-                .fill(theme.swiftUIColor(from: theme.foreground).opacity(dividerOpacity))
+                .fill(theme.swiftUIColor(from: theme.foreground).opacity(theme.dividerOpacity))
                 .frame(height: 1)
 
             if !historyController.searchResults.isEmpty {
                 resultsList
 
                 Rectangle()
-                    .fill(theme.swiftUIColor(from: theme.foreground).opacity(dividerOpacity))
+                    .fill(theme.swiftUIColor(from: theme.foreground).opacity(theme.dividerOpacity))
                     .frame(height: 1)
             }
 

@@ -13,10 +13,8 @@ final class InputBarState: ObservableObject {
 
     @Published private(set) var isEmpty: Bool = true
     @Published private(set) var displayLineCount: Int = 1
-    @Published private(set) var isSearchActive: Bool = false
 
     private var sessionCancellable: AnyCancellable?
-    private var searchCancellable: AnyCancellable?
 
     func createView(theme: TerminalTheme, fontFamily: String, fontSize: Double, cursorConfig: EditorLayoutEngine.CursorConfig? = nil, cursorBlink: Bool = true) {
         guard editorView == nil else { return }
@@ -29,17 +27,8 @@ final class InputBarState: ObservableObject {
         }
 
         sessionCancellable = editorSession.$cursorPosition
-            .receive(on: RunLoop.main)
             .sink { [weak self] _ in
                 self?.syncDerivedState()
-            }
-
-        searchCancellable = historyController.$isSearchActive
-            .receive(on: RunLoop.main)
-            .sink { [weak self] active in
-                if self?.isSearchActive != active {
-                    self?.isSearchActive = active
-                }
             }
     }
 
@@ -173,14 +162,10 @@ struct InputBarView: View {
     let fontFamily: String
     let fontSize: Double
 
-    private var dividerOpacity: Double {
-        theme.isDarkBackground ? 0.22 : 0.14
-    }
-
     var body: some View {
         VStack(spacing: 0) {
             Rectangle()
-                .fill(theme.swiftUIColor(from: theme.foreground).opacity(dividerOpacity))
+                .fill(theme.swiftUIColor(from: theme.foreground).opacity(theme.dividerOpacity))
                 .frame(height: 1)
 
             ZStack(alignment: .topLeading) {
