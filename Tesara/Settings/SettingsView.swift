@@ -290,11 +290,13 @@ private struct AppearanceSettingsPane: View {
             }
 
             Section {
-                HStack {
-                    Slider(value: $settings.windowOpacity, in: 0.3...1.0, step: 0.05)
-                    Text("\(Int(settings.windowOpacity * 100))%")
-                        .monospacedDigit()
-                        .frame(width: 48)
+                settingRow("Window opacity", description: "Reduces terminal window transparency for readability.") {
+                    HStack(spacing: 6) {
+                        Slider(value: $settings.windowOpacity, in: 0.3...1.0, step: 0.05)
+                        Text("\(Int(settings.windowOpacity * 100))%")
+                            .monospacedDigit()
+                            .frame(width: 40, alignment: .trailing)
+                    }
                 }
 
                 settingRow("Background blur", description: "Applies a vibrancy effect behind translucent terminal backgrounds.") {
@@ -302,22 +304,22 @@ private struct AppearanceSettingsPane: View {
                         .labelsHidden()
                 }
 
-                HStack {
-                    Text("Horizontal padding")
-                    Spacer()
-                    TextField("", value: $settings.windowPaddingX, format: .number)
-                        .frame(width: 60)
-                        .multilineTextAlignment(.trailing)
-                    Text("px")
+                settingRow("Horizontal padding", description: "Space between the terminal content and the left and right window edges.") {
+                    HStack(spacing: 6) {
+                        Text("\(settings.windowPaddingX) px")
+                            .monospacedDigit()
+                        Stepper("", value: $settings.windowPaddingX, in: 0...50, step: 2)
+                            .labelsHidden()
+                    }
                 }
 
-                HStack {
-                    Text("Vertical padding")
-                    Spacer()
-                    TextField("", value: $settings.windowPaddingY, format: .number)
-                        .frame(width: 60)
-                        .multilineTextAlignment(.trailing)
-                    Text("px")
+                settingRow("Vertical padding", description: "Space between the terminal content and the top and bottom window edges.") {
+                    HStack(spacing: 6) {
+                        Text("\(settings.windowPaddingY) px")
+                            .monospacedDigit()
+                        Stepper("", value: $settings.windowPaddingY, in: 0...50, step: 2)
+                            .labelsHidden()
+                    }
                 }
             } header: {
                 Text("Window")
@@ -413,6 +415,11 @@ private struct TerminalSettingsPane: View {
                     Toggle("", isOn: $settings.inputBarEnabled)
                         .labelsHidden()
                 }
+                settingRow("Show working directory", description: "Displays the current working directory and git branch above the input bar.") {
+                    Toggle("", isOn: $settings.inputBarPromptInfoEnabled)
+                        .labelsHidden()
+                }
+                .disabled(!settings.inputBarEnabled)
             }
         }
         .formStyle(.grouped)
