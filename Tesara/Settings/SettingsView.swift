@@ -358,27 +358,6 @@ private struct AppearanceSettingsPane: View {
                 Text("Window")
             }
 
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Preview")
-                    .font(.headline)
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(activeTheme.swiftUIBackgroundGradient)
-                    .opacity(settings.windowOpacity)
-                    .frame(height: 140)
-                    .overlay(alignment: .topLeading) {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("sam@tesara ~/src")
-                                .foregroundStyle(activeTheme.swiftUIColor(from: activeTheme.green))
-                            Text("$ git status")
-                                .foregroundStyle(activeTheme.swiftUIColor(from: activeTheme.foreground))
-                            Text("On branch main")
-                                .foregroundStyle(activeTheme.swiftUIColor(from: activeTheme.cyan))
-                        }
-                        .font(.custom(settings.fontFamily, size: settings.fontSize))
-                        .padding(16)
-                    }
-            }
-            .padding(.top, 8)
         }
         .formStyle(.grouped)
     }
