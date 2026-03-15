@@ -156,7 +156,7 @@ final class ShellTokenizer: SyntaxTokenizer {
             }
 
             // Flag: -x, --long-option
-            if ch == 0x2D && nextIsNotMinus(utf16, i, len) { // -
+            if ch == 0x2D && hasValidFlagAfterDash(utf16, i, len) { // -
                 let start = i
                 i += 1
                 while i < len && isFlagChar(utf16[i]) { i += 1 }
@@ -240,7 +240,7 @@ final class ShellTokenizer: SyntaxTokenizer {
         ch == 0x5F    // _
     }
 
-    private func nextIsNotMinus(_ utf16: [UInt16], _ i: Int, _ len: Int) -> Bool {
+    private func hasValidFlagAfterDash(_ utf16: [UInt16], _ i: Int, _ len: Int) -> Bool {
         i + 1 < len && isFlagChar(utf16[i + 1])
     }
 

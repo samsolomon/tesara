@@ -18,6 +18,9 @@ final class InputBarState: ObservableObject {
     /// Ghost text suffix for autosuggestion (not @Published — drives Metal, not SwiftUI).
     fileprivate(set) var ghostSuffix: String?
 
+    /// Visual hint appended to ghost text so users discover Right arrow accepts.
+    static let ghostHintSuffix = " →"
+
     private var sessionCancellable: AnyCancellable?
 
     func createView(theme: TerminalTheme, fontFamily: String, fontSize: Double, cursorConfig: EditorLayoutEngine.CursorConfig? = nil, cursorBlink: Bool = true) {
@@ -91,7 +94,7 @@ final class InputBarState: ObservableObject {
         }
 
         if let match = suggestionEngine.suggest(prefix: text) {
-            ghostSuffix = String(match.dropFirst(text.count)) + " →"
+            ghostSuffix = String(match.dropFirst(text.count)) + Self.ghostHintSuffix
         } else {
             ghostSuffix = nil
         }
@@ -198,7 +201,7 @@ final class InputBarKeyHandler: EditorViewDelegate {
                let ghostSuffix = state.ghostSuffix,
                !ghostSuffix.isEmpty,
                session.isCursorAtDocumentEnd {
-                let suggestion = String(ghostSuffix.dropLast(2)) // strip " →"
+                let suggestion = String(ghostSuffix.dropLast(InputBarState.ghostHintSuffix.count))
                 guard !suggestion.isEmpty else { return false }
                 if mods.contains(.option) {
                     session.insertText(firstWord(of: suggestion))

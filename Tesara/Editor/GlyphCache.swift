@@ -116,16 +116,13 @@ final class GlyphCache {
 
         monoAtlas.write(data: bitmapData, to: region)
 
-        // Exact bearing: distance from baseline to top of bitmap = bitmapHeight − drawY
-        let drawY = -boundingRect.origin.y + CGFloat(padding)
-        let exactBearingY = Float(CGFloat(height) - drawY)
-        let bearingYInt = Int16(ceil(boundingRect.origin.y + boundingRect.height)) + Int16(padding)
+        let byMetrics = bearingYMetrics(boundingRect: boundingRect, bitmapHeight: height, padding: padding)
 
         let cached = CachedGlyph(
             region: region,
             bearingX: Int16(floor(boundingRect.origin.x)) - Int16(padding),
-            bearingY: bearingYInt,
-            baselineOffset: Float(bearingYInt) - exactBearingY,
+            bearingY: byMetrics.bearingY,
+            baselineOffset: byMetrics.baselineOffset,
             advance: Float(advance.width),
             isPlaceholder: false,
             isColor: false
@@ -149,6 +146,14 @@ final class GlyphCache {
         fontColorCache.removeAll()
         monoAtlas.reset()
         colorAtlas.reset()
+    }
+
+    /// Compute integer bearingY and sub-pixel baseline correction from glyph bounding rect.
+    private func bearingYMetrics(boundingRect: CGRect, bitmapHeight: Int, padding: Int) -> (bearingY: Int16, baselineOffset: Float) {
+        let drawY = -boundingRect.origin.y + CGFloat(padding)
+        let exactBearingY = Float(CGFloat(bitmapHeight) - drawY)
+        let bearingYInt = Int16(ceil(boundingRect.origin.y + boundingRect.height)) + Int16(padding)
+        return (bearingYInt, Float(bearingYInt) - exactBearingY)
     }
 
     // MARK: - Private
@@ -221,15 +226,13 @@ final class GlyphCache {
 
         colorAtlas.write(data: pixelData, to: region)
 
-        let colorDrawY = -boundingRect.origin.y + CGFloat(padding)
-        let colorExactBearingY = Float(CGFloat(height) - colorDrawY)
-        let colorBearingYInt = Int16(ceil(boundingRect.origin.y + boundingRect.height)) + Int16(padding)
+        let colorByMetrics = bearingYMetrics(boundingRect: boundingRect, bitmapHeight: height, padding: padding)
 
         return CachedGlyph(
             region: region,
             bearingX: Int16(floor(boundingRect.origin.x)) - Int16(padding),
-            bearingY: colorBearingYInt,
-            baselineOffset: Float(colorBearingYInt) - colorExactBearingY,
+            bearingY: colorByMetrics.bearingY,
+            baselineOffset: colorByMetrics.baselineOffset,
             advance: Float(advance.width),
             isPlaceholder: false,
             isColor: true
