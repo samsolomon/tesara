@@ -217,7 +217,7 @@ private struct FixedPitchFontPickerPopover: View {
             } else {
                 ScrollViewReader { proxy in
                     ScrollView {
-                        LazyVStack(alignment: .leading, spacing: 6) {
+                        LazyVStack(alignment: .leading, spacing: 4) {
                             ForEach(filteredFamilies, id: \.self) { family in
                                 fontRow(for: family)
                                     .id(family)
@@ -280,15 +280,15 @@ private struct FixedPitchFontPickerPopover: View {
                         .foregroundStyle(Color.accentColor)
                 }
             }
-            .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 14)
-            .padding(.vertical, 12)
+            .padding(.vertical, 8)
             .background {
-                RoundedRectangle(cornerRadius: 10)
+                RoundedRectangle(cornerRadius: 8)
                     .fill(backgroundColor(isSelected: isSelected, isHighlighted: isHighlighted, isHovered: isHovered))
             }
             .overlay {
-                RoundedRectangle(cornerRadius: 10)
+                RoundedRectangle(cornerRadius: 8)
                     .strokeBorder(borderColor(isSelected: isSelected, isHovered: isHovered), lineWidth: borderWidth(isSelected: isSelected, isHovered: isHovered))
             }
         }
