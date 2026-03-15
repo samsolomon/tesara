@@ -108,7 +108,7 @@ final class TerminalThemeTests: XCTestCase {
     }
 
     func testBuiltInThemeCount() {
-        XCTAssertEqual(BuiltInTheme.allCases.count, 10)
+        XCTAssertEqual(BuiltInTheme.allCases.count, 22)
     }
 
     func testEachThemeHasUniqueID() {
@@ -117,14 +117,14 @@ final class TerminalThemeTests: XCTestCase {
     }
 
     func testSwiftUIColorFromHex() {
-        let theme = BuiltInTheme.oxide.theme
+        let theme = BuiltInTheme.tesaraDark.theme
         // Should not crash and return a valid color
         let color = theme.swiftUIColor(from: "#FF0000")
         XCTAssertNotNil(color)
     }
 
     func testSwiftUIColorFromInvalidHexFallsBackToBlack() {
-        let theme = BuiltInTheme.oxide.theme
+        let theme = BuiltInTheme.tesaraDark.theme
         let color = theme.swiftUIColor(from: "invalid")
         // Falls back to .black per implementation
         XCTAssertNotNil(color)

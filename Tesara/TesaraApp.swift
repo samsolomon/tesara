@@ -11,7 +11,6 @@ struct TesaraApp: App {
     @StateObject private var workspaceManager = WorkspaceManager()
     @StateObject private var keyBindingDispatcher = KeyBindingDispatcher()
     @StateObject private var settingsOpenCoordinator = SettingsOpenCoordinator()
-    @Environment(\.colorScheme) private var colorScheme
 
     var body: some Scene {
         WindowGroup {
@@ -22,7 +21,6 @@ struct TesaraApp: App {
                 .environmentObject(settingsOpenCoordinator)
                 .frame(minWidth: minimumWindowSize.width, minHeight: minimumWindowSize.height)
                 .onAppear {
-                    settingsStore.isDark = colorScheme == .dark
                     updaterController.updater.automaticallyChecksForUpdates = settingsStore.settings.updateChecksEnabled
                     blockStore.setHistoryCaptureEnabled(settingsStore.settings.historyCaptureEnabled)
                     LocalLogStore.shared.setEnabled(settingsStore.settings.localLoggingEnabled)
@@ -70,11 +68,6 @@ struct TesaraApp: App {
                         theme: settingsStore.activeTheme,
                         settings: settingsStore.settings
                     )
-                }
-                .onChange(of: colorScheme) { _, newScheme in
-                    Task { @MainActor in
-                        settingsStore.isDark = newScheme == .dark
-                    }
                 }
                 .onChange(of: settingsStore.settings.windowBlur) {
                     applyWindowBlur(settingsStore.settings.windowBlur)

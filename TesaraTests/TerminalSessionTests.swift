@@ -169,7 +169,7 @@ final class TerminalSessionTests: XCTestCase {
         let editorSession = EditorSession()
         let editorView = EditorView(
             session: editorSession,
-            theme: BuiltInTheme.oxide.theme,
+            theme: BuiltInTheme.tesaraDark.theme,
             fontFamily: "SF Mono",
             fontSize: 13
         )
@@ -294,7 +294,7 @@ final class TerminalSessionTests: XCTestCase {
     private func makeEditorView() -> EditorView {
         EditorView(
             session: EditorSession(),
-            theme: BuiltInTheme.oxide.theme,
+            theme: BuiltInTheme.tesaraDark.theme,
             fontFamily: "SF Mono",
             fontSize: 13
         )

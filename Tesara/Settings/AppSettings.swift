@@ -58,8 +58,8 @@ struct AppSettings: Codable, Equatable {
         inputBarEnabled: Bool = true,
         cursorStyle: CursorStyle = .bar,
         cursorBlink: Bool = true,
-        lightThemeID: String = BuiltInTheme.paper.id,
-        darkThemeID: String = BuiltInTheme.oxide.id,
+        lightThemeID: String = BuiltInTheme.tesaraLight.id,
+        darkThemeID: String = BuiltInTheme.tesaraDark.id,
         windowOpacity: Double = 1.0,
         windowBlur: Bool = false,
         windowPaddingX: Int = 0,
@@ -196,8 +196,8 @@ struct AppSettings: Codable, Equatable {
         inputBarEnabled = try container.decodeIfPresent(Bool.self, forKey: .inputBarEnabled) ?? true
         cursorStyle = try container.decodeIfPresent(CursorStyle.self, forKey: .cursorStyle) ?? .bar
         cursorBlink = try container.decodeIfPresent(Bool.self, forKey: .cursorBlink) ?? true
-        lightThemeID = try container.decodeIfPresent(String.self, forKey: .lightThemeID) ?? BuiltInTheme.paper.id
-        darkThemeID = try container.decodeIfPresent(String.self, forKey: .darkThemeID) ?? BuiltInTheme.oxide.id
+        lightThemeID = try container.decodeIfPresent(String.self, forKey: .lightThemeID) ?? BuiltInTheme.tesaraLight.id
+        darkThemeID = try container.decodeIfPresent(String.self, forKey: .darkThemeID) ?? BuiltInTheme.tesaraDark.id
         windowOpacity = try container.decodeIfPresent(Double.self, forKey: .windowOpacity) ?? 1.0
         windowBlur = try container.decodeIfPresent(Bool.self, forKey: .windowBlur) ?? false
         windowPaddingX = try container.decodeIfPresent(Int.self, forKey: .windowPaddingX) ?? 0

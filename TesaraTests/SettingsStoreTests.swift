@@ -24,8 +24,8 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(store.settings.inactiveSplitDimAmount, 0.3, accuracy: 0.0001)
         XCTAssertTrue(store.settings.inputBarEnabled)
         XCTAssertEqual(store.settings.cursorStyle, .bar)
-        XCTAssertEqual(store.settings.lightThemeID, BuiltInTheme.paper.id)
-        XCTAssertEqual(store.settings.darkThemeID, BuiltInTheme.oxide.id)
+        XCTAssertEqual(store.settings.lightThemeID, BuiltInTheme.tesaraLight.id)
+        XCTAssertEqual(store.settings.darkThemeID, BuiltInTheme.tesaraDark.id)
         XCTAssertEqual(store.settings.windowOpacity, 1.0)
         XCTAssertFalse(store.settings.windowBlur)
         XCTAssertEqual(store.settings.windowPaddingX, 0)
@@ -121,8 +121,8 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertTrue(settings.inputBarEnabled)
         XCTAssertEqual(settings.cursorStyle, .bar)
         XCTAssertEqual(settings.colorMode, .system)
-        XCTAssertEqual(settings.lightThemeID, BuiltInTheme.paper.id)
-        XCTAssertEqual(settings.darkThemeID, BuiltInTheme.oxide.id)
+        XCTAssertEqual(settings.lightThemeID, BuiltInTheme.tesaraLight.id)
+        XCTAssertEqual(settings.darkThemeID, BuiltInTheme.tesaraDark.id)
         XCTAssertEqual(settings.windowOpacity, 1.0)
         XCTAssertFalse(settings.windowBlur)
         XCTAssertEqual(settings.windowPaddingX, 0)
@@ -144,22 +144,22 @@ final class SettingsStoreTests: XCTestCase {
 
         var legacySettings = AppSettings.default
         legacySettings.fontSize = 18
-        legacySettings.darkThemeID = BuiltInTheme.atlas.id
+        legacySettings.darkThemeID = BuiltInTheme.atlasDark.id
         let data = try! JSONEncoder().encode(legacySettings)
         defaults.set(data, forKey: "tesara.app-settings")
 
         let store = SettingsStore(configDirectory: tempDir, defaults: defaults)
         XCTAssertEqual(store.settings.fontSize, 18)
-        XCTAssertEqual(store.settings.darkThemeID, BuiltInTheme.atlas.id)
+        XCTAssertEqual(store.settings.darkThemeID, BuiltInTheme.atlasDark.id)
         XCTAssertNil(defaults.data(forKey: "tesara.app-settings"))
         XCTAssertNotNil(ConfigFile.readConfigFile(from: tempDir))
     }
 
-    func testActiveThemeFallsBackToOxide() {
+    func testActiveThemeFallsBackToTesaraDark() {
         let store = makeStore()
         store.settings.darkThemeID = "nonexistent-theme"
         store.settings.colorMode = .dark
-        XCTAssertEqual(store.activeTheme.id, BuiltInTheme.oxide.id)
+        XCTAssertEqual(store.activeTheme.id, BuiltInTheme.tesaraDark.id)
     }
 
     func testAvailableThemesIncludesAllBuiltIn() {

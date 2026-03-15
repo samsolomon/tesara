@@ -10,10 +10,11 @@ final class SettingsStore: ObservableObject {
         }
     }
 
-    @Published var isDark: Bool = true
+    @Published var isDark: Bool = NSApp?.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
 
     let configDirectory: URL
     private var watcher: ConfigFileWatcher?
+    private var appearanceObserver: NSObjectProtocol?
     private var isSuppressingPersist = false
     private var pendingWriteCount = 0
     private let defaults: UserDefaults
@@ -52,6 +53,22 @@ final class SettingsStore: ObservableObject {
         watcher = ConfigFileWatcher(directory: configDirectory) { [weak self] in
             self?.reloadFromDisk()
         }
+
+        appearanceObserver = DistributedNotificationCenter.default.addObserver(
+            forName: NSNotification.Name("AppleInterfaceThemeChangedNotification"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.isDark = NSApp?.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            }
+        }
+    }
+
+    deinit {
+        if let appearanceObserver {
+            DistributedNotificationCenter.default.removeObserver(appearanceObserver)
+        }
     }
 
     var availableThemes: [TerminalTheme] {
@@ -64,7 +81,7 @@ final class SettingsStore: ObservableObject {
         case .dark: settings.darkThemeID
         case .system: isDark ? settings.darkThemeID : settings.lightThemeID
         }
-        return availableThemes.first { $0.id == id } ?? BuiltInTheme.oxide.theme
+        return availableThemes.first { $0.id == id } ?? BuiltInTheme.tesaraDark.theme
     }
 
     struct GhosttyConfigInputs: Equatable {
