@@ -9,8 +9,21 @@ struct PaneHeaderView: View {
     let theme: TerminalTheme
     let onClose: () -> Void
 
+    @State private var isHovered = false
+
+    private var isDragSource: Bool {
+        dragState.activeDragSourceID == paneID
+    }
+
     var body: some View {
         HStack(spacing: 0) {
+            Image(systemName: "line.3.horizontal")
+                .font(.system(size: 9, weight: .medium))
+                .foregroundStyle(theme.swiftUIColor(from: theme.foreground).opacity(0.4))
+                .opacity(isHovered ? 1 : 0)
+                .frame(width: 14)
+                .animation(.easeInOut(duration: 0.12), value: isHovered)
+
             Text(title)
                 .font(.system(size: 12))
                 .foregroundStyle(theme.swiftUIColor(from: theme.foreground).opacity(isActive ? 0.7 : 0.4))
@@ -23,8 +36,11 @@ struct PaneHeaderView: View {
                 isActive: isActive,
                 action: onClose
             )
+            .opacity(isDragSource ? 0 : 1)
+            .allowsHitTesting(!isDragSource)
         }
-        .padding(.horizontal, 8)
+        .padding(.leading, 4)
+        .padding(.trailing, 8)
         .frame(height: 24)
         .background(theme.swiftUIColor(from: theme.background))
         .overlay(alignment: .top) {
@@ -36,6 +52,11 @@ struct PaneHeaderView: View {
             Rectangle()
                 .fill(Color.gray.opacity(0.3))
                 .frame(height: 1)
+        }
+        .opacity(isDragSource ? 0.4 : 1)
+        .animation(.easeInOut(duration: 0.15), value: isDragSource)
+        .onHover { hovering in
+            isHovered = hovering
         }
         .onDrag {
             dragState.dragStarted(sourceID: paneID)

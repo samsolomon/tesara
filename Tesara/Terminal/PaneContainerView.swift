@@ -162,14 +162,23 @@ private struct PaneDropTarget<Content: View>: View {
     @ViewBuilder let content: Content
     @State private var isDropTargeted = false
 
+    private var showOverlay: Bool {
+        isDropTargeted && dragState.activeDragSourceID != nil
+    }
+
     var body: some View {
         content
             .overlay {
-                if isDropTargeted, dragState.activeDragSourceID != nil {
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.accentColor.opacity(0.1))
-                        .allowsHitTesting(false)
+                Group {
+                    if showOverlay {
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.accentColor.opacity(0.15))
+                            .stroke(Color.accentColor.opacity(0.3), lineWidth: 1)
+                            .allowsHitTesting(false)
+                            .transition(.opacity)
+                    }
                 }
+                .animation(.easeInOut(duration: 0.12), value: showOverlay)
             }
             .onDrop(of: [.plainText], isTargeted: $isDropTargeted) { _ in
                 guard dragState.activeDragSourceID != nil else { return false }
