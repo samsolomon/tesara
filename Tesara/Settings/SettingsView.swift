@@ -166,6 +166,9 @@ enum SettingsPane: String, CaseIterable, Identifiable {
 }
 
 private struct SettingsDetailContainer<Content: View>: View {
+    /// Titlebar (28) + traffic-light offset (8) + visual gutter (2).
+    private static var topInset: CGFloat { 38 }
+
     let content: Content
 
     init(@ViewBuilder content: () -> Content) {
@@ -174,8 +177,7 @@ private struct SettingsDetailContainer<Content: View>: View {
 
     var body: some View {
         content
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .contentMargins(.top, 38, for: .scrollContent)
+            .contentMargins(.top, Self.topInset, for: .scrollContent)
             .background(Color(nsColor: .windowBackgroundColor))
     }
 }
