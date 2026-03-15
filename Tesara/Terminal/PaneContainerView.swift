@@ -288,7 +288,7 @@ private struct TerminalPaneLeafView: View {
     @ViewBuilder
     private func inputBarRegion(_ inputBarState: InputBarState, session: TerminalSession, surfaceView: GhosttySurfaceView) -> some View {
         VStack(spacing: 4) {
-            if inputBarState.historyController.isSearchActive {
+            if inputBarState.isSearchActive {
                 HistorySearchOverlayView(
                     historyController: inputBarState.historyController,
                     theme: theme,
@@ -390,7 +390,6 @@ private struct TerminalPaneLeafView: View {
                     }
                 }
                 .id(session.id)
-                .animation(.easeInOut(duration: 0.15), value: showInputBar)
                 .onAppear {
                     syncInputBarPresentation(session: session, surfaceView: surfaceView)
                 }

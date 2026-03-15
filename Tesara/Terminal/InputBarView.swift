@@ -13,8 +13,10 @@ final class InputBarState: ObservableObject {
 
     @Published private(set) var isEmpty: Bool = true
     @Published private(set) var displayLineCount: Int = 1
+    @Published private(set) var isSearchActive: Bool = false
 
     private var sessionCancellable: AnyCancellable?
+    private var searchCancellable: AnyCancellable?
 
     func createView(theme: TerminalTheme, fontFamily: String, fontSize: Double, cursorConfig: EditorLayoutEngine.CursorConfig? = nil, cursorBlink: Bool = true) {
         guard editorView == nil else { return }
@@ -30,6 +32,14 @@ final class InputBarState: ObservableObject {
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in
                 self?.syncDerivedState()
+            }
+
+        searchCancellable = historyController.$isSearchActive
+            .receive(on: RunLoop.main)
+            .sink { [weak self] active in
+                if self?.isSearchActive != active {
+                    self?.isSearchActive = active
+                }
             }
     }
 

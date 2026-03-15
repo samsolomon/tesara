@@ -403,7 +403,7 @@ class GhosttySurfaceView: NSView, NSTextInputClient {
 
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
         guard event.type == .keyDown else { return false }
-        guard focused else { return false }
+        guard focused, !keyboardFocusDisabled else { return false }
 
         // Check if this is a ghostty binding
         var ghosttyEvent = event.ghosttyKeyEvent(GHOSTTY_ACTION_PRESS)
