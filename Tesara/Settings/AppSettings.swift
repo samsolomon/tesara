@@ -66,8 +66,8 @@ struct AppSettings: Codable, Equatable {
         darkThemeID: String = BuiltInTheme.tesaraDark.id,
         windowOpacity: Double = 1.0,
         windowBlur: Bool = false,
-        windowPaddingX: Int = 0,
-        windowPaddingY: Int = 0,
+        windowPaddingX: Int = 12,
+        windowPaddingY: Int = 4,
         fontLigatures: Bool = true,
         fontThicken: Bool = false,
         optionAsAlt: OptionAsAlt = .off,
@@ -204,8 +204,8 @@ struct AppSettings: Codable, Equatable {
         darkThemeID = try container.decodeIfPresent(String.self, forKey: .darkThemeID) ?? BuiltInTheme.tesaraDark.id
         windowOpacity = try container.decodeIfPresent(Double.self, forKey: .windowOpacity) ?? 1.0
         windowBlur = try container.decodeIfPresent(Bool.self, forKey: .windowBlur) ?? false
-        windowPaddingX = try container.decodeIfPresent(Int.self, forKey: .windowPaddingX) ?? 0
-        windowPaddingY = try container.decodeIfPresent(Int.self, forKey: .windowPaddingY) ?? 0
+        windowPaddingX = try container.decodeIfPresent(Int.self, forKey: .windowPaddingX) ?? 12
+        windowPaddingY = try container.decodeIfPresent(Int.self, forKey: .windowPaddingY) ?? 4
         fontLigatures = try container.decodeIfPresent(Bool.self, forKey: .fontLigatures) ?? true
         fontThicken = try container.decodeIfPresent(Bool.self, forKey: .fontThicken) ?? false
         optionAsAlt = try container.decodeIfPresent(OptionAsAlt.self, forKey: .optionAsAlt) ?? .off

@@ -132,20 +132,15 @@ final class TerminalSession: ObservableObject, Identifiable {
 
     // MARK: - Alternate Screen
 
-    /// Tracks how many RENDER calls we've seen, to throttle debug logging.
-    private var renderCheckCount = 0
-
     func checkAlternateScreen() {
         guard let surface = surfaceView?.surface else { return }
-        let alt = ghostty_surface_is_alternate_screen(surface)
-        renderCheckCount += 1
-        // Log every 100th check so we can verify the pipeline works without spam
-        if renderCheckCount % 100 == 1 {
-            print("[Tesara-DEBUG] checkAlternateScreen #\(renderCheckCount): alt=\(alt) current=\(isAlternateScreen)")
-        }
-        if alt != isAlternateScreen {
-            print("[Tesara-DEBUG] alternate screen CHANGED: \(alt)")
-            isAlternateScreen = alt
+        // A TUI app is running if the terminal is in alternate screen mode
+        // (vim, less, htop) OR has mouse capture enabled (Claude Code, other
+        // modern TUIs built with Ink/React that render inline).
+        let isTUI = ghostty_surface_is_alternate_screen(surface)
+            || ghostty_surface_mouse_captured(surface)
+        if isTUI != isAlternateScreen {
+            isAlternateScreen = isTUI
         }
     }
 
