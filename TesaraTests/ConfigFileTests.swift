@@ -248,6 +248,149 @@ final class ConfigFileTests: XCTestCase {
         XCTAssertEqual(restored, expected)
     }
 
+    // MARK: - Legacy auto-theme-switching
+
+    func testApplyLegacyAutoThemeSwitchingTrueSetsSystem() {
+        let parsed = ConfigFile.parse("auto-theme-switching = true")
+        var s = AppSettings.default
+        s.colorMode = .light // start with non-system
+        ConfigFile.applyParsedConfig(parsed, to: &s)
+        XCTAssertEqual(s.colorMode, .system)
+    }
+
+    func testApplyLegacyAutoThemeSwitchingFalseKeepsDefault() {
+        let parsed = ConfigFile.parse("auto-theme-switching = false")
+        var s = AppSettings.default
+        ConfigFile.applyParsedConfig(parsed, to: &s)
+        XCTAssertEqual(s.colorMode, AppSettings.default.colorMode)
+    }
+
+    func testApplyColorModeTakesPrecedenceOverLegacy() {
+        let parsed = ConfigFile.parse("color-mode = dark\nauto-theme-switching = true")
+        var s = AppSettings.default
+        ConfigFile.applyParsedConfig(parsed, to: &s)
+        XCTAssertEqual(s.colorMode, .dark)
+    }
+
+    // MARK: - Windows Line Endings in Parse
+
+    func testParseWindowsLineEndingsRequirePreNormalization() {
+        // Swift treats \r\n as a single grapheme cluster, so split(separator: "\n")
+        // does NOT split at \r\n boundaries. Config files with Windows line endings
+        // must be pre-normalized before parsing.
+        let raw = "font-size = 16\r\nshell-path = /bin/zsh\r\n"
+        let rawParsed = ConfigFile.parse(raw)
+        // Without normalization, the entire content is treated as a single line
+        XCTAssertNil(rawParsed["shell-path"])
+
+        // With normalization, parsing works correctly
+        let normalized = raw.replacingOccurrences(of: "\r\n", with: "\n")
+        let parsed = ConfigFile.parse(normalized)
+        XCTAssertEqual(parsed["font-size"]?.last, "16")
+        XCTAssertEqual(parsed["shell-path"]?.last, "/bin/zsh")
+    }
+
+    // MARK: - Special Key Round Trips
+
+    func testSpecialKeyShortcutRoundTrips() {
+        let specialKeys: [(String, String)] = [
+            ("\u{1b}", "escape"),
+            ("\r", "return"),
+            ("\t", "tab"),
+            (" ", "space"),
+            ("\u{7f}", "delete"),
+            ("\u{F728}", "forward_delete"),
+            ("\u{F700}", "up"),
+            ("\u{F701}", "down"),
+            ("\u{F702}", "left"),
+            ("\u{F703}", "right"),
+            ("\u{F729}", "home"),
+            ("\u{F72B}", "end"),
+            ("\u{F72C}", "page_up"),
+            ("\u{F72D}", "page_down"),
+        ]
+        for (key, expectedName) in specialKeys {
+            let shortcut = KeyShortcut(key: key, modifiers: [.command])
+            let serialized = ConfigFile.serializeShortcut(shortcut)
+            XCTAssertTrue(serialized.contains(expectedName), "Key \(key.debugDescription) should serialize to \(expectedName), got \(serialized)")
+            let parsed = ConfigFile.parseShortcut(serialized)
+            XCTAssertEqual(parsed, shortcut, "Round trip failed for \(expectedName)")
+        }
+    }
+
+    func testParseFunctionKeyShortcuts() {
+        for i in 1...12 {
+            let serialized = "cmd+f\(i)"
+            let parsed = ConfigFile.parseShortcut(serialized)
+            XCTAssertNotNil(parsed, "Failed to parse f\(i) shortcut")
+            XCTAssertEqual(parsed?.modifiers, [.command])
+        }
+    }
+
+    // MARK: - Parse Empty Input
+
+    func testParseEmptyString() {
+        XCTAssertTrue(ConfigFile.parse("").isEmpty)
+    }
+
+    func testParseOnlyComments() {
+        XCTAssertTrue(ConfigFile.parse("# comment 1\n# comment 2\n").isEmpty)
+    }
+
+    // MARK: - Shortcut Parse Edge Cases
+
+    func testParseShortcutEmptyString() {
+        XCTAssertNil(ConfigFile.parseShortcut(""))
+    }
+
+    func testParseShortcutKeyOnly() {
+        let parsed = ConfigFile.parseShortcut("t")
+        XCTAssertNotNil(parsed)
+        XCTAssertEqual(parsed?.key, "t")
+        XCTAssertEqual(parsed?.modifiers, [])
+    }
+
+    func testSerializeShortcutWithUnknownKey() {
+        let shortcut = KeyShortcut(key: "å", modifiers: [.command])
+        let serialized = ConfigFile.serializeShortcut(shortcut)
+        XCTAssertEqual(serialized, "cmd+å")
+    }
+
+    // MARK: - Theme I/O Edge Cases
+
+    func testLoadImportedThemesFromEmptyDirectory() {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("tesara-themes-\(UUID().uuidString)")
+        let themes = ConfigFile.loadImportedThemes(from: dir)
+        XCTAssertTrue(themes.isEmpty)
+        try? FileManager.default.removeItem(at: dir)
+    }
+
+    func testLoadImportedThemesIgnoresNonJSONFiles() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("tesara-themes-\(UUID().uuidString)")
+        let themesDir = dir.appendingPathComponent("themes")
+        try FileManager.default.createDirectory(at: themesDir, withIntermediateDirectories: true)
+        try "not json".write(to: themesDir.appendingPathComponent("readme.txt"), atomically: true, encoding: .utf8)
+        let themes = ConfigFile.loadImportedThemes(from: dir)
+        XCTAssertTrue(themes.isEmpty)
+        try? FileManager.default.removeItem(at: dir)
+    }
+
+    func testSaveImportedThemeSanitizesSlashesInFilename() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("tesara-themes-\(UUID().uuidString)")
+        let theme = ImportedTheme(id: "custom/my-theme", name: "My Theme", theme: TerminalTheme(
+            id: "custom/my-theme", name: "My Theme",
+            foreground: "#FFF", background: "#000", cursor: "#F00", cursorText: "#000", selectionBackground: "#333",
+            black: "#000", red: "#F00", green: "#0F0", yellow: "#FF0", blue: "#00F", magenta: "#F0F", cyan: "#0FF", white: "#FFF",
+            brightBlack: "#888", brightRed: "#F00", brightGreen: "#0F0", brightYellow: "#FF0",
+            brightBlue: "#00F", brightMagenta: "#F0F", brightCyan: "#0FF", brightWhite: "#FFF"
+        ))
+        try ConfigFile.saveImportedTheme(theme, to: dir)
+        // Filename should have slash replaced with dash
+        let expectedFile = dir.appendingPathComponent("themes/custom-my-theme.json")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: expectedFile.path))
+        try? FileManager.default.removeItem(at: dir)
+    }
+
     // MARK: - Shortcut Serialization
 
     func testShortcutRoundTrips() {

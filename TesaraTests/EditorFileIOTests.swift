@@ -230,6 +230,118 @@ final class EditorFileIOTests: XCTestCase {
         XCTAssertGreaterThan(editorView.totalVisualLinesForTesting(), 1)
     }
 
+    // MARK: - Encoding Error
+
+    func testNonUTF8FileThrowsEncodingError() throws {
+        let url = tempDir.appendingPathComponent("binary.txt")
+        // Write raw bytes that are not valid UTF-8
+        let invalidUTF8 = Data([0xFF, 0xFE, 0x80, 0x81, 0x82])
+        try invalidUTF8.write(to: url)
+        XCTAssertThrowsError(try session.loadFile(url: url)) { error in
+            guard case EditorFileError.encodingError = error else {
+                XCTFail("Expected encodingError, got \(error)")
+                return
+            }
+        }
+    }
+
+    // MARK: - File at Exactly Max Size
+
+    func testFileAtExactlyMaxSizeLoadsSuccessfully() throws {
+        let url = tempDir.appendingPathComponent("exact.txt")
+        let content = String(repeating: "A", count: EditorSession.maxFileSize)
+        try content.write(to: url, atomically: true, encoding: .utf8)
+        XCTAssertNoThrow(try session.loadFile(url: url))
+    }
+
+    // MARK: - Syntax Highlighter Setup
+
+    func testLoadSwiftFileSetsUpSyntaxHighlighter() throws {
+        let url = try tempFile(name: "test.swift", content: "let x = 1")
+        try session.loadFile(url: url)
+        XCTAssertNotNil(session.syntaxHighlighter)
+    }
+
+    func testLoadJSONFileSetsUpSyntaxHighlighter() throws {
+        let url = try tempFile(name: "data.json", content: "{\"key\": 1}")
+        try session.loadFile(url: url)
+        XCTAssertNotNil(session.syntaxHighlighter)
+    }
+
+    func testLoadPlainTextHasInactiveSyntaxHighlighter() throws {
+        let url = try tempFile(name: "readme.txt", content: "Hello world")
+        try session.loadFile(url: url)
+        // SyntaxHighlighter is created but tokenizer is nil for unknown extensions
+        XCTAssertNotNil(session.syntaxHighlighter)
+        XCTAssertFalse(session.syntaxHighlighter?.isActive ?? true)
+    }
+
+    // MARK: - Load Clears Undo Stack
+
+    func testLoadFileClearsUndoStack() throws {
+        session.insertText("some text")
+        XCTAssertTrue(session.undoManager.canUndo)
+
+        let url = try tempFile(name: "test.txt", content: "fresh")
+        try session.loadFile(url: url)
+        XCTAssertFalse(session.undoManager.canUndo)
+    }
+
+    // MARK: - Save As Sets Up Syntax Highlighting
+
+    func testSaveAsToSwiftExtensionEnablesSyntaxHighlighting() throws {
+        session.insertText("let x = 1")
+        XCTAssertNil(session.syntaxHighlighter)
+
+        let url = tempDir.appendingPathComponent("new.swift")
+        try session.saveAs(url: url)
+        XCTAssertNotNil(session.syntaxHighlighter)
+    }
+
+    // MARK: - Modification Date Tracking
+
+    func testLoadFileSetsModificationDate() throws {
+        let url = try tempFile(name: "test.txt", content: "hello")
+        try session.loadFile(url: url)
+        XCTAssertNotNil(session.fileModificationDate)
+    }
+
+    func testSaveUpdatesModificationDate() throws {
+        let url = try tempFile(name: "test.txt", content: "hello")
+        try session.loadFile(url: url)
+        let originalDate = session.fileModificationDate
+
+        Thread.sleep(forTimeInterval: 0.1)
+        session.insertText("!")
+        try session.save()
+
+        XCTAssertNotEqual(session.fileModificationDate, originalDate)
+    }
+
+    // MARK: - Stale Detection Edge Cases
+
+    func testCheckFileStaleWithNoPathReturnsFalse() {
+        XCTAssertFalse(session.checkFileStale())
+    }
+
+    // MARK: - Error Descriptions
+
+    func testFileTooLargeErrorDescription() {
+        let error = EditorFileError.fileTooLarge(10 * 1024 * 1024)
+        XCTAssertTrue(error.errorDescription?.contains("10.0 MB") ?? false)
+        XCTAssertTrue(error.errorDescription?.contains("5 MB") ?? false)
+    }
+
+    func testEncodingErrorDescription() {
+        let error = EditorFileError.encodingError
+        XCTAssertTrue(error.errorDescription?.contains("UTF-8") ?? false)
+    }
+
+    func testNoFilePathErrorDescription() {
+        let error = EditorFileError.noFilePath
+        XCTAssertTrue(error.errorDescription?.contains("Save As") ?? false)
+    }
+
     private func extractText(_ line: String, token: SyntaxToken?) -> String? {
         guard let token else { return nil }
         let utf16 = Array(line.utf16)

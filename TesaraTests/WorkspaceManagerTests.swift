@@ -925,6 +925,335 @@ final class WorkspaceManagerTests: XCTestCase {
         XCTAssertEqual(manager.activePaneID, rightPaneID)
     }
 
+    // MARK: - Swap Panes
+
+    func testSwapPanesExchangesLeafPositions() {
+        addTab()
+        let firstPaneID = manager.activePaneID!
+        manager.splitActivePane(
+            direction: .horizontal,
+            shellPath: "/bin/zsh",
+            workingDirectory: URL(fileURLWithPath: "/tmp"),
+            blockStore: blockStore
+        )
+        let secondPaneID = manager.activePaneID!
+
+        guard case .split(_, _, let firstBefore, let secondBefore, _) = manager.activeTab?.rootPane else {
+            XCTFail("Expected split root pane")
+            return
+        }
+        XCTAssertEqual(firstBefore.id, firstPaneID)
+        XCTAssertEqual(secondBefore.id, secondPaneID)
+
+        manager.swapPanes(sourceID: firstPaneID, targetID: secondPaneID)
+
+        guard case .split(_, _, let firstAfter, let secondAfter, _) = manager.activeTab?.rootPane else {
+            XCTFail("Expected split root pane after swap")
+            return
+        }
+        XCTAssertEqual(firstAfter.id, secondPaneID)
+        XCTAssertEqual(secondAfter.id, firstPaneID)
+    }
+
+    func testSwapPanesSameIDIsNoOp() {
+        addTab()
+        let paneID = manager.activePaneID!
+        manager.splitActivePane(
+            direction: .horizontal,
+            shellPath: "/bin/zsh",
+            workingDirectory: URL(fileURLWithPath: "/tmp"),
+            blockStore: blockStore
+        )
+
+        guard case .split(_, _, let firstBefore, let secondBefore, _) = manager.activeTab?.rootPane else {
+            XCTFail("Expected split root pane")
+            return
+        }
+
+        manager.swapPanes(sourceID: paneID, targetID: paneID)
+
+        guard case .split(_, _, let firstAfter, let secondAfter, _) = manager.activeTab?.rootPane else {
+            XCTFail("Expected split root pane")
+            return
+        }
+        XCTAssertEqual(firstBefore.id, firstAfter.id)
+        XCTAssertEqual(secondBefore.id, secondAfter.id)
+    }
+
+    // MARK: - Update Pane Ratio
+
+    func testUpdatePaneRatioChangesRatio() {
+        addTab()
+        manager.splitActivePane(
+            direction: .horizontal,
+            shellPath: "/bin/zsh",
+            workingDirectory: URL(fileURLWithPath: "/tmp"),
+            blockStore: blockStore
+        )
+
+        guard case .split(let splitID, _, _, _, _) = manager.activeTab?.rootPane else {
+            XCTFail("Expected split root pane")
+            return
+        }
+
+        manager.updatePaneRatio(splitID: splitID, ratio: 0.7)
+
+        guard case .split(_, _, _, _, let newRatio) = manager.activeTab?.rootPane else {
+            XCTFail("Expected split root pane")
+            return
+        }
+        XCTAssertEqual(Double(newRatio), 0.7, accuracy: 0.001)
+    }
+
+    // MARK: - Restore Root Pane
+
+    func testRestoreRootPaneReplacesEntireTree() {
+        addTab()
+        manager.splitActivePane(
+            direction: .horizontal,
+            shellPath: "/bin/zsh",
+            workingDirectory: URL(fileURLWithPath: "/tmp"),
+            blockStore: blockStore
+        )
+
+        // Save current root, then restore it
+        let savedRoot = manager.activeTab!.rootPane
+
+        // Create a new simple leaf
+        let newSession = TerminalSession()
+        let newPaneID = UUID()
+        let newRoot = PaneNode.leaf(id: newPaneID, session: newSession)
+
+        manager.restoreRootPane(newRoot)
+
+        if case .leaf = manager.activeTab?.rootPane {
+            XCTAssertEqual(manager.activeTab?.rootPane.id, newPaneID)
+        } else {
+            XCTFail("Expected leaf root after restore")
+        }
+
+        // Restore back to the split
+        manager.restoreRootPane(savedRoot)
+        if case .split = manager.activeTab?.rootPane {
+            // success
+        } else {
+            XCTFail("Expected split root after second restore")
+        }
+    }
+
+    // MARK: - Tab Title Mode
+
+    func testSetTabTitleModeChangesMode() {
+        addTab()
+        manager.setTabTitleMode(.workingDirectory)
+        XCTAssertEqual(manager.tabTitleMode, .workingDirectory)
+    }
+
+    func testSetTabTitleModeSameValueIsNoOp() {
+        addTab()
+        manager.setTabTitleMode(.shellTitle)
+        // Default is .shellTitle, setting again should be no-op
+        manager.setTabTitleMode(.shellTitle)
+        XCTAssertEqual(manager.tabTitleMode, .shellTitle)
+    }
+
+    func testSetTabTitleModeRefreshesTabTitles() throws {
+        addTab()
+        let session = try XCTUnwrap(manager.activeSession)
+        session.updateWorkingDirectory(URL(fileURLWithPath: "/Users/test/projects/cool-app"))
+        session.updateTitle("vim main.swift")
+        waitForWorkspaceRefresh()
+
+        // In shellTitle mode, shell title takes precedence
+        manager.setTabTitleMode(.shellTitle)
+        XCTAssertEqual(manager.tabs.first?.title, "vim main.swift")
+
+        // In workingDirectory mode, directory takes precedence
+        manager.setTabTitleMode(.workingDirectory)
+        XCTAssertEqual(manager.tabs.first?.title, "cool-app")
+    }
+
+    // MARK: - paneTitle (static)
+
+    func testPaneTitleShellTitleModePrefersTitleOverDirectory() {
+        let title = WorkspaceManager.paneTitle(
+            shellTitle: "vim",
+            workingDirectory: "/Users/test/projects",
+            mode: .shellTitle
+        )
+        XCTAssertEqual(title, "vim")
+    }
+
+    func testPaneTitleShellTitleModeFallsBackToDirectory() {
+        let title = WorkspaceManager.paneTitle(
+            shellTitle: nil,
+            workingDirectory: "/Users/test/projects",
+            mode: .shellTitle
+        )
+        XCTAssertEqual(title, "projects")
+    }
+
+    func testPaneTitleWorkingDirectoryModePrefersDirOverTitle() {
+        let title = WorkspaceManager.paneTitle(
+            shellTitle: "vim",
+            workingDirectory: "/Users/test/projects",
+            mode: .workingDirectory
+        )
+        XCTAssertEqual(title, "projects")
+    }
+
+    func testPaneTitleWorkingDirectoryModeFallsBackToTitle() {
+        let title = WorkspaceManager.paneTitle(
+            shellTitle: "vim",
+            workingDirectory: nil,
+            mode: .workingDirectory
+        )
+        XCTAssertEqual(title, "vim")
+    }
+
+    func testPaneTitleFallsBackToShell() {
+        let title = WorkspaceManager.paneTitle(
+            shellTitle: nil,
+            workingDirectory: nil,
+            mode: .shellTitle
+        )
+        XCTAssertEqual(title, "Shell")
+    }
+
+    func testPaneTitleHomeDirectoryShowsTilde() {
+        let homePath = FileManager.default.homeDirectoryForCurrentUser.path
+        let title = WorkspaceManager.paneTitle(
+            shellTitle: nil,
+            workingDirectory: homePath,
+            mode: .workingDirectory
+        )
+        XCTAssertEqual(title, "~")
+    }
+
+    func testPaneTitleEmptyShellTitleTreatedAsNil() {
+        let title = WorkspaceManager.paneTitle(
+            shellTitle: "   ",
+            workingDirectory: "/tmp",
+            mode: .shellTitle
+        )
+        XCTAssertEqual(title, "tmp")
+    }
+
+    func testPaneTitleEmptyDirectoryTreatedAsNil() {
+        let title = WorkspaceManager.paneTitle(
+            shellTitle: "vim",
+            workingDirectory: "",
+            mode: .workingDirectory
+        )
+        XCTAssertEqual(title, "vim")
+    }
+
+    // MARK: - Active Tab Title
+
+    func testActiveTabTitleFallbackWhenEmpty() {
+        XCTAssertEqual(manager.activeTabTitle, "Shell")
+    }
+
+    // MARK: - Save Active Editor
+
+    func testSaveActiveEditorWithNoEditorIsNoOp() {
+        addTab()
+        // No editor session, should not crash
+        manager.saveActiveEditor()
+        XCTAssertNil(manager.pendingSavePanel)
+    }
+
+    func testSaveActiveEditorAsOpensPanel() {
+        addTab()
+        manager.splitActivePaneWithEditor(
+            direction: .horizontal,
+            theme: testTheme,
+            fontFamily: "SF Mono",
+            fontSize: 13
+        )
+        manager.saveActiveEditorAs()
+        XCTAssertNotNil(manager.pendingSavePanel)
+    }
+
+    func testCancelPendingSavePanelClearsState() {
+        addTab()
+        manager.splitActivePaneWithEditor(
+            direction: .horizontal,
+            theme: testTheme,
+            fontFamily: "SF Mono",
+            fontSize: 13
+        )
+        manager.saveActiveEditorAs()
+        XCTAssertNotNil(manager.pendingSavePanel)
+
+        manager.cancelPendingSavePanel()
+        XCTAssertNil(manager.pendingSavePanel)
+    }
+
+    // MARK: - Close Resolution Cancel
+
+    func testResolvePendingCloseCancelIsNoOp() throws {
+        manager.setConfirmOnCloseRunningSessionEnabled(true)
+        addTab()
+
+        let paneID = try XCTUnwrap(manager.activePaneID)
+        let session = try XCTUnwrap(manager.activeSession)
+        session.setStatusForTesting(.running)
+
+        manager.closePane(id: paneID)
+        XCTAssertNotNil(manager.pendingCloseConfirmation)
+
+        manager.resolvePendingClose(.cancel)
+        // Tab should still be present
+        XCTAssertEqual(manager.tabs.count, 1)
+        XCTAssertNil(manager.pendingCloseConfirmation)
+    }
+
+    // MARK: - Next/Previous Pane
+
+    func testSelectNextPaneCyclesThroughPanes() {
+        addTab()
+        let firstPaneID = manager.activePaneID!
+        manager.splitActivePane(
+            direction: .horizontal,
+            shellPath: "/bin/zsh",
+            workingDirectory: URL(fileURLWithPath: "/tmp"),
+            blockStore: blockStore
+        )
+        let secondPaneID = manager.activePaneID!
+
+        manager.selectPane(id: firstPaneID)
+        manager.selectNextPane()
+        XCTAssertEqual(manager.activePaneID, secondPaneID)
+
+        // Wraps back to first
+        manager.selectNextPane()
+        XCTAssertEqual(manager.activePaneID, firstPaneID)
+    }
+
+    func testSelectPreviousPaneCyclesThroughPanes() {
+        addTab()
+        let firstPaneID = manager.activePaneID!
+        manager.splitActivePane(
+            direction: .horizontal,
+            shellPath: "/bin/zsh",
+            workingDirectory: URL(fileURLWithPath: "/tmp"),
+            blockStore: blockStore
+        )
+        let secondPaneID = manager.activePaneID!
+
+        manager.selectPane(id: firstPaneID)
+        manager.selectPreviousPane()
+        XCTAssertEqual(manager.activePaneID, secondPaneID)
+    }
+
+    func testSelectNextPaneSinglePaneIsNoOp() {
+        addTab()
+        let paneID = manager.activePaneID!
+        manager.selectNextPane()
+        XCTAssertEqual(manager.activePaneID, paneID)
+    }
+
     private func horizontalWidths(in node: PaneNode, availableWidth: CGFloat = 1) -> [UUID: CGFloat] {
         switch node {
         case .leaf(let id, _):

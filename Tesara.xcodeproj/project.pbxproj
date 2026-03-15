@@ -97,6 +97,10 @@
 		FA96111B4FCCEF18236CA364 /* TerminalIntegration in Resources */ = {isa = PBXBuildFile; fileRef = 2292F5BCC3AC767DAD9619D7 /* TerminalIntegration */; };
 		AABB001122334455GHOSTTY01 /* GhosttyThemeLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB001122334455GHOSTTY02 /* GhosttyThemeLoader.swift */; };
 		AABB001122334455GHOSTTY03 /* GhosttyThemes in Resources */ = {isa = PBXBuildFile; fileRef = AABB001122334455GHOSTTY04 /* GhosttyThemes */; };
+		B2C3D4E5F607182A3B4C5D70 /* BuiltInThemeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5E /* BuiltInThemeTests.swift */; };
+		B2C3D4E5F607182A3B4C5D71 /* ConfigFileWatcherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5F /* ConfigFileWatcherTests.swift */; };
+		B2C3D4E5F607182A3B4C5D6E /* GhosttyThemeLoaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5C /* GhosttyThemeLoaderTests.swift */; };
+		B2C3D4E5F607182A3B4C5D6F /* PaneDragStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5D /* PaneDragStateTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -203,6 +207,10 @@
 		F964C1A41A90CF9F4FFD4D42 /* CLikeTokenizerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLikeTokenizerTests.swift; sourceTree = "<group>"; };
 		FD687D9481D6B35B308BF99F /* GlyphAtlas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlyphAtlas.swift; sourceTree = "<group>"; };
 		FF7543B634720042FBCD3C12 /* GhosttyConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhosttyConfig.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A4B5E /* BuiltInThemeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuiltInThemeTests.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A4B5F /* ConfigFileWatcherTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigFileWatcherTests.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A4B5C /* GhosttyThemeLoaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhosttyThemeLoaderTests.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A4B5D /* PaneDragStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaneDragStateTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -368,15 +376,18 @@
 			isa = PBXGroup;
 			children = (
 				5563A901A8F611AC6D01A419 /* BlockStoreTests.swift */,
+				A1B2C3D4E5F60718293A4B5E /* BuiltInThemeTests.swift */,
 				F964C1A41A90CF9F4FFD4D42 /* CLikeTokenizerTests.swift */,
 				194C23B007577944F607E3A3 /* CommandCaptureTests.swift */,
 				92F0C126DD5D57B46F0CB0C9 /* ConfigFileTests.swift */,
+				A1B2C3D4E5F60718293A4B5F /* ConfigFileWatcherTests.swift */,
 				701EC8B00AF61720A7DECCDE /* EditorFileIOTests.swift */,
 				55C3D9E0E1A4305FC7BC9C6E /* EditorLayoutEngineTests.swift */,
 				64EFE681376FA0A5DDC2373C /* EditorSessionTests.swift */,
 				6F327F83FF7CD1A1B4166DD1 /* FixedPitchFontLibraryTests.swift */,
 				388B787A886EB7129E51A67D /* GhosttyConfigTests.swift */,
 				6C11B2123603104BFA909CD4 /* GhosttyInputTests.swift */,
+				A1B2C3D4E5F60718293A4B5C /* GhosttyThemeLoaderTests.swift */,
 				8BEFEA907D720F797090FCEE /* GhosttySurfaceConfigTests.swift */,
 				570AAE7A2F968564CCF33133 /* GlyphAtlasTests.swift */,
 				F52B6FCC6732906AA75CFDBF /* GlyphCacheTests.swift */,
@@ -384,6 +395,7 @@
 				82D7963110E1A9AC988CD6C8 /* JSONTokenizerTests.swift */,
 				44F9E6038E59B2766F11272E /* KeyBindingDispatcherTests.swift */,
 				64F682A08A5ECC9A73792C74 /* PaneNodeTests.swift */,
+				A1B2C3D4E5F60718293A4B5D /* PaneDragStateTests.swift */,
 				BC8A5E83190F2BE454002AF3 /* PerformanceBenchmarkTests.swift */,
 				C0913B2DEDB933D3E3356B83 /* SettingsStoreTests.swift */,
 				E9AFE0628E390F064A0F5476 /* SyntaxColorMapTests.swift */,
@@ -595,15 +607,18 @@
 			buildActionMask = 2147483647;
 			files = (
 				9D2AA9AEBFD5CEEB5FED047D /* BlockStoreTests.swift in Sources */,
+				B2C3D4E5F607182A3B4C5D70 /* BuiltInThemeTests.swift in Sources */,
 				3EEE11C653E36FBD7149E9B0 /* CLikeTokenizerTests.swift in Sources */,
 				29A734CE04277445AEE6D04F /* CommandCaptureTests.swift in Sources */,
 				930B4A96AEFFBD8443B5EA71 /* ConfigFileTests.swift in Sources */,
+				B2C3D4E5F607182A3B4C5D71 /* ConfigFileWatcherTests.swift in Sources */,
 				1A68BB74DD68235FD70B8CC8 /* EditorFileIOTests.swift in Sources */,
 				BDBC77980C44DF22A0C670BE /* EditorLayoutEngineTests.swift in Sources */,
 				E397C2CD41B2D496D525E68C /* EditorSessionTests.swift in Sources */,
 				21B8B24014BA7BEB3D16003F /* FixedPitchFontLibraryTests.swift in Sources */,
 				3A9CB9669EA9FFC856BD0681 /* GhosttyConfigTests.swift in Sources */,
 				29D0CE84C757E03EF56F432D /* GhosttyInputTests.swift in Sources */,
+				B2C3D4E5F607182A3B4C5D6E /* GhosttyThemeLoaderTests.swift in Sources */,
 				67946EE861023962AF28FA7B /* GhosttySurfaceConfigTests.swift in Sources */,
 				A138077D7D45D0ED5A1391B3 /* GlyphAtlasTests.swift in Sources */,
 				8F50B109818FA08FF12D63F2 /* GlyphCacheTests.swift in Sources */,
@@ -611,6 +626,7 @@
 				072331F12CC7007794B08CF1 /* JSONTokenizerTests.swift in Sources */,
 				085CFD75DF7B4FA9B9F36894 /* KeyBindingDispatcherTests.swift in Sources */,
 				D92C7A0446CBC7553B01AD55 /* PaneNodeTests.swift in Sources */,
+				B2C3D4E5F607182A3B4C5D6F /* PaneDragStateTests.swift in Sources */,
 				006547217CEB29410796DDE2 /* PerformanceBenchmarkTests.swift in Sources */,
 				7C4EC6EB70E96401AD27AFB9 /* SettingsStoreTests.swift in Sources */,
 				2C67001BE8159765D72AAA76 /* SyntaxColorMapTests.swift in Sources */,

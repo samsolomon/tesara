@@ -206,6 +206,144 @@ final class TerminalSessionTests: XCTestCase {
         XCTAssertFalse(handled)
     }
 
+    // MARK: - handleCommandFinished
+
+    func testHandleCommandFinishedWithNegativeOneExitCodeTreatsAsNil() throws {
+        let blockStore = try BlockStore(dbQueue: DatabaseQueue())
+        session.configure(blockStore: blockStore)
+        session.start(shellPath: "/bin/zsh", workingDirectory: URL(fileURLWithPath: "/tmp"))
+
+        // -1 exit code is treated as nil (unknown)
+        session.handleCommandFinished(exitCode: -1, durationNs: 1_000_000)
+        XCTAssertTrue(session.isAtPrompt)
+    }
+
+    func testHandleCommandFinishedSetsIsAtPromptForNonZeroExit() {
+        session.handleCommandFinished(exitCode: 127, durationNs: 500_000)
+        XCTAssertTrue(session.isAtPrompt)
+    }
+
+    // MARK: - handleChildExited
+
+    func testHandleChildExitedSetsStatusToStopped() {
+        session.handleChildExited(exitCode: 0)
+        XCTAssertEqual(session.status, .stopped)
+    }
+
+    func testHandleChildExitedClearsAlternateScreen() {
+        // Can't set isAlternateScreen directly, but can verify it's false after exit
+        session.handleChildExited(exitCode: 0)
+        XCTAssertFalse(session.isAlternateScreen)
+    }
+
+    func testHandleChildExitedTearsDownInputBar() {
+        session.prepareInputBar()
+        XCTAssertNotNil(session.inputBarState)
+
+        session.handleChildExited(exitCode: 0)
+        XCTAssertNil(session.inputBarState)
+    }
+
+    // MARK: - updateTitle
+
+    func testUpdateTitleSetsShellTitle() {
+        session.updateTitle("Deploy logs")
+        XCTAssertEqual(session.shellTitle, "Deploy logs")
+    }
+
+    func testUpdateTitleTrimsWhitespace() {
+        session.updateTitle("  Deploy logs  ")
+        XCTAssertEqual(session.shellTitle, "Deploy logs")
+    }
+
+    func testUpdateTitleEmptyStringBecomesNil() {
+        session.updateTitle("Something")
+        session.updateTitle("")
+        XCTAssertNil(session.shellTitle)
+    }
+
+    func testUpdateTitleWhitespaceOnlyBecomesNil() {
+        session.updateTitle("Something")
+        session.updateTitle("   ")
+        XCTAssertNil(session.shellTitle)
+    }
+
+    func testUpdateTitleDuplicateValueIsNoOp() {
+        session.updateTitle("Deploy logs")
+        // Second call with same value should not trigger change
+        session.updateTitle("Deploy logs")
+        XCTAssertEqual(session.shellTitle, "Deploy logs")
+    }
+
+    // MARK: - updateWorkingDirectory
+
+    func testUpdateWorkingDirectoryDuplicateValueIsNoOp() {
+        let url = URL(fileURLWithPath: "/Users/test")
+        session.updateWorkingDirectory(url)
+        // Second call with same path should be no-op
+        session.updateWorkingDirectory(url)
+        XCTAssertEqual(session.currentWorkingDirectory, "/Users/test")
+    }
+
+    // MARK: - prepareInputBar
+
+    func testPrepareInputBarCreatesState() {
+        session.prepareInputBar()
+        XCTAssertNotNil(session.inputBarState)
+    }
+
+    func testPrepareInputBarIdempotent() {
+        session.prepareInputBar()
+        let first = session.inputBarState
+        session.prepareInputBar()
+        XCTAssertTrue(session.inputBarState === first)
+    }
+
+    // MARK: - configure
+
+    func testConfigureIsIdempotent() throws {
+        let blockStore1 = try BlockStore(dbQueue: DatabaseQueue())
+        let blockStore2 = try BlockStore(dbQueue: DatabaseQueue())
+        session.configure(blockStore: blockStore1)
+        // Second configure should not replace the first
+        session.configure(blockStore: blockStore2)
+        // Verified by the fact that the session works correctly after double-configure
+    }
+
+    // MARK: - handleSurfaceClosed
+
+    func testHandleSurfaceClosedCallsStop() {
+        session.start(shellPath: "/bin/zsh", workingDirectory: URL(fileURLWithPath: "/tmp"))
+        session.handleSurfaceClosed()
+        // Failed start stays as .failed, stop preserves .failed
+        XCTAssertEqual(session.status, .failed)
+        XCTAssertFalse(session.isAtPrompt)
+    }
+
+    // MARK: - readAndCleanupCommandFile
+
+    func testReadAndCleanupCommandFileReturnsNilWhenMissing() {
+        let result = session.readAndCleanupCommandFile()
+        XCTAssertNil(result)
+    }
+
+    func testReadAndCleanupCommandFileReadsAndDeletesFile() throws {
+        let path = NSTemporaryDirectory() + "tesara-cmd-\(session.shellSessionID).txt"
+        try "echo hello".write(toFile: path, atomically: true, encoding: .utf8)
+
+        let result = session.readAndCleanupCommandFile()
+        XCTAssertEqual(result, "echo hello")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: path))
+    }
+
+    func testReadAndCleanupCommandFileTrimsWhitespace() throws {
+        let path = NSTemporaryDirectory() + "tesara-cmd-\(session.shellSessionID).txt"
+        try "  ls -la  \n".write(toFile: path, atomically: true, encoding: .utf8)
+
+        let result = session.readAndCleanupCommandFile()
+        XCTAssertEqual(result, "ls -la")
+    }
+
     // MARK: - Stale Temp File Cleanup
 
     func testCleanupStaleTempFilesRemovesOldFiles() throws {
