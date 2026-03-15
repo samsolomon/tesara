@@ -33,7 +33,8 @@ struct MainWindowView: View {
             .background {
                 WindowConfigurator(
                     backgroundColor: themeBackgroundColor,
-                    isDark: settingsStore.activeTheme.isDarkBackground
+                    isDark: settingsStore.activeTheme.isDarkBackground,
+                    needsTransparency: settingsStore.settings.needsTransparency
                 )
             }
             .background {
@@ -67,6 +68,7 @@ struct MainWindowView: View {
 private struct WindowConfigurator: NSViewRepresentable {
     let backgroundColor: NSColor
     let isDark: Bool
+    let needsTransparency: Bool
 
     func makeNSView(context: Context) -> NSView {
         let view = NSView()
@@ -87,7 +89,8 @@ private struct WindowConfigurator: NSViewRepresentable {
         // adopt the correct contrast while SwiftUI owns the toolbar background.
         window.appearance = NSAppearance(named: isDark ? .darkAqua : .aqua)
         window.titlebarAppearsTransparent = true
-        window.backgroundColor = backgroundColor
+        window.isOpaque = !needsTransparency
+        window.backgroundColor = needsTransparency ? .clear : backgroundColor
     }
 }
 

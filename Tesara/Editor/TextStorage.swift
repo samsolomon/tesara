@@ -135,18 +135,28 @@ final class TextStorage {
 
     // MARK: - Private Helpers
 
+    /// Clamp a column offset to the valid range for the given line.
+    private func safeColumn(_ col: Int, inLine lineIndex: Int) -> Int {
+        max(0, min(col, lines[lineIndex].length))
+    }
+
     func textInRange(_ range: Range) -> String {
         let norm = range.normalized
+        guard !norm.isEmpty else { return "" }
+        guard norm.start.line >= 0, norm.start.line < lines.count else { return "" }
+
         if norm.start.line == norm.end.line {
-            let line = lines[norm.start.line]
-            let nsRange = NSRange(location: norm.start.column, length: norm.end.column - norm.start.column)
-            return line.substring(with: nsRange)
+            let start = safeColumn(norm.start.column, inLine: norm.start.line)
+            let end = safeColumn(norm.end.column, inLine: norm.start.line)
+            guard start < end else { return "" }
+            return lines[norm.start.line].substring(with: NSRange(location: start, length: end - start))
         }
+
+        guard norm.end.line < lines.count else { return "" }
 
         var parts: [String] = []
         // First line: from start.column to end
-        let firstLine = lines[norm.start.line]
-        parts.append(firstLine.substring(from: norm.start.column))
+        parts.append(lines[norm.start.line].substring(from: safeColumn(norm.start.column, inLine: norm.start.line)))
 
         // Middle lines: full content
         for i in (norm.start.line + 1)..<norm.end.line {
@@ -154,25 +164,25 @@ final class TextStorage {
         }
 
         // Last line: from 0 to end.column
-        let lastLine = lines[norm.end.line]
-        parts.append(lastLine.substring(to: norm.end.column))
+        parts.append(lines[norm.end.line].substring(to: safeColumn(norm.end.column, inLine: norm.end.line)))
 
         return parts.joined(separator: "\n")
     }
 
     private func performInsert(_ text: String, at pos: Position) -> Position {
         let insertLines = text.split(separator: "\n", omittingEmptySubsequences: false).map { String($0) }
+        let col = safeColumn(pos.column, inLine: pos.line)
 
         if insertLines.count == 1 {
             // Single-line insert
-            lines[pos.line].insert(insertLines[0], at: pos.column)
-            return Position(line: pos.line, column: pos.column + (insertLines[0] as NSString).length)
+            lines[pos.line].insert(insertLines[0], at: col)
+            return Position(line: pos.line, column: col + (insertLines[0] as NSString).length)
         }
 
         // Multi-line insert: split current line at cursor
         let currentLine = lines[pos.line]
-        let afterCursor = currentLine.substring(from: pos.column)
-        currentLine.deleteCharacters(in: NSRange(location: pos.column, length: currentLine.length - pos.column))
+        let afterCursor = currentLine.substring(from: col)
+        currentLine.deleteCharacters(in: NSRange(location: col, length: currentLine.length - col))
 
         // Append first insert segment to current line
         currentLine.append(insertLines[0])
@@ -195,21 +205,28 @@ final class TextStorage {
     private func performDelete(range: Range) {
         let norm = range.normalized
         guard !norm.isEmpty else { return }
+        guard norm.start.line >= 0, norm.start.line < lines.count else { return }
 
         if norm.start.line == norm.end.line {
             // Single-line delete
-            let nsRange = NSRange(location: norm.start.column, length: norm.end.column - norm.start.column)
-            lines[norm.start.line].deleteCharacters(in: nsRange)
+            let start = safeColumn(norm.start.column, inLine: norm.start.line)
+            let end = safeColumn(norm.end.column, inLine: norm.start.line)
+            guard start < end else { return }
+            lines[norm.start.line].deleteCharacters(in: NSRange(location: start, length: end - start))
             return
         }
+
+        guard norm.end.line < lines.count else { return }
 
         // Multi-line delete: keep content before start and after end
         let firstLine = lines[norm.start.line]
         let lastLine = lines[norm.end.line]
-        let afterEnd = lastLine.substring(from: norm.end.column)
+        let startCol = safeColumn(norm.start.column, inLine: norm.start.line)
+        let endCol = safeColumn(norm.end.column, inLine: norm.end.line)
+        let afterEnd = lastLine.substring(from: endCol)
 
         // Truncate first line and append remainder
-        firstLine.deleteCharacters(in: NSRange(location: norm.start.column, length: firstLine.length - norm.start.column))
+        firstLine.deleteCharacters(in: NSRange(location: startCol, length: firstLine.length - startCol))
         firstLine.append(afterEnd)
 
         // Remove lines between (inclusive of end line)

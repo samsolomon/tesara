@@ -88,15 +88,9 @@ enum GhosttyConfig {
         lines.append("cursor-style-blink = \(settings.cursorBlink)")
 
         // Window
-        if settings.windowOpacity < 1.0 {
-            lines.append("background-opacity = \(settings.windowOpacity)")
-        }
-        if settings.windowPaddingX > 0 {
-            lines.append("window-padding-x = \(settings.windowPaddingX)")
-        }
-        if settings.windowPaddingY > 0 {
-            lines.append("window-padding-y = \(settings.windowPaddingY)")
-        }
+        lines.append("background-opacity = \(settings.windowOpacity)")
+        lines.append("window-padding-x = \(settings.windowPaddingX)")
+        lines.append("window-padding-y = \(settings.windowPaddingY)")
 
         // macOS
         lines.append("macos-option-as-alt = \(settings.optionAsAlt.ghosttyValue)")

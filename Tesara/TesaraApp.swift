@@ -40,7 +40,6 @@ struct TesaraApp: App {
                         blockStore: blockStore,
                         settingsOpenCoordinator: settingsOpenCoordinator
                     )
-                    applyWindowBlur(settingsStore.settings.windowBlur)
                 }
                 .onChange(of: settingsStore.settings.updateChecksEnabled) {
                     updaterController.updater.automaticallyChecksForUpdates = settingsStore.settings.updateChecksEnabled
@@ -69,9 +68,6 @@ struct TesaraApp: App {
                         settings: settingsStore.settings
                     )
                 }
-                .onChange(of: settingsStore.settings.windowBlur) {
-                    applyWindowBlur(settingsStore.settings.windowBlur)
-                }
         }
         .windowToolbarStyle(.unifiedCompact(showsTitle: false))
         .commands {
@@ -92,10 +88,4 @@ struct TesaraApp: App {
         }
     }
 
-    private func applyWindowBlur(_ enabled: Bool) {
-        for window in NSApp.windows where window.className.contains("AppKitWindow") {
-            window.isOpaque = !enabled
-            window.backgroundColor = enabled ? .clear : .windowBackgroundColor
-        }
-    }
 }

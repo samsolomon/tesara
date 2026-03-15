@@ -28,6 +28,10 @@ struct AppSettings: Codable, Equatable {
     var darkThemeID: String
     var windowOpacity: Double
     var windowBlur: Bool
+
+    var needsTransparency: Bool {
+        windowBlur || windowOpacity < 1.0
+    }
     var windowPaddingX: Int
     var windowPaddingY: Int
     var fontLigatures: Bool

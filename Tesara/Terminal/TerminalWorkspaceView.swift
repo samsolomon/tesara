@@ -12,7 +12,11 @@ struct TerminalWorkspaceView: View {
 
     var body: some View {
         terminalContent
-            .background(settingsStore.activeTheme.swiftUIColor(from: settingsStore.activeTheme.background))
+            .background(
+                settingsStore.settings.needsTransparency
+                    ? Color.clear
+                    : settingsStore.activeTheme.swiftUIColor(from: settingsStore.activeTheme.background)
+            )
             .task {
                 if manager.tabs.isEmpty {
                     manager.newTab(
