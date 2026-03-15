@@ -41,3 +41,15 @@ function __tesara_fish_preexec --on-event fish_preexec
         printf '%s' "$argv" > "$TESARA_TMPDIR/tesara-cmd-$TESARA_SESSION_ID.txt" 2>/dev/null; or true
     end
 end
+
+# Re-align cursor to bottom row when the app signals via a temp file.
+# Triggered by SIGWINCH after the input bar appears/resizes the terminal.
+function __tesara_fish_winch --on-signal WINCH
+    if set -q TESARA_TMPDIR; and set -q TESARA_SESSION_ID
+        set -l sigfile "$TESARA_TMPDIR/tesara-ba-$TESARA_SESSION_ID"
+        if test -f "$sigfile"
+            rm -f "$sigfile"
+            printf '\033[%d;1H' (tput lines)
+        end
+    end
+end

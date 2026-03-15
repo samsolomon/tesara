@@ -30,7 +30,6 @@ struct SettingsView: View {
         .toolbar(removing: .sidebarToggle)
         .toolbar(removing: .title)
         .toolbarBackgroundVisibility(.hidden, for: .windowToolbar)
-        .background { SettingsWindowConfigurator() }
         .fileImporter(
             isPresented: $isImporterPresented,
             allowedContentTypes: [.json],
@@ -186,51 +185,6 @@ private enum SettingsPane: String, CaseIterable, Identifiable {
         case .privacy:
             "lock.shield"
         }
-    }
-}
-
-private struct SettingsWindowConfigurator: NSViewRepresentable {
-    func makeNSView(context: Context) -> NSView {
-        let view = NSView()
-        view.setFrameSize(.zero)
-        DispatchQueue.main.async { Self.configure(from: view) }
-        return view
-    }
-
-    func updateNSView(_ nsView: NSView, context: Context) {
-        Self.configure(from: nsView)
-    }
-
-    private static func configure(from view: NSView) {
-        guard let window = view.window else { return }
-
-        // Hide the sidebar toggle toolbar item in-place rather than removing it —
-        // removing causes SwiftUI to re-inject it on its next pass.
-        if let toolbar = window.toolbar {
-            for item in toolbar.items where item.itemIdentifier == .toggleSidebar {
-                item.isHidden = true
-            }
-        }
-
-        guard !window.titlebarAppearsTransparent else { return }
-
-        // Prevent sidebar collapse on the underlying NSSplitViewController
-        var responder: NSResponder? = view
-        while let current = responder {
-            if let splitVC = current as? NSSplitViewController,
-               let sidebarItem = splitVC.splitViewItems.first {
-                sidebarItem.canCollapse = false
-                break
-            }
-            responder = current.nextResponder
-        }
-
-        // Make the sidebar extend behind the titlebar so traffic lights
-        // sit on the sidebar surface (like macOS System Settings).
-        window.titlebarAppearsTransparent = true
-        window.titleVisibility = .hidden
-        window.titlebarSeparatorStyle = .none
-        window.styleMask.insert(.fullSizeContentView)
     }
 }
 
@@ -478,7 +432,7 @@ private struct TerminalSettingsPane: View {
             }
 
             Section("Input") {
-                settingRow("Input editor bar", description: "Shows a native text editor below the terminal prompt. Provides macOS text editing features like selection, undo, and emoji picker.") {
+                settingRow("Input editor bar", description: "Shows a native text editor below the terminal and inverts terminal output to the bottom of the screen. Provides macOS text editing features like selection, undo, and emoji picker.") {
                     Toggle("", isOn: $settings.inputBarEnabled)
                         .labelsHidden()
                 }

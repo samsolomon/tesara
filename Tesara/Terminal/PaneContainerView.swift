@@ -401,8 +401,11 @@ private struct TerminalPaneLeafView: View {
                 .onChange(of: session.isAtPrompt) { _, _ in
                     syncInputBarPresentation(session: session, surfaceView: surfaceView)
                 }
-                .onChange(of: inputBarEnabled) { _, _ in
+                .onChange(of: inputBarEnabled) { _, newValue in
                     syncInputBarPresentation(session: session, surfaceView: surfaceView)
+                    if newValue {
+                        session.requestBottomAlign()
+                    }
                 }
                 .onChange(of: session.isAlternateScreen) { _, _ in
                     syncInputBarPresentation(session: session, surfaceView: surfaceView)

@@ -1,14 +1,10 @@
+import AppKit
 import SwiftUI
 
 @MainActor
 final class SettingsOpenCoordinator: ObservableObject {
-    private var action: (@MainActor () -> Void)?
-
-    func setAction(_ action: @escaping @MainActor () -> Void) {
-        self.action = action
-    }
-
     func openSettings() {
-        action?()
+        NSApp.sendAction(NSSelectorFromString("showSettingsWindow:"), to: nil, from: nil)
+        NSApp.activate(ignoringOtherApps: true)
     }
 }

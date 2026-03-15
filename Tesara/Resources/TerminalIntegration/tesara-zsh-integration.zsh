@@ -32,3 +32,15 @@ function _tesara_preexec() {
 
 add-zsh-hook precmd _tesara_precmd
 add-zsh-hook preexec _tesara_preexec
+
+# Re-align cursor to bottom row when the app signals via a temp file.
+# Triggered by SIGWINCH after the input bar appears/resizes the terminal.
+function TRAPWINCH() {
+  if [[ -n "${TESARA_TMPDIR:-}" && -n "${TESARA_SESSION_ID:-}" ]]; then
+    local sigfile="${TESARA_TMPDIR}/tesara-ba-${TESARA_SESSION_ID}"
+    if [[ -f "$sigfile" ]]; then
+      rm -f "$sigfile"
+      printf '\e[%d;1H' "$(tput lines)"
+    fi
+  fi
+}

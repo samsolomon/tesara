@@ -68,3 +68,16 @@ if [[ -z "${TESARA_BASH_DEBUG_TRAP:-}" ]]; then
   __tesara_chain_existing_debug_trap
   TESARA_BASH_DEBUG_TRAP=1
 fi
+
+# Re-align cursor to bottom row when the app signals via a temp file.
+# Triggered by SIGWINCH after the input bar appears/resizes the terminal.
+__tesara_winch() {
+  if [[ -n "${TESARA_TMPDIR:-}" && -n "${TESARA_SESSION_ID:-}" ]]; then
+    local sigfile="${TESARA_TMPDIR}/tesara-ba-${TESARA_SESSION_ID}"
+    if [[ -f "$sigfile" ]]; then
+      rm -f "$sigfile"
+      printf '\033[%d;1H' "$(tput lines)"
+    fi
+  fi
+}
+trap '__tesara_winch' WINCH

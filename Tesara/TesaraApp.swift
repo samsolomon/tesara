@@ -80,14 +80,13 @@ struct TesaraApp: App {
             )
         }
 
-        Window("Settings", id: "settings") {
+        Settings {
             SettingsView(updater: updaterController.updater)
                 .environmentObject(settingsStore)
                 .environmentObject(blockStore)
                 .frame(minWidth: 840, minHeight: 560)
         }
         .windowResizability(.contentSize)
-        .windowToolbarStyle(.unified(showsTitle: false))
         .defaultSize(width: 840, height: 560)
     }
 
