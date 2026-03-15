@@ -86,6 +86,7 @@ struct TesaraApp: App {
                 .environmentObject(blockStore)
                 .frame(minWidth: 840, minHeight: 560)
         }
+        .windowToolbarStyle(.unified(showsTitle: false))
     }
 
 }
