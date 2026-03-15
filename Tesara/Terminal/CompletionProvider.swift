@@ -9,15 +9,11 @@ protocol CompletionProvider: Sendable {
 // MARK: - Completion Item
 
 struct CompletionItem: Identifiable, Equatable {
-    let id = UUID()
+    var id: String { "\(kind)-\(displayText)" }
     let displayText: String
     let insertionText: String
     let icon: String          // SF Symbol name
     let kind: CompletionContext
-
-    static func == (lhs: CompletionItem, rhs: CompletionItem) -> Bool {
-        lhs.displayText == rhs.displayText && lhs.insertionText == rhs.insertionText && lhs.kind == rhs.kind
-    }
 }
 
 // MARK: - File Path Completion
@@ -51,7 +47,7 @@ struct FilePathCompletionProvider: CompletionProvider {
             let displayText = isDir.boolValue ? entry + "/" : entry
             let completionSuffix = String(entry.dropFirst(namePrefix.count))
             let escapedSuffix = shellEscape(completionSuffix)
-            let insertionText = isDir.boolValue ? escapedSuffix + "/" : escapedSuffix
+            let insertionText = isDir.boolValue ? escapedSuffix + "/" : escapedSuffix + " "
 
             let icon = isDir.boolValue ? "folder" : "doc"
             items.append(CompletionItem(displayText: displayText, insertionText: insertionText, icon: icon, kind: .filePath))
@@ -140,13 +136,15 @@ struct CommandCompletionProvider: CompletionProvider {
     private static let cache = CommandCache()
 
     func complete(prefix: String, cwd: String?) async -> [CompletionItem] {
+        guard !prefix.isEmpty else { return [] }
+
         var items: [CompletionItem] = []
 
         // Builtins
         for builtin in Self.builtins where builtin.hasPrefix(prefix) {
             items.append(CompletionItem(
                 displayText: builtin,
-                insertionText: String(builtin.dropFirst(prefix.count)),
+                insertionText: String(builtin.dropFirst(prefix.count)) + " ",
                 icon: "terminal",
                 kind: .command
             ))
@@ -159,7 +157,7 @@ struct CommandCompletionProvider: CompletionProvider {
             if Self.builtins.contains(name) { continue }
             items.append(CompletionItem(
                 displayText: name,
-                insertionText: String(name.dropFirst(prefix.count)),
+                insertionText: String(name.dropFirst(prefix.count)) + " ",
                 icon: "gearshape",
                 kind: .command
             ))
@@ -220,7 +218,7 @@ struct GitBranchCompletionProvider: CompletionProvider {
             guard branch.hasPrefix(prefix) else { continue }
             items.append(CompletionItem(
                 displayText: branch,
-                insertionText: String(branch.dropFirst(prefix.count)),
+                insertionText: String(branch.dropFirst(prefix.count)) + " ",
                 icon: "arrow.triangle.branch",
                 kind: .gitBranch
             ))

@@ -15,6 +15,8 @@ struct CompletionOverlayView: View {
             resultsList
         }
         .background(theme.swiftUIColor(from: theme.background))
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Tab completions")
     }
 
     private var resultsList: some View {
@@ -63,6 +65,9 @@ struct CompletionOverlayView: View {
             completionController.selectedIndex = index
             completionController.acceptSelected()
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(item.displayText), \(kindLabel(item.kind))")
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
     private func kindLabel(_ kind: CompletionContext) -> String {

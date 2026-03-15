@@ -79,7 +79,13 @@ final class TabCompletionController: ObservableObject {
                         kind: $0.kind
                     )}
 
-                if filtered.isEmpty || filtered.count == 1 {
+                if filtered.count == 1 {
+                    insertCompletion(filtered[0].insertionText)
+                    activeTask = nil
+                    return
+                }
+                if filtered.isEmpty {
+                    activeTask = nil
                     return
                 }
 
@@ -93,6 +99,8 @@ final class TabCompletionController: ObservableObject {
                 selectedIndex = 0
                 isActive = true
             }
+
+            if generation == gen { activeTask = nil }
         }
     }
 

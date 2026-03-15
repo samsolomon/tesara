@@ -302,7 +302,15 @@ final class FilePathCompletionProviderTests: XCTestCase {
         let items = await provider.complete(prefix: "file1", cwd: testDir)
         XCTAssertEqual(items.count, 1)
         XCTAssertEqual(items[0].displayText, "file1.txt")
-        XCTAssertEqual(items[0].insertionText, ".txt")
+        XCTAssertEqual(items[0].insertionText, ".txt ")
+    }
+
+    func testDirectoryCompletionHasNoTrailingSpace() async {
+        let items = await provider.complete(prefix: "sub", cwd: testDir)
+        XCTAssertEqual(items.count, 1)
+        XCTAssertEqual(items[0].displayText, "subdir/")
+        XCTAssertTrue(items[0].insertionText.hasSuffix("/"))
+        XCTAssertFalse(items[0].insertionText.hasSuffix(" "))
     }
 }
 
@@ -328,10 +336,9 @@ final class CommandCompletionProviderTests: XCTestCase {
         XCTAssertFalse(items.contains { $0.displayText == "cd" })
     }
 
-    func testEmptyPrefixReturnsCapped() async {
+    func testEmptyPrefixReturnsEmpty() async {
         let items = await provider.complete(prefix: "", cwd: nil)
-        XCTAssertLessThanOrEqual(items.count, 50)
-        XCTAssertFalse(items.isEmpty)
+        XCTAssertTrue(items.isEmpty)
     }
 
     func testResultsAreSorted() async {
@@ -343,7 +350,7 @@ final class CommandCompletionProviderTests: XCTestCase {
     func testInsertionTextIsRemainder() async {
         let items = await provider.complete(prefix: "ech", cwd: nil)
         if let echo = items.first(where: { $0.displayText == "echo" }) {
-            XCTAssertEqual(echo.insertionText, "o")
+            XCTAssertEqual(echo.insertionText, "o ")
         }
     }
 }
