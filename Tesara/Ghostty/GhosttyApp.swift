@@ -85,6 +85,7 @@ final class GhosttyApp: @unchecked Sendable {
         if app == nil {
             LocalLogStore.shared.log("[GhosttyApp] Failed to create ghostty app")
         }
+
     }
 
     func tick() {
@@ -171,7 +172,10 @@ final class GhosttyApp: @unchecked Sendable {
             return handleMouseShape(action: action)
 
         case GHOSTTY_ACTION_RENDER:
-            // Render is handled by Metal/CAMetalLayer automatically
+            print("[Tesara-DEBUG] RENDER action received")
+            if let session = sessionFromTarget(target) {
+                session.checkAlternateScreen()
+            }
             return true
 
         // Note: Standard shortcuts (Cmd+T, Cmd+W, Cmd+D) are handled by AppKit menu
@@ -202,6 +206,7 @@ final class GhosttyApp: @unchecked Sendable {
             return handleQuit()
 
         default:
+            print("[Tesara-DEBUG] unhandled action tag=\(action.tag.rawValue)")
             return false
         }
     }
