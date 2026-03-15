@@ -68,6 +68,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
 
             let sidebarView = SettingsSidebarView(paneSelection: paneSelection)
             let sidebarHosting = NSHostingController(rootView: sidebarView)
+            sidebarHosting.sizingOptions = []
             let sidebarItem = NSSplitViewItem(sidebarWithViewController: sidebarHosting)
             sidebarItem.canCollapse = false
             sidebarItem.minimumThickness = 248
@@ -77,10 +78,12 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
                 .environmentObject(settingsStore)
                 .environmentObject(blockStore)
             let detailHosting = NSHostingController(rootView: detailView)
+            detailHosting.sizingOptions = []
             let detailItem = NSSplitViewItem(viewController: detailHosting)
 
             splitVC.addSplitViewItem(sidebarItem)
             splitVC.addSplitViewItem(detailItem)
+            splitVC.preferredContentSize = NSSize(width: 840, height: 560)
 
             window?.contentViewController = splitVC
         }
