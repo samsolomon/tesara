@@ -3,7 +3,7 @@
 
 # Returns current time in milliseconds.
 timestamp_ms() {
-  python3 -c 'import time; print(int(time.time() * 1000))'
+  perl -MTime::HiRes -e 'printf "%d", Time::HiRes::time()*1000'
 }
 
 # Wait for a window to appear for the given bundle ID.

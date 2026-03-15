@@ -11,44 +11,69 @@ CSV="${RESULTS_DIR}/report.csv"
 
 echo "Generating report..."
 
+# ── Rating helper ────────────────────────────────────────────────────
+# Usage: rate_metric <value> <excellent> <good> <acceptable>
+# Prints: Excellent, Good, Acceptable, or Poor
+rate_metric() {
+  awk "BEGIN{v=$1; if(v<$2) print \"Excellent\"; else if(v<$3) print \"Good\"; else if(v<$4) print \"Acceptable\"; else print \"Poor\"}"
+}
+
 # ── Header ───────────────────────────────────────────────────────────
 cat > "$REPORT" << 'HEADER'
 # Tesara Terminal Benchmark Results
 
 HEADER
 
-# System info
+# System info (prominent)
 if [[ -f "${RESULTS_DIR}/system.json" ]]; then
-  local_macos=$(jq -r '.macos' "${RESULTS_DIR}/system.json")
-  local_chip=$(jq -r '.chip' "${RESULTS_DIR}/system.json")
-  local_ram=$(jq -r '.ram_gb' "${RESULTS_DIR}/system.json")
-  local_date=$(jq -r '.date' "${RESULTS_DIR}/system.json")
+  IFS=$'\t' read -r local_macos local_chip local_ram local_date < <(
+    jq -r '[.macos, .chip, (.ram_gb|tostring), .date] | @tsv' "${RESULTS_DIR}/system.json"
+  )
+
+  # Get display refresh rate from system.json if available, else query once
+  local_refresh=$(jq -r '.display_refresh // empty' "${RESULTS_DIR}/system.json" 2>/dev/null || true)
+  if [[ -z "$local_refresh" ]]; then
+    local_refresh=$(system_profiler SPDisplaysDataType 2>/dev/null | grep -i 'refresh\|hertz\|hz' | head -1 | grep -oE '[0-9]+' | head -1 || echo "—")
+  fi
 
   cat >> "$REPORT" << EOF
-**System:** macOS ${local_macos} | ${local_chip} | ${local_ram} GB RAM
-**Date:** ${local_date}
+## System
+
+| Property | Value |
+|----------|-------|
+| macOS | ${local_macos} |
+| Chip | ${local_chip} |
+| RAM | ${local_ram} GB |
+| Display refresh | ${local_refresh} Hz |
+| Date | ${local_date} |
 
 EOF
 fi
+
+# Thresholds from competitive research:
+#   Startup:  <500ms excellent, <1000ms good, <2000ms acceptable, >=2000ms poor
+#   Latency:  <5ms excellent, <10ms good, <20ms acceptable, >=20ms poor
+#   Ctrl-C:   <200ms excellent, <500ms good, <1000ms acceptable, >=1000ms poor
+#   Memory:   <100MB excellent, <200MB good, <500MB acceptable, >=500MB poor
 
 # ── Startup Table ────────────────────────────────────────────────────
 startup_files=("${RESULTS_DIR}"/startup-*.json)
 if [[ -f "${startup_files[0]}" ]]; then
   cat >> "$REPORT" << 'EOF'
-## Startup Time (ms)
+## Startup time (ms)
 
-| Terminal | Mean | Stddev | Min | Max | Median |
-|----------|------|--------|-----|-----|--------|
+Thresholds: <500 excellent | <1000 good | <2000 acceptable | >=2000 poor
+
+| Terminal | Mean | Stddev | Min | Max | Median | Rating |
+|----------|------|--------|-----|-----|--------|--------|
 EOF
 
   for f in "${RESULTS_DIR}"/startup-*.json; do
-    name=$(jq -r '.terminal' "$f")
-    mean=$(jq -r '.stats.mean' "$f")
-    stddev=$(jq -r '.stats.stddev' "$f")
-    min=$(jq -r '.stats.min' "$f")
-    max=$(jq -r '.stats.max' "$f")
-    median=$(jq -r '.stats.median // .stats.p50' "$f")
-    echo "| ${name} | ${mean} | ${stddev} | ${min} | ${max} | ${median} |" >> "$REPORT"
+    IFS=$'\t' read -r name mean stddev min max median < <(
+      jq -r '[.terminal, (.stats.mean|tostring), (.stats.stddev|tostring), (.stats.min|tostring), (.stats.max|tostring), ((.stats.median // .stats.p50)|tostring)] | @tsv' "$f"
+    )
+    rating=$(rate_metric "$mean" 500 1000 2000)
+    echo "| ${name} | ${mean} | ${stddev} | ${min} | ${max} | ${median} | ${rating} |" >> "$REPORT"
   done
   echo "" >> "$REPORT"
 fi
@@ -59,17 +84,23 @@ if [[ -f "${throughput_files[0]}" ]]; then
   cat >> "$REPORT" << 'EOF'
 ## Throughput (MB/s)
 
-| Terminal | ASCII | Seq | Unicode | ANSI |
-|----------|-------|-----|---------|------|
+| Terminal | ASCII | Seq | Unicode | ANSI | Ligature | ZWJ |
+|----------|-------|-----|---------|------|----------|-----|
 EOF
 
   for f in "${RESULTS_DIR}"/throughput-*.json; do
-    name=$(jq -r '.terminal' "$f")
-    ascii=$(jq -r 'if .payloads.ascii then (.payloads.ascii.stats.mean / 1048576 * 100 | round / 100 | tostring) else "—" end' "$f")
-    seq_val=$(jq -r 'if .payloads.seq then (.payloads.seq.stats.mean / 1048576 * 100 | round / 100 | tostring) else "—" end' "$f")
-    unicode=$(jq -r 'if .payloads.unicode then (.payloads.unicode.stats.mean / 1048576 * 100 | round / 100 | tostring) else "—" end' "$f")
-    ansi=$(jq -r 'if .payloads.ansi then (.payloads.ansi.stats.mean / 1048576 * 100 | round / 100 | tostring) else "—" end' "$f")
-    echo "| ${name} | ${ascii} | ${seq_val} | ${unicode} | ${ansi} |" >> "$REPORT"
+    IFS=$'\t' read -r name ascii seq_val unicode ansi ligature zwj < <(
+      jq -r '[
+        .terminal,
+        (if .payloads.ascii then (.payloads.ascii.stats.mean / 1048576 * 100 | round / 100 | tostring) else "—" end),
+        (if .payloads.seq then (.payloads.seq.stats.mean / 1048576 * 100 | round / 100 | tostring) else "—" end),
+        (if .payloads.unicode then (.payloads.unicode.stats.mean / 1048576 * 100 | round / 100 | tostring) else "—" end),
+        (if .payloads.ansi then (.payloads.ansi.stats.mean / 1048576 * 100 | round / 100 | tostring) else "—" end),
+        (if .payloads.ligature then (.payloads.ligature.stats.mean / 1048576 * 100 | round / 100 | tostring) else "—" end),
+        (if .payloads.zwj then (.payloads.zwj.stats.mean / 1048576 * 100 | round / 100 | tostring) else "—" end)
+      ] | @tsv' "$f"
+    )
+    echo "| ${name} | ${ascii} | ${seq_val} | ${unicode} | ${ansi} | ${ligature} | ${zwj} |" >> "$REPORT"
   done
   echo "" >> "$REPORT"
 fi
@@ -78,19 +109,20 @@ fi
 resource_files=("${RESULTS_DIR}"/resources-*.json)
 if [[ -f "${resource_files[0]}" ]]; then
   cat >> "$REPORT" << 'EOF'
-## Resource Usage
+## Resource usage
 
-| Terminal | Idle RSS (MB) | Idle CPU (%) | Load RSS Peak (MB) | Load CPU Avg (%) |
-|----------|---------------|--------------|--------------------|--------------------|
+Thresholds (idle RSS): <100 MB excellent | <200 MB good | <500 MB acceptable | >=500 MB poor
+
+| Terminal | Idle RSS (MB) | Idle CPU (%) | Load RSS peak (MB) | Load CPU avg (%) | Rating |
+|----------|---------------|--------------|--------------------|--------------------|--------|
 EOF
 
   for f in "${RESULTS_DIR}"/resources-*.json; do
-    name=$(jq -r '.terminal' "$f")
-    idle_rss=$(jq -r '.idle.rss_kb.mean / 1024 * 10 | round / 10' "$f")
-    idle_cpu=$(jq -r '.idle.cpu_pct.mean' "$f")
-    load_peak=$(jq -r '.load.peak_rss_kb / 1024 * 10 | round / 10' "$f")
-    load_cpu=$(jq -r '.load.cpu_pct.mean' "$f")
-    echo "| ${name} | ${idle_rss} | ${idle_cpu} | ${load_peak} | ${load_cpu} |" >> "$REPORT"
+    IFS=$'\t' read -r name idle_rss idle_cpu load_peak load_cpu < <(
+      jq -r '[.terminal, (.idle.rss_kb.mean / 1024 * 10 | round / 10 | tostring), (.idle.cpu_pct.mean|tostring), (.load.peak_rss_kb / 1024 * 10 | round / 10 | tostring), (.load.cpu_pct.mean|tostring)] | @tsv' "$f"
+    )
+    rating=$(rate_metric "$idle_rss" 100 200 500)
+    echo "| ${name} | ${idle_rss} | ${idle_cpu} | ${load_peak} | ${load_cpu} | ${rating} |" >> "$REPORT"
   done
   echo "" >> "$REPORT"
 fi
@@ -99,59 +131,225 @@ fi
 latency_files=("${RESULTS_DIR}"/latency-*.json)
 if [[ -f "${latency_files[0]}" ]]; then
   cat >> "$REPORT" << 'EOF'
-## Input Latency (ms)
+## Input latency (ms)
 
-| Terminal | Mean | p50 | p95 | p99 | Stddev |
-|----------|------|-----|-----|-----|--------|
+Thresholds: <5 ms excellent | <10 ms good | <20 ms acceptable | >=20 ms poor
+
+| Terminal | Mean | p50 | p95 | p99 | Stddev | Rating |
+|----------|------|-----|-----|-----|--------|--------|
 EOF
 
   for f in "${RESULTS_DIR}"/latency-*.json; do
-    name=$(jq -r '.terminal' "$f")
-    mean=$(jq -r '.stats.mean' "$f")
-    p50=$(jq -r '.stats.p50' "$f")
-    p95=$(jq -r '.stats.p95' "$f")
-    p99=$(jq -r '.stats.p99' "$f")
-    stddev=$(jq -r '.stats.stddev' "$f")
-    echo "| ${name} | ${mean} | ${p50} | ${p95} | ${p99} | ${stddev} |" >> "$REPORT"
+    IFS=$'\t' read -r name mean p50 p95 p99 stddev < <(
+      jq -r '[.terminal, (.stats.mean|tostring), (.stats.p50|tostring), (.stats.p95|tostring), (.stats.p99|tostring), (.stats.stddev|tostring)] | @tsv' "$f"
+    )
+    rating=$(rate_metric "$mean" 5 10 20)
+    echo "| ${name} | ${mean} | ${p50} | ${p95} | ${p99} | ${stddev} | ${rating} |" >> "$REPORT"
   done
   echo "" >> "$REPORT"
 fi
+
+# ── FPS Table ────────────────────────────────────────────────────────
+fps_files=("${RESULTS_DIR}"/fps-*.json)
+if [[ -f "${fps_files[0]}" ]]; then
+  cat >> "$REPORT" << 'EOF'
+## FPS under load
+
+| Terminal | Avg FPS | Duration (s) |
+|----------|---------|--------------|
+EOF
+
+  for f in "${RESULTS_DIR}"/fps-*.json; do
+    IFS=$'\t' read -r name avg_fps duration < <(
+      jq -r '[.terminal, (.avg_fps // "—" | tostring), (.duration_sec|tostring)] | @tsv' "$f"
+    )
+    echo "| ${name} | ${avg_fps} | ${duration} |" >> "$REPORT"
+  done
+  echo "" >> "$REPORT"
+fi
+
+# ── Ctrl-C Table ─────────────────────────────────────────────────────
+ctrlc_files=("${RESULTS_DIR}"/ctrlc-*.json)
+if [[ -f "${ctrlc_files[0]}" ]]; then
+  cat >> "$REPORT" << 'EOF'
+## Ctrl-C responsiveness (ms)
+
+Thresholds: <200 ms excellent | <500 ms good | <1000 ms acceptable | >=1000 ms poor
+
+| Terminal | Mean | Stddev | Min | Max | Rating |
+|----------|------|--------|-----|-----|--------|
+EOF
+
+  for f in "${RESULTS_DIR}"/ctrlc-*.json; do
+    IFS=$'\t' read -r name mean stddev min max < <(
+      jq -r '[.terminal, (.stats.mean|tostring), (.stats.stddev|tostring), (.stats.min|tostring), (.stats.max|tostring)] | @tsv' "$f"
+    )
+    rating=$(rate_metric "$mean" 200 500 1000)
+    echo "| ${name} | ${mean} | ${stddev} | ${min} | ${max} | ${rating} |" >> "$REPORT"
+  done
+  echo "" >> "$REPORT"
+fi
+
+# ── Parser Table ─────────────────────────────────────────────────────
+parser_files=("${RESULTS_DIR}"/parser-*.json)
+if [[ -f "${parser_files[0]}" ]]; then
+  cat >> "$REPORT" << 'EOF'
+## Parser throughput (MB/s)
+
+Via `kitten __benchmark__`
+
+| Terminal | ASCII | Unicode | CSI |
+|----------|-------|---------|-----|
+EOF
+
+  for f in "${RESULTS_DIR}"/parser-*.json; do
+    IFS=$'\t' read -r name ascii unicode csi < <(
+      jq -r '[.terminal, (.ascii // "—" | tostring), (.unicode // "—" | tostring), (.csi // "—" | tostring)] | @tsv' "$f"
+    )
+    echo "| ${name} | ${ascii} | ${unicode} | ${csi} |" >> "$REPORT"
+  done
+  echo "" >> "$REPORT"
+fi
+
+# ── Scaling Table ────────────────────────────────────────────────────
+scaling_files=("${RESULTS_DIR}"/scaling-*.json)
+if [[ -f "${scaling_files[0]}" ]]; then
+  cat >> "$REPORT" << 'EOF'
+## Tab scaling (RSS in MB)
+
+| Terminal | 1 tab | 5 tabs | 10 tabs | 20 tabs |
+|----------|-------|--------|---------|---------|
+EOF
+
+  for f in "${RESULTS_DIR}"/scaling-*.json; do
+    IFS=$'\t' read -r name t1 t5 t10 t20 < <(
+      jq -r '[
+        .terminal,
+        (if .scaling."1_tabs" then (.scaling."1_tabs".rss_kb / 1024 | round | tostring) else "—" end),
+        (if .scaling."5_tabs" then (.scaling."5_tabs".rss_kb / 1024 | round | tostring) else "—" end),
+        (if .scaling."10_tabs" then (.scaling."10_tabs".rss_kb / 1024 | round | tostring) else "—" end),
+        (if .scaling."20_tabs" then (.scaling."20_tabs".rss_kb / 1024 | round | tostring) else "—" end)
+      ] | @tsv' "$f"
+    )
+    echo "| ${name} | ${t1} | ${t5} | ${t10} | ${t20} |" >> "$REPORT"
+  done
+  echo "" >> "$REPORT"
+fi
+
+# ── Verdict Summary ─────────────────────────────────────────────────
+cat >> "$REPORT" << 'EOF'
+## Verdict
+
+EOF
+
+# Find winner for each category
+find_winner() {
+  local category="$1"
+  local metric_path="$2"
+  local lower_is_better="${3:-1}"
+
+  local best_name=""; local best_val=""
+  for f in "${RESULTS_DIR}"/${category}-*.json; do
+    [[ -f "$f" ]] || continue
+    local name val
+    name=$(jq -r '.terminal' "$f")
+    val=$(jq -r "${metric_path}" "$f")
+    [[ "$val" == "null" || -z "$val" ]] && continue
+
+    if [[ -z "$best_val" ]]; then
+      best_name="$name"; best_val="$val"
+    else
+      local is_better
+      if (( lower_is_better )); then
+        is_better=$(awk "BEGIN{print ($val < $best_val) ? 1 : 0}")
+      else
+        is_better=$(awk "BEGIN{print ($val > $best_val) ? 1 : 0}")
+      fi
+      if (( is_better )); then
+        best_name="$name"; best_val="$val"
+      fi
+    fi
+  done
+
+  if [[ -n "$best_name" ]]; then
+    echo "$best_name"
+  else
+    echo "—"
+  fi
+}
+
+startup_winner=$(find_winner "startup" ".stats.mean" 1)
+throughput_winner=$(find_winner "throughput" ".payloads.ascii.stats.mean" 0)
+idle_rss_winner=$(find_winner "resources" ".idle.rss_kb.mean" 1)
+latency_winner=$(find_winner "latency" ".stats.mean" 1)
+ctrlc_winner=$(find_winner "ctrlc" ".stats.mean" 1)
+
+cat >> "$REPORT" << EOF
+| Category | Winner |
+|----------|--------|
+| Startup | ${startup_winner} |
+| Throughput (ASCII) | ${throughput_winner} |
+| Idle memory | ${idle_rss_winner} |
+| Input latency | ${latency_winner} |
+| Ctrl-C responsiveness | ${ctrlc_winner} |
+
+EOF
 
 # ── CSV export ───────────────────────────────────────────────────────
 echo "terminal,benchmark,metric,value" > "$CSV"
 
 for f in "${RESULTS_DIR}"/startup-*.json; do
   [[ -f "$f" ]] || continue
-  name=$(jq -r '.terminal' "$f")
-  mean=$(jq -r '.stats.mean' "$f")
-  echo "${name},startup,mean_ms,${mean}" >> "$CSV"
+  jq -r '[.terminal, "startup", "mean_ms", (.stats.mean|tostring)] | @csv' "$f" >> "$CSV"
 done
 
 for f in "${RESULTS_DIR}"/throughput-*.json; do
   [[ -f "$f" ]] || continue
-  name=$(jq -r '.terminal' "$f")
-  for payload in ascii seq unicode ansi; do
-    val=$(jq -r "if .payloads.${payload} then .payloads.${payload}.stats.mean else \"\" end" "$f")
-    [[ -n "$val" ]] && echo "${name},throughput_${payload},mean_bytes_per_sec,${val}" >> "$CSV"
-  done
+  jq -r '
+    .terminal as $t |
+    .payloads | to_entries[] |
+    [$t, "throughput_" + .key, "mean_bytes_per_sec", (.value.stats.mean|tostring)] | @csv
+  ' "$f" >> "$CSV"
 done
 
 for f in "${RESULTS_DIR}"/resources-*.json; do
   [[ -f "$f" ]] || continue
-  name=$(jq -r '.terminal' "$f")
-  idle_rss=$(jq -r '.idle.rss_kb.mean' "$f")
-  load_peak=$(jq -r '.load.peak_rss_kb' "$f")
-  echo "${name},resources,idle_rss_kb,${idle_rss}" >> "$CSV"
-  echo "${name},resources,peak_rss_kb,${load_peak}" >> "$CSV"
+  jq -r '[.terminal, "resources", "idle_rss_kb", (.idle.rss_kb.mean|tostring)] | @csv' "$f" >> "$CSV"
+  jq -r '[.terminal, "resources", "peak_rss_kb", (.load.peak_rss_kb|tostring)] | @csv' "$f" >> "$CSV"
 done
 
 for f in "${RESULTS_DIR}"/latency-*.json; do
   [[ -f "$f" ]] || continue
-  name=$(jq -r '.terminal' "$f")
-  mean=$(jq -r '.stats.mean' "$f")
-  p95=$(jq -r '.stats.p95' "$f")
-  echo "${name},latency,mean_ms,${mean}" >> "$CSV"
-  echo "${name},latency,p95_ms,${p95}" >> "$CSV"
+  jq -r '[[.terminal, "latency", "mean_ms", (.stats.mean|tostring)], [.terminal, "latency", "p95_ms", (.stats.p95|tostring)]] | .[] | @csv' "$f" >> "$CSV"
+done
+
+for f in "${RESULTS_DIR}"/fps-*.json; do
+  [[ -f "$f" ]] || continue
+  jq -r 'select(.avg_fps != null) | [.terminal, "fps", "avg_fps", (.avg_fps|tostring)] | @csv' "$f" >> "$CSV"
+done
+
+for f in "${RESULTS_DIR}"/ctrlc-*.json; do
+  [[ -f "$f" ]] || continue
+  jq -r '[.terminal, "ctrlc", "mean_ms", (.stats.mean|tostring)] | @csv' "$f" >> "$CSV"
+done
+
+for f in "${RESULTS_DIR}"/parser-*.json; do
+  [[ -f "$f" ]] || continue
+  jq -r '
+    .terminal as $t |
+    [["ascii", .ascii], ["unicode", .unicode], ["csi", .csi]] |
+    .[] | select(.[1] != null) |
+    [$t, "parser_" + .[0], "mbps", (.[1]|tostring)] | @csv
+  ' "$f" >> "$CSV"
+done
+
+for f in "${RESULTS_DIR}"/scaling-*.json; do
+  [[ -f "$f" ]] || continue
+  jq -r '
+    .terminal as $t |
+    .scaling | to_entries[] |
+    [$t, "scaling", .key + "_rss_kb", (.value.rss_kb|tostring)] | @csv
+  ' "$f" >> "$CSV"
 done
 
 echo "Report: ${REPORT}"

@@ -12,14 +12,16 @@ source "${SCRIPT_DIR}/../lib/helpers.sh"
 
 TARGETS=("${@:-$(detect_terminals)}")
 
-PAYLOAD_NAMES="ascii seq unicode ansi"
+PAYLOAD_NAMES="ascii seq unicode ansi ligature zwj"
 
 get_payload_file() {
   case "$1" in
-    ascii)   echo ".payload-ascii" ;;
-    seq)     echo ".payload-seq" ;;
-    unicode) echo ".payload-unicode" ;;
-    ansi)    echo ".payload-ansi" ;;
+    ascii)    echo ".payload-ascii" ;;
+    seq)      echo ".payload-seq" ;;
+    unicode)  echo ".payload-unicode" ;;
+    ansi)     echo ".payload-ansi" ;;
+    ligature) echo ".payload-ligature" ;;
+    zwj)      echo ".payload-zwj" ;;
   esac
 }
 
@@ -57,14 +59,16 @@ run_throughput_bench() {
       launch_terminal "$bundle_id"
       sleep 1
 
-      # Write a temp script to avoid AppleScript escaping issues
+      # Write a temp script — output must flow through the terminal to measure rendering
+      # (no > /dev/null redirect; clear after to reset scrollback between runs)
       local bench_script="/tmp/tesara-bench-tp-$$.sh"
       cat > "$bench_script" << BENCHEOF
 #!/bin/bash
 T0=\$(python3 -c 'import time;print(time.time())')
-cat ${payload_file} > /dev/null
+cat ${payload_file}
 T1=\$(python3 -c 'import time;print(time.time())')
 python3 -c "print(\$T1 - \$T0)" > ${sentinel}
+clear
 BENCHEOF
       chmod +x "$bench_script"
       send_command "bash ${bench_script}"

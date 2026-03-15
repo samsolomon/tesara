@@ -27,6 +27,9 @@ LATENCY_KEYSTROKES=100
 LATENCY_WARMUP=10
 RESOURCE_IDLE_SAMPLES=10
 RESOURCE_LOAD_DURATION=30
+FPS_DURATION=10
+CTRLC_ITERATIONS=5
+SCALING_TAB_COUNTS="1 5 10 20"
 
 # ── Paths ────────────────────────────────────────────────────────────
 BENCH_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

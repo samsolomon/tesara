@@ -60,6 +60,16 @@ final class TextStorage {
         (lines as [NSString]).map { $0 as String }.joined(separator: "\n")
     }
 
+    /// Total UTF-16 length of the document (sum of line lengths + newline separators).
+    func totalUTF16Length() -> Int {
+        var total = 0
+        for i in 0..<lines.count {
+            if i > 0 { total += 1 } // newline separator
+            total += lines[i].length
+        }
+        return total
+    }
+
     // MARK: - Bulk Load
 
     func loadString(_ string: String) {

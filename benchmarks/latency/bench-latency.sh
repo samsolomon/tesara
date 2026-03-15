@@ -53,22 +53,23 @@ run_latency_bench() {
 
   local outfile="${RESULTS_DIR}/latency-${name}.json"
 
-  # Run the probe
-  "$PROBE" \
+  # Run the probe (may fail if terminal doesn't expose AX text)
+  if "$PROBE" \
     --pid "$pid" \
     --keystrokes "$LATENCY_KEYSTROKES" \
     --warmup "$LATENCY_WARMUP" \
     --output "$outfile" \
     --terminal "$name" \
-    --bundle-id "$bundle_id"
+    --bundle-id "$bundle_id"; then
+
+    if [[ -f "$outfile" ]]; then
+      echo "  Results saved to ${outfile}"
+    fi
+  else
+    echo "  Warning: latency probe failed for ${name} (AX text may not be exposed)" >&2
+  fi
 
   quit_terminal "$bundle_id"
-
-  if [[ -f "$outfile" ]]; then
-    echo "  Results saved to ${outfile}"
-  else
-    echo "  Warning: no results file produced" >&2
-  fi
 }
 
 mkdir -p "$RESULTS_DIR"

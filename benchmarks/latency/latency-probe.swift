@@ -18,6 +18,7 @@ struct Config {
     var outputPath: String = ""
     var terminalName: String = ""
     var bundleId: String = ""
+    var verbose: Bool = false
 }
 
 func parseArgs() -> Config {
@@ -38,6 +39,8 @@ func parseArgs() -> Config {
             i += 1; config.terminalName = args[i]
         case "--bundle-id":
             i += 1; config.bundleId = args[i]
+        case "--verbose":
+            config.verbose = true
         default:
             break
         }
@@ -52,38 +55,97 @@ func getAXApp(pid: pid_t) -> AXUIElement {
     return AXUIElementCreateApplication(pid)
 }
 
+/// Roles whose AXValue is likely to contain terminal text content.
+private let textBearingRoles: Set<String> = ["AXTextArea", "AXTextField", "AXWebArea", "AXStaticText"]
+
+/// Recursively search the AX tree for a text value, up to `maxDepth` levels deep.
+/// Checks AXValue on each element, prioritizing text areas and web areas.
+func findTextInElement(_ element: AXUIElement, depth: Int = 0, maxDepth: Int = 5) -> String? {
+    // Try AXValue on this element
+    var value: AnyObject?
+    if AXUIElementCopyAttributeValue(element, kAXValueAttribute as CFString, &value) == .success,
+       let str = value as? String, !str.isEmpty {
+        return str
+    }
+
+    guard depth < maxDepth else { return nil }
+
+    // Recurse into children
+    var children: AnyObject?
+    guard AXUIElementCopyAttributeValue(element, kAXChildrenAttribute as CFString, &children) == .success,
+          let childArray = children as? [AXUIElement] else {
+        return nil
+    }
+
+    // Prioritize text-bearing roles
+    var priorityChildren: [AXUIElement] = []
+    var otherChildren: [AXUIElement] = []
+
+    for child in childArray {
+        var role: AnyObject?
+        AXUIElementCopyAttributeValue(child, kAXRoleAttribute as CFString, &role)
+        if let roleStr = role as? String, textBearingRoles.contains(roleStr) {
+            priorityChildren.append(child)
+        } else {
+            otherChildren.append(child)
+        }
+    }
+
+    for child in priorityChildren + otherChildren {
+        if let text = findTextInElement(child, depth: depth + 1, maxDepth: maxDepth) {
+            return text
+        }
+    }
+
+    return nil
+}
+
 func getFocusedWindowText(app: AXUIElement) -> String? {
     var focusedWindow: AnyObject?
     guard AXUIElementCopyAttributeValue(app, kAXFocusedWindowAttribute as CFString, &focusedWindow) == .success else {
         return nil
     }
 
-    // Try to get the AXValue or AXDocument content
+    // AXUIElement is a CFTypeRef — the cast always succeeds when the API returns .success
+    let window = focusedWindow as! AXUIElement
+    return findTextInElement(window)
+}
+
+/// Dump the AX tree structure for debugging (--verbose mode).
+func dumpAXTree(_ element: AXUIElement, depth: Int = 0, maxDepth: Int = 4) {
+    let indent = String(repeating: "  ", count: depth)
+
+    var role: AnyObject?
+    AXUIElementCopyAttributeValue(element, kAXRoleAttribute as CFString, &role)
+    let roleStr = (role as? String) ?? "unknown"
+
+    var desc: AnyObject?
+    AXUIElementCopyAttributeValue(element, kAXDescriptionAttribute as CFString, &desc)
+    let descStr = (desc as? String) ?? ""
+
     var value: AnyObject?
-    if AXUIElementCopyAttributeValue(focusedWindow as! AXUIElement, kAXValueAttribute as CFString, &value) == .success {
-        return value as? String
+    let hasValue = AXUIElementCopyAttributeValue(element, kAXValueAttribute as CFString, &value) == .success
+    let valuePreview: String
+    if hasValue, let str = value as? String {
+        let trimmed = str.prefix(60).replacingOccurrences(of: "\n", with: "\\n")
+        valuePreview = " value=\"\(trimmed)\""
+    } else {
+        valuePreview = ""
     }
 
-    // Fallback: try to find a text area child
+    fputs("\(indent)[\(roleStr)] \(descStr)\(valuePreview)\n", stderr)
+
+    guard depth < maxDepth else { return }
+
     var children: AnyObject?
-    guard AXUIElementCopyAttributeValue(focusedWindow as! AXUIElement, kAXChildrenAttribute as CFString, &children) == .success,
+    guard AXUIElementCopyAttributeValue(element, kAXChildrenAttribute as CFString, &children) == .success,
           let childArray = children as? [AXUIElement] else {
-        return nil
+        return
     }
 
     for child in childArray {
-        var role: AnyObject?
-        AXUIElementCopyAttributeValue(child, kAXRoleAttribute as CFString, &role)
-        if let roleStr = role as? String,
-           (roleStr == "AXTextArea" || roleStr == "AXWebArea" || roleStr == "AXGroup") {
-            var childValue: AnyObject?
-            if AXUIElementCopyAttributeValue(child, kAXValueAttribute as CFString, &childValue) == .success {
-                return childValue as? String
-            }
-        }
+        dumpAXTree(child, depth: depth + 1, maxDepth: maxDepth)
     }
-
-    return nil
 }
 
 // MARK: - Keystroke Injection
@@ -128,6 +190,26 @@ let app = getAXApp(pid: config.pid)
 guard AXIsProcessTrusted() else {
     fputs("Error: Accessibility access not granted. Enable in System Settings > Privacy & Security > Accessibility.\n", stderr)
     exit(1)
+}
+
+// Verbose: dump AX tree to help debug Tesara's Metal editor or other custom views
+if config.verbose {
+    fputs("\n=== AX Tree Dump (pid \(config.pid)) ===\n", stderr)
+    var focusedWindow: AnyObject?
+    if AXUIElementCopyAttributeValue(app, kAXFocusedWindowAttribute as CFString, &focusedWindow) == .success {
+        dumpAXTree(focusedWindow as! AXUIElement)
+    } else {
+        fputs("  (no focused window found)\n", stderr)
+    }
+    fputs("=== End AX Tree Dump ===\n\n", stderr)
+
+    // Test if we can read text at all
+    if let text = getFocusedWindowText(app: app) {
+        fputs("Initial text probe succeeded (\(text.count) chars)\n", stderr)
+    } else {
+        fputs("Warning: initial text probe returned nil — AX may not expose text for this terminal\n", stderr)
+        fputs("  Latency results may be unreliable (all timeouts)\n", stderr)
+    }
 }
 
 let testChars: [Character] = Array("abcdefghijklmnopqrstuvwxyz0123456789")

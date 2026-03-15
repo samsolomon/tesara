@@ -838,6 +838,61 @@ class EditorView: NSView, NSTextInputClient {
         session?.selectAll()
     }
 
+    // MARK: - Accessibility
+
+    override func isAccessibilityElement() -> Bool {
+        return true
+    }
+
+    override func accessibilityRole() -> NSAccessibility.Role? {
+        return .textArea
+    }
+
+    override func accessibilityHelp() -> String? {
+        return "Editor input area"
+    }
+
+    override func accessibilityValue() -> Any? {
+        return session?.storage.entireString()
+    }
+
+    override func accessibilitySelectedTextRange() -> NSRange {
+        guard let session else {
+            return NSRange(location: 0, length: 0)
+        }
+        guard let sel = session.selection?.normalized, !sel.isEmpty else {
+            // No selection — report cursor as zero-length range at flat document offset
+            let offset = utf16Offset(for: session.cursorPosition, in: session.storage)
+            return NSRange(location: offset, length: 0)
+        }
+        let startOffset = utf16Offset(for: sel.start, in: session.storage)
+        let endOffset = utf16Offset(for: sel.end, in: session.storage)
+        return NSRange(location: startOffset, length: endOffset - startOffset)
+    }
+
+    override func accessibilitySelectedText() -> String? {
+        return session?.selectedText()
+    }
+
+    override func accessibilityNumberOfCharacters() -> Int {
+        return session?.storage.totalUTF16Length() ?? 0
+    }
+
+    override func accessibilityVisibleCharacterRange() -> NSRange {
+        let count = session?.storage.totalUTF16Length() ?? 0
+        return NSRange(location: 0, length: count)
+    }
+
+    /// Convert a TextStorage.Position to a flat UTF-16 offset across the entire document.
+    private func utf16Offset(for pos: TextStorage.Position, in storage: TextStorage) -> Int {
+        var offset = 0
+        for i in 0..<pos.line {
+            offset += storage.lineLength(i) + 1 // +1 for "\n" (one UTF-16 code unit)
+        }
+        offset += pos.column
+        return offset
+    }
+
     // MARK: - NSTextInputClient
 
     func insertText(_ string: Any, replacementRange: NSRange) {

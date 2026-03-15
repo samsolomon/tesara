@@ -1,0 +1,14 @@
+# Generated payloads
+throughput/.payload-*
+
+# Compiled binaries
+latency/latency-probe
+
+# Vendored benchmark dependencies
+vendor/
+
+# Benchmark results (keep .gitkeep)
+results/*.json
+results/*.md
+results/*.csv
+!results/.gitkeep

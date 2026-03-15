@@ -30,7 +30,7 @@ sample_process_tree() {
     rss=$(echo "$stats" | awk '{print $1}')
     cpu=$(echo "$stats" | awk '{print $2}')
     total_rss=$((total_rss + rss))
-    total_cpu=$(python3 -c "print(round(${total_cpu} + ${cpu}, 1))")
+    total_cpu=$(awk "BEGIN{printf \"%.1f\", ${total_cpu} + ${cpu}}")
   done
 
   echo "${total_rss} ${total_cpu}"

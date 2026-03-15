@@ -63,6 +63,10 @@ SUITES=(
   "throughput/bench-throughput.sh"
   "resources/bench-resources.sh"
   "latency/bench-latency.sh"
+  "fps/bench-fps.sh"
+  "ctrlc/bench-ctrlc.sh"
+  "parser/bench-parser.sh"
+  "scaling/bench-scaling.sh"
 )
 
 for suite in "${SUITES[@]}"; do
