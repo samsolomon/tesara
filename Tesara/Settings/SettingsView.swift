@@ -337,6 +337,7 @@ private struct AppearanceSettingsPane: View {
                 Text("Window")
             }
 
+            SettingsFooter()
         }
         .formStyle(.grouped)
     }
@@ -441,6 +442,8 @@ private struct TerminalSettingsPane: View {
                 }
                 .disabled(!settings.inputBarEnabled)
             }
+
+            SettingsFooter()
         }
         .formStyle(.grouped)
     }
@@ -493,6 +496,8 @@ private struct KeyboardSettingsPane: View {
             Button("Reset all to defaults") {
                 settingsStore.resetKeyBindings()
             }
+
+            SettingsFooter()
         }
         .formStyle(.grouped)
     }
@@ -532,6 +537,8 @@ private struct WorkspaceSettingsPane: View {
                 }
                 .disabled(!settings.dimInactiveSplits)
             }
+
+            SettingsFooter()
         }
         .formStyle(.grouped)
     }
@@ -598,6 +605,8 @@ private struct UpdatesPrivacySettingsPane: View {
             } header: {
                 Text("Network policy")
             }
+
+            SettingsFooter()
         }
         .formStyle(.grouped)
         .confirmationDialog("Clear command history?", isPresented: $confirmingClearHistory, titleVisibility: .visible) {
@@ -621,6 +630,35 @@ private struct UpdatesPrivacySettingsPane: View {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
         let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? ""
         return "\(version) (\(build))"
+    }
+}
+
+private struct SettingsFooter: View {
+    private var version: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0.0"
+    }
+
+    private var year: String {
+        Calendar.current.component(.year, from: Date()).description
+    }
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image("TesaraIcon")
+                .resizable()
+                .frame(width: 14, height: 14)
+
+            Text("Tesara v\(version)")
+
+            Text("·")
+
+            Link("\u{00A9} \(year) Sam Solomon", destination: URL(string: "https://solomon.io/")!)
+                .foregroundStyle(.tertiary)
+        }
+        .font(.subheadline)
+        .foregroundStyle(.tertiary)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
     }
 }
 
