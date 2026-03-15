@@ -108,7 +108,7 @@ final class TerminalThemeTests: XCTestCase {
     }
 
     func testBuiltInThemeCount() {
-        XCTAssertEqual(BuiltInTheme.allCases.count, 22)
+        XCTAssertEqual(BuiltInTheme.allCases.count, 4)
     }
 
     func testEachThemeHasUniqueID() {

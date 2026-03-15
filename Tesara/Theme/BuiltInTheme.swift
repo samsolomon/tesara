@@ -3,26 +3,8 @@ import Foundation
 enum BuiltInTheme: String, CaseIterable {
     case tesaraDark
     case tesaraLight
-    case oxideDark
-    case oxideLight
-    case atlasDark
-    case atlasLight
-    case emberDark
-    case emberLight
-    case tideDark
-    case tideLight
-    case groveDark
-    case groveLight
-    case brassDark
-    case brassLight
-    case duskDark
-    case duskLight
     case paperDark
     case paperLight
-    case signalDark
-    case signalLight
-    case slateDark
-    case slateLight
 
     var id: String { rawValue }
 
@@ -84,46 +66,10 @@ enum BuiltInTheme: String, CaseIterable {
                 brightWhite: "#FFFFFF",
                 linkColor: "#4A8A9E"
             )
-        case .oxideDark:
-            makeTheme(name: "Oxide Dark", background: "#111827", foreground: "#E5E7EB", accent: "#F59E0B")
-        case .oxideLight:
-            makeTheme(name: "Oxide Light", background: "#FAFAF8", foreground: "#111827", accent: "#B45309", light: true)
-        case .atlasDark:
-            makeTheme(name: "Atlas Dark", background: "#0F172A", foreground: "#E2E8F0", accent: "#0EA5E9")
-        case .atlasLight:
-            makeTheme(name: "Atlas Light", background: "#F0F4FA", foreground: "#0F172A", accent: "#0369A1", light: true)
-        case .emberDark:
-            makeTheme(name: "Ember Dark", background: "#1C1917", foreground: "#F5F5F4", accent: "#EA580C")
-        case .emberLight:
-            makeTheme(name: "Ember Light", background: "#FBF7F5", foreground: "#1C1917", accent: "#C2410C", light: true)
-        case .tideDark:
-            makeTheme(name: "Tide Dark", background: "#082F49", foreground: "#E0F2FE", accent: "#06B6D4")
-        case .tideLight:
-            makeTheme(name: "Tide Light", background: "#F0FAFE", foreground: "#082F49", accent: "#0E7490", light: true)
-        case .groveDark:
-            makeTheme(name: "Grove Dark", background: "#052E16", foreground: "#DCFCE7", accent: "#22C55E")
-        case .groveLight:
-            makeTheme(name: "Grove Light", background: "#F0FAF4", foreground: "#052E16", accent: "#15803D", light: true)
-        case .brassDark:
-            makeTheme(name: "Brass Dark", background: "#1F2937", foreground: "#F9FAFB", accent: "#D97706")
-        case .brassLight:
-            makeTheme(name: "Brass Light", background: "#FAF8F0", foreground: "#1F2937", accent: "#92400E", light: true)
-        case .duskDark:
-            makeTheme(name: "Dusk Dark", background: "#1E1B4B", foreground: "#EDE9FE", accent: "#818CF8")
-        case .duskLight:
-            makeTheme(name: "Dusk Light", background: "#F2F0FA", foreground: "#1E1B4B", accent: "#4F46E5", light: true)
         case .paperDark:
             makeTheme(name: "Paper Dark", background: "#1A1B2E", foreground: "#F8FAFC", accent: "#2563EB")
         case .paperLight:
             makeTheme(name: "Paper Light", background: "#F8FAFC", foreground: "#0F172A", accent: "#1D4ED8", light: true)
-        case .signalDark:
-            makeTheme(name: "Signal Dark", background: "#18181B", foreground: "#FAFAFA", accent: "#E11D48")
-        case .signalLight:
-            makeTheme(name: "Signal Light", background: "#FEF2F2", foreground: "#18181B", accent: "#BE123C", light: true)
-        case .slateDark:
-            makeTheme(name: "Slate Dark", background: "#0F172A", foreground: "#CBD5E1", accent: "#64748B")
-        case .slateLight:
-            makeTheme(name: "Slate Light", background: "#F1F5F9", foreground: "#0F172A", accent: "#475569", light: true)
         }
     }
 

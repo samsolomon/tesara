@@ -144,13 +144,13 @@ final class SettingsStoreTests: XCTestCase {
 
         var legacySettings = AppSettings.default
         legacySettings.fontSize = 18
-        legacySettings.darkThemeID = BuiltInTheme.atlasDark.id
+        legacySettings.darkThemeID = BuiltInTheme.paperDark.id
         let data = try! JSONEncoder().encode(legacySettings)
         defaults.set(data, forKey: "tesara.app-settings")
 
         let store = SettingsStore(configDirectory: tempDir, defaults: defaults)
         XCTAssertEqual(store.settings.fontSize, 18)
-        XCTAssertEqual(store.settings.darkThemeID, BuiltInTheme.atlasDark.id)
+        XCTAssertEqual(store.settings.darkThemeID, BuiltInTheme.paperDark.id)
         XCTAssertNil(defaults.data(forKey: "tesara.app-settings"))
         XCTAssertNotNil(ConfigFile.readConfigFile(from: tempDir))
     }
