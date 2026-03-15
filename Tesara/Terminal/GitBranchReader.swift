@@ -27,6 +27,47 @@ enum GitBranchReader {
         return nil
     }
 
+    /// Returns all local branch names for the given directory.
+    /// Enumerates refs/heads/ recursively and parses packed-refs.
+    static func allBranches(at directory: String) -> [String] {
+        guard let gitPath = findGitPath(from: directory) else { return [] }
+
+        let fm = FileManager.default
+        var branches = Set<String>()
+
+        // 1. Enumerate refs/heads/ recursively (loose refs)
+        let refsHeads = (gitPath as NSString).appendingPathComponent("refs/heads")
+        if let enumerator = fm.enumerator(atPath: refsHeads) {
+            while let relative = enumerator.nextObject() as? String {
+                let fullPath = (refsHeads as NSString).appendingPathComponent(relative)
+                var isDir: ObjCBool = false
+                if fm.fileExists(atPath: fullPath, isDirectory: &isDir), !isDir.boolValue {
+                    branches.insert(relative)
+                }
+            }
+        }
+
+        // 2. Parse packed-refs for additional branches
+        let packedRefsPath = (gitPath as NSString).appendingPathComponent("packed-refs")
+        if let data = fm.contents(atPath: packedRefsPath),
+           let content = String(data: data, encoding: .utf8) {
+            let prefix = "refs/heads/"
+            for line in content.split(separator: "\n") {
+                let trimmed = line.trimmingCharacters(in: .whitespaces)
+                guard !trimmed.hasPrefix("#"), !trimmed.hasPrefix("^") else { continue }
+                // Format: <sha> <ref>
+                let parts = trimmed.split(separator: " ", maxSplits: 1)
+                guard parts.count == 2 else { continue }
+                let ref = String(parts[1])
+                if ref.hasPrefix(prefix) {
+                    branches.insert(String(ref.dropFirst(prefix.count)))
+                }
+            }
+        }
+
+        return branches.sorted()
+    }
+
     /// Walks up from `directory` looking for `.git` (directory or file).
     /// Returns the path to the git directory containing HEAD.
     private static func findGitPath(from directory: String) -> String? {

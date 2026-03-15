@@ -105,6 +105,10 @@
 		B2C3D4E5F607182A3B4C5D71 /* ConfigFileWatcherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5F /* ConfigFileWatcherTests.swift */; };
 		B2C3D4E5F607182A3B4C5D6E /* GhosttyThemeLoaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5C /* GhosttyThemeLoaderTests.swift */; };
 		B2C3D4E5F607182A3B4C5D6F /* PaneDragStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5D /* PaneDragStateTests.swift */; };
+		TABCOMP001A00000000000001 /* CompletionContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = TABCOMP001B00000000000001 /* CompletionContext.swift */; };
+		TABCOMP001A00000000000002 /* CompletionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = TABCOMP001B00000000000002 /* CompletionProvider.swift */; };
+		TABCOMP001A00000000000003 /* TabCompletionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = TABCOMP001B00000000000003 /* TabCompletionController.swift */; };
+		TABCOMP001A00000000000004 /* CompletionOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TABCOMP001B00000000000004 /* CompletionOverlayView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -155,6 +159,10 @@
 		4C1F323FA7FDDFD3E4A544A8 /* InputBarHistoryController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputBarHistoryController.swift; sourceTree = "<group>"; };
 		36A1B2C3D4E5F607GITBRA02 /* GitBranchReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitBranchReader.swift; sourceTree = "<group>"; };
 		36A1B2C3D4E5F607SUGGEST02 /* SuggestionEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuggestionEngine.swift; sourceTree = "<group>"; };
+		TABCOMP001B00000000000001 /* CompletionContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompletionContext.swift; sourceTree = "<group>"; };
+		TABCOMP001B00000000000002 /* CompletionProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompletionProvider.swift; sourceTree = "<group>"; };
+		TABCOMP001B00000000000003 /* TabCompletionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabCompletionController.swift; sourceTree = "<group>"; };
+		TABCOMP001B00000000000004 /* CompletionOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompletionOverlayView.swift; sourceTree = "<group>"; };
 		5563A901A8F611AC6D01A419 /* BlockStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockStoreTests.swift; sourceTree = "<group>"; };
 		55C3D9E0E1A4305FC7BC9C6E /* EditorLayoutEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorLayoutEngineTests.swift; sourceTree = "<group>"; };
 		570AAE7A2F968564CCF33133 /* GlyphAtlasTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlyphAtlasTests.swift; sourceTree = "<group>"; };
@@ -366,6 +374,9 @@
 		DAF7F752BD488515A0DA51E4 /* Terminal */ = {
 			isa = PBXGroup;
 			children = (
+				TABCOMP001B00000000000001 /* CompletionContext.swift */,
+				TABCOMP001B00000000000004 /* CompletionOverlayView.swift */,
+				TABCOMP001B00000000000002 /* CompletionProvider.swift */,
 				36A1B2C3D4E5F607GITBRA02 /* GitBranchReader.swift */,
 				0265AE3B30D51A6B57910DEB /* HistorySearchOverlayView.swift */,
 				4C1F323FA7FDDFD3E4A544A8 /* InputBarHistoryController.swift */,
@@ -376,6 +387,7 @@
 				58B4C6D2A1E3F790843D5B26 /* PaneHeaderView.swift */,
 				36D96A4177859EA0D14FAFCB /* PaneNode.swift */,
 				36A1B2C3D4E5F607SUGGEST02 /* SuggestionEngine.swift */,
+				TABCOMP001B00000000000003 /* TabCompletionController.swift */,
 				C43028483E4CE7E65A49B780 /* TabBarView.swift */,
 				D9ACBFEB7F97B6D7DB444D4F /* TerminalSession.swift */,
 				EDDA22FF0E3CCF02CE8BCD05 /* TerminalWorkspaceView.swift */,
@@ -582,6 +594,10 @@
 				8B4137DA33B84A8B3057E40F /* GhosttySurfaceView.swift in Sources */,
 				4210A267A3E924FC287E3E71 /* GlyphAtlas.swift in Sources */,
 				5B230117551D0D8524F02002 /* GlyphCache.swift in Sources */,
+				TABCOMP001A00000000000001 /* CompletionContext.swift in Sources */,
+				TABCOMP001A00000000000004 /* CompletionOverlayView.swift in Sources */,
+				TABCOMP001A00000000000002 /* CompletionProvider.swift in Sources */,
+				TABCOMP001A00000000000003 /* TabCompletionController.swift in Sources */,
 				36A1B2C3D4E5F607GITBRA01 /* GitBranchReader.swift in Sources */,
 				222EC9F7F53F29D795F54208 /* HistorySearchOverlayView.swift in Sources */,
 				81D353BEAF13304C4935B40F /* HistoryView.swift in Sources */,

@@ -306,6 +306,16 @@ private struct TerminalPaneLeafView: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
 
+            if inputBarState.completionController.isActive {
+                CompletionOverlayView(
+                    completionController: inputBarState.completionController,
+                    theme: theme,
+                    fontFamily: fontFamily,
+                    fontSize: fontSize
+                )
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+
             InputBarView(
                 inputBarState: inputBarState,
                 theme: theme,
@@ -315,6 +325,7 @@ private struct TerminalPaneLeafView: View {
                 maxHeight: maxInputBarHeight
             )
         }
+        .animation(.easeInOut(duration: 0.12), value: inputBarState.completionController.isActive)
         .transition(.move(edge: .bottom).combined(with: .opacity))
         .onAppear {
             focusInputBar(session: session, surfaceView: surfaceView)

@@ -6,7 +6,7 @@ final class SettingsStore: ObservableObject {
     @Published var settings: AppSettings {
         didSet {
             guard !isSuppressingPersist else { return }
-            persist()
+            schedulePersist()
         }
     }
 
@@ -17,7 +17,7 @@ final class SettingsStore: ObservableObject {
     private var watcher: ConfigFileWatcher?
     private var appearanceObserver: NSObjectProtocol?
     private var isSuppressingPersist = false
-    private var pendingWriteCount = 0
+    private var persistWorkItem: DispatchWorkItem?
     private let defaults: UserDefaults
     private let legacyStorageKey = "tesara.app-settings"
     private let bookmarkKey = "tesara.defaultWorkingDirectoryBookmark"
@@ -206,21 +206,28 @@ final class SettingsStore: ObservableObject {
     }
 
 
+    /// Coalesces rapid mutations into a single disk write.
+    private func schedulePersist() {
+        persistWorkItem?.cancel()
+        let item = DispatchWorkItem { [weak self] in
+            self?.persist()
+        }
+        persistWorkItem = item
+        DispatchQueue.main.async(execute: item)
+    }
+
     private func persist() {
-        pendingWriteCount += 1
+        persistWorkItem = nil
         ConfigFile.writeConfigFile(content: ConfigFile.buildConfigString(from: settings), to: configDirectory)
         if let bookmark = settings.defaultWorkingDirectoryBookmark {
             defaults.set(bookmark, forKey: bookmarkKey)
         } else {
             defaults.removeObject(forKey: bookmarkKey)
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
-            self?.pendingWriteCount -= 1
-        }
     }
 
     private func reloadFromDisk() {
-        guard pendingWriteCount == 0 else { return }
+        guard persistWorkItem == nil else { return }
         guard let content = ConfigFile.readConfigFile(from: configDirectory) else { return }
         var s = AppSettings.default
         ConfigFile.applyParsedConfig(ConfigFile.parse(content), to: &s)

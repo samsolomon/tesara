@@ -8,7 +8,9 @@ final class SettingsPaneSelection: ObservableObject {
 
     @Published var pane: SettingsPane {
         didSet {
-            UserDefaults.standard.set(pane.rawValue, forKey: Self.defaultsKey)
+            Task { @MainActor in
+                UserDefaults.standard.set(self.pane.rawValue, forKey: Self.defaultsKey)
+            }
         }
     }
 

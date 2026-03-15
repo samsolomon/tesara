@@ -11,6 +11,7 @@ final class InputBarState: ObservableObject {
     let keyHandler = InputBarKeyHandler()
     let historyController = InputBarHistoryController()
     let suggestionEngine = SuggestionEngine()
+    let completionController = TabCompletionController()
 
     @Published private(set) var isEmpty: Bool = true
     @Published private(set) var displayLineCount: Int = 1
@@ -69,6 +70,16 @@ final class InputBarState: ObservableObject {
         if isEmpty != newEmpty { isEmpty = newEmpty }
         if displayLineCount != lineCount { displayLineCount = lineCount }
 
+        // Live-filter completion popup if active
+        if completionController.isActive {
+            if cursorPosition.line != completionController.replacementLine {
+                completionController.dismiss()
+            } else {
+                let lineText = editorSession.storage.lineContent(cursorPosition.line)
+                completionController.updateFilter(lineText: lineText, cursorColumn: cursorPosition.column)
+            }
+        }
+
         // Update ghost suggestion
         updateGhostSuffix(cursorPosition: cursorPosition)
     }
@@ -103,6 +114,11 @@ final class InputBarState: ObservableObject {
         }
     }
 
+    /// Refresh ghost text (called after completion dismissal).
+    func refreshGhostSuffix() {
+        updateGhostSuffix(cursorPosition: editorSession.cursorPosition)
+    }
+
     private func updateGhostSuffix(cursorPosition: TextStorage.Position) {
         // Only show ghost when cursor is at document end.
         // Use the passed-in position because @Published fires on willSet,
@@ -115,8 +131,8 @@ final class InputBarState: ObservableObject {
             return
         }
 
-        // No ghost during history navigation or search
-        guard !historyController.isSearchActive && !historyController.isNavigatingHistory else {
+        // No ghost during history navigation, search, or tab completion
+        guard !historyController.isSearchActive && !historyController.isNavigatingHistory && !completionController.isActive else {
             ghostSuffix = nil
             return
         }
@@ -144,9 +160,12 @@ final class InputBarKeyHandler: EditorViewDelegate {
     func editorView(_ editorView: EditorView, handleKeyDown event: NSEvent) -> Bool {
         let mods = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
 
-        // Escape — cancel search, dismiss ghost text, or clear input
+        // Escape — dismiss completion, cancel search, dismiss ghost text, or clear input
         if let chars = event.charactersIgnoringModifiers, chars == "\u{1b}" {
             if let state = terminalSession?.inputBarState,
+               state.completionController.isActive {
+                state.completionController.dismiss()
+            } else if let state = terminalSession?.inputBarState,
                state.historyController.isSearchActive {
                 state.historyController.cancelSearch()
             } else if let state = terminalSession?.inputBarState,
@@ -163,6 +182,7 @@ final class InputBarKeyHandler: EditorViewDelegate {
         if mods.contains(.control), let chars = event.charactersIgnoringModifiers {
             switch chars {
             case "c":
+                terminalSession?.inputBarState?.completionController.dismiss()
                 terminalSession?.inputBarState?.clear()
                 terminalSession?.inputBarState?.historyController.reset()
                 return true
@@ -173,6 +193,7 @@ final class InputBarKeyHandler: EditorViewDelegate {
                 editorView.session?.insertNewline()
                 return true
             case "r":
+                terminalSession?.inputBarState?.completionController.dismiss()
                 terminalSession?.inputBarState?.historyController.beginSearch()
                 return true
             case "z":
@@ -195,6 +216,10 @@ final class InputBarKeyHandler: EditorViewDelegate {
             if mods.intersection([.shift, .control, .option]).isEmpty == false {
                 return false
             }
+            if let state = terminalSession?.inputBarState, state.completionController.isActive {
+                state.completionController.acceptSelected()
+                return true
+            }
             guard let terminalSession else { return true }
             let text = session.storage.entireString()
             terminalSession.sendFromInputBar(text: text)
@@ -203,10 +228,29 @@ final class InputBarKeyHandler: EditorViewDelegate {
             return true
 
         case .tab:
-            terminalSession?.send(text: "\t")
+            guard let state = terminalSession?.inputBarState else {
+                terminalSession?.send(text: "\t")
+                return true
+            }
+            if state.completionController.isActive {
+                state.completionController.acceptSelected()
+            } else {
+                let pos = session.cursorPosition
+                let lineText = session.storage.lineContent(pos.line)
+                state.completionController.triggerCompletion(
+                    lineText: lineText,
+                    line: pos.line,
+                    cursorColumn: pos.column,
+                    cwd: terminalSession?.currentWorkingDirectory
+                )
+            }
             return true
 
         case .upArrow:
+            if let state = terminalSession?.inputBarState, state.completionController.isActive {
+                state.completionController.selectPrevious()
+                return true
+            }
             if isSingleLine && !mods.contains(.command) && !mods.contains(.option) {
                 if let state = terminalSession?.inputBarState {
                     state.historyController.navigateUp(
@@ -219,6 +263,10 @@ final class InputBarKeyHandler: EditorViewDelegate {
             return false
 
         case .downArrow:
+            if let state = terminalSession?.inputBarState, state.completionController.isActive {
+                state.completionController.selectNext()
+                return true
+            }
             if isSingleLine && !mods.contains(.command) && !mods.contains(.option) {
                 if let state = terminalSession?.inputBarState {
                     state.historyController.navigateDown(

@@ -209,6 +209,10 @@ final class TerminalSession: ObservableObject, Identifiable {
         state.keyHandler.terminalSession = self
         state.historyController.blockStore = blockStore
         state.suggestionEngine.blockStore = blockStore
+        state.completionController.terminalSession = self
+        state.completionController.onDismiss = { [weak state] in
+            state?.refreshGhostSuffix()
+        }
         state.observeSession()
         inputBarState = state
 
@@ -228,6 +232,7 @@ final class TerminalSession: ObservableObject, Identifiable {
     }
 
     private func teardownInputBar() {
+        inputBarState?.completionController.dismiss()
         inputBarState?.editorView?.focusDidChange(false)
         inputBarState?.editorView?.pauseDisplayLink()
         searchStateCancellable = nil

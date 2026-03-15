@@ -115,7 +115,7 @@ final class GhosttyApp: @unchecked Sendable {
 
     func unregister(surfaceUserdata: UnsafeRawPointer) {
         lock.withLock {
-            surfaceRegistry.removeValue(forKey: surfaceUserdata)
+            surfaceRegistry[surfaceUserdata] = nil
         }
     }
 
