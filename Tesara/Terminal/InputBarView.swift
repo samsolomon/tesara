@@ -37,6 +37,7 @@ final class InputBarState: ObservableObject {
         searchCancellable = historyController.$isSearchActive
             .receive(on: RunLoop.main)
             .sink { [weak self] active in
+                print("[Tesara-DEBUG] isSearchActive pipe: \(active), current=\(self?.isSearchActive ?? false)")
                 if self?.isSearchActive != active {
                     self?.isSearchActive = active
                 }
@@ -102,6 +103,7 @@ final class InputBarKeyHandler: EditorViewDelegate {
                 editorView.session?.insertNewline()
                 return true
             case "r":
+                print("[Tesara-DEBUG] Ctrl+R pressed, beginSearch()")
                 terminalSession?.inputBarState?.historyController.beginSearch()
                 return true
             case "z":

@@ -1,3 +1,4 @@
+import Combine
 import Foundation
 
 @MainActor
@@ -20,12 +21,14 @@ final class TerminalSession: ObservableObject, Identifiable {
     @Published private(set) var surfaceView: GhosttySurfaceView?
     @Published private(set) var isAtPrompt = false
     @Published private(set) var isAlternateScreen = false
+    @Published private(set) var isHistorySearchActive = false
 
     /// Published so prompt-driven presentation updates can react when the input
     /// bar is created or torn down outside the same render pass.
     @Published private(set) var inputBarState: InputBarState?
 
     private var blockStore: BlockStore?
+    private var searchStateCancellable: AnyCancellable?
     private var activeSessionID: UUID?
     private var activeCapture: TerminalBlockCapture?
     private var blockOrderIndex = 0
@@ -189,6 +192,14 @@ final class TerminalSession: ObservableObject, Identifiable {
         state.keyHandler.terminalSession = self
         state.historyController.blockStore = blockStore
         inputBarState = state
+
+        searchStateCancellable = state.historyController.$isSearchActive
+            .receive(on: RunLoop.main)
+            .sink { [weak self] active in
+                if self?.isHistorySearchActive != active {
+                    self?.isHistorySearchActive = active
+                }
+            }
     }
 
     private func teardownInputBar() {

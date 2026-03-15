@@ -288,7 +288,7 @@ private struct TerminalPaneLeafView: View {
     @ViewBuilder
     private func inputBarRegion(_ inputBarState: InputBarState, session: TerminalSession, surfaceView: GhosttySurfaceView) -> some View {
         VStack(spacing: 4) {
-            if inputBarState.isSearchActive {
+            if session.isHistorySearchActive {
                 HistorySearchOverlayView(
                     historyController: inputBarState.historyController,
                     theme: theme,
