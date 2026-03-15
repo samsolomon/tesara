@@ -194,6 +194,7 @@ final class TerminalSession: ObservableObject, Identifiable {
         state.keyHandler.terminalSession = self
         state.historyController.blockStore = blockStore
         state.suggestionEngine.blockStore = blockStore
+        state.observeSession()
         inputBarState = state
 
         searchStateCancellable = state.historyController.$isSearchActive

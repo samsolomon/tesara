@@ -53,6 +53,7 @@ enum ConfigFile {
         lines.append("\(K.bellMode) = \(settings.bellMode.rawValue)")
         lines.append("\(K.pasteProtection) = \(settings.pasteProtectionMode.rawValue)")
         lines.append("\(K.inputBarEnabled) = \(settings.inputBarEnabled)")
+        lines.append("\(K.inputBarPromptInfoEnabled) = \(settings.inputBarPromptInfoEnabled)")
         lines.append("")
         lines.append("# Workspace")
         lines.append("\(K.tabTitleMode) = \(settings.tabTitleMode.rawValue)")
@@ -144,6 +145,7 @@ enum ConfigFile {
         settings.bellMode = enumVal(K.bellMode, d.bellMode)
         settings.pasteProtectionMode = enumVal(K.pasteProtection, d.pasteProtectionMode)
         settings.inputBarEnabled = bool(K.inputBarEnabled, d.inputBarEnabled)
+        settings.inputBarPromptInfoEnabled = bool(K.inputBarPromptInfoEnabled, d.inputBarPromptInfoEnabled)
 
         settings.tabTitleMode = enumVal(K.tabTitleMode, d.tabTitleMode)
         settings.dimInactiveSplits = bool(K.dimInactiveSplits, d.dimInactiveSplits)

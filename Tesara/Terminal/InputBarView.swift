@@ -14,6 +14,8 @@ final class InputBarState: ObservableObject {
 
     @Published private(set) var isEmpty: Bool = true
     @Published private(set) var displayLineCount: Int = 1
+    @Published private(set) var displayPath: String?
+    @Published private(set) var gitBranch: String?
 
     /// Ghost text suffix for autosuggestion (not @Published — drives Metal, not SwiftUI).
     fileprivate(set) var ghostSuffix: String?
@@ -22,6 +24,8 @@ final class InputBarState: ObservableObject {
     static let ghostHintSuffix = " →"
 
     private var sessionCancellable: AnyCancellable?
+    private var cwdCancellable: AnyCancellable?
+    private var promptInfoGeneration: UInt64 = 0
 
     func createView(theme: TerminalTheme, fontFamily: String, fontSize: Double, cursorConfig: EditorLayoutEngine.CursorConfig? = nil, cursorBlink: Bool = true) {
         guard editorView == nil else { return }
@@ -67,6 +71,36 @@ final class InputBarState: ObservableObject {
 
         // Update ghost suggestion
         updateGhostSuffix(cursorPosition: cursorPosition)
+    }
+
+    func observeSession() {
+        guard let session = keyHandler.terminalSession else { return }
+        updatePromptInfo(cwd: session.currentWorkingDirectory)
+        cwdCancellable = session.$currentWorkingDirectory
+            .removeDuplicates()
+            .sink { [weak self] cwd in self?.updatePromptInfo(cwd: cwd) }
+    }
+
+    private static let homePath = FileManager.default.homeDirectoryForCurrentUser.path
+
+    private func updatePromptInfo(cwd: String?) {
+        promptInfoGeneration &+= 1
+        let gen = promptInfoGeneration
+        guard let cwd, !cwd.isEmpty else {
+            if displayPath != nil { displayPath = nil }
+            if gitBranch != nil { gitBranch = nil }
+            return
+        }
+        let home = Self.homePath
+        let newPath = (cwd == home || cwd.hasPrefix(home + "/")) ? "~" + cwd.dropFirst(home.count) : cwd
+        if displayPath != newPath { displayPath = newPath }
+        Task.detached(priority: .utility) {
+            let branch = GitBranchReader.branch(at: cwd)
+            await MainActor.run { [weak self] in
+                guard let self, self.promptInfoGeneration == gen else { return }
+                if self.gitBranch != branch { self.gitBranch = branch }
+            }
+        }
     }
 
     private func updateGhostSuffix(cursorPosition: TextStorage.Position) {
@@ -240,12 +274,17 @@ struct InputBarView: View {
     let theme: TerminalTheme
     let fontFamily: String
     let fontSize: Double
+    let showPromptInfo: Bool
 
     var body: some View {
         VStack(spacing: 0) {
             Rectangle()
                 .fill(theme.swiftUIColor(from: theme.foreground).opacity(theme.dividerOpacity))
                 .frame(height: 1)
+
+            if showPromptInfo, let displayPath = inputBarState.displayPath {
+                promptInfoRow(path: displayPath, branch: inputBarState.gitBranch)
+            }
 
             ZStack(alignment: .topLeading) {
                 if inputBarState.isEmpty {
@@ -288,7 +327,34 @@ struct InputBarView: View {
         return CGFloat(lines) * editorLineHeight
     }
 
+    private static let promptInfoFontScale: CGFloat = 0.85
+
+    private var promptInfoHeight: CGFloat {
+        showPromptInfo && inputBarState.displayPath != nil ? ceil(fontSize * Self.promptInfoFontScale * 1.2) + 8 : 0
+    }
+
     private var totalHeight: CGFloat {
-        textAreaHeight + 19
+        textAreaHeight + 19 + promptInfoHeight
+    }
+
+    private func promptInfoRow(path: String, branch: String?) -> some View {
+        HStack(spacing: 4) {
+            Text(path)
+                .lineLimit(1)
+                .truncationMode(.middle)
+            if let branch {
+                Text("·")
+                Image(systemName: "arrow.triangle.branch")
+                Text(branch)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+            }
+        }
+        .font(.custom(fontFamily, size: fontSize * Self.promptInfoFontScale))
+        .foregroundStyle(theme.swiftUIColor(from: theme.foreground).opacity(0.35))
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 12)
+        .padding(.top, 6)
+        .padding(.bottom, 2)
     }
 }

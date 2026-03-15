@@ -310,7 +310,8 @@ private struct TerminalPaneLeafView: View {
                 inputBarState: inputBarState,
                 theme: theme,
                 fontFamily: fontFamily,
-                fontSize: fontSize
+                fontSize: fontSize,
+                showPromptInfo: settingsStore.settings.inputBarPromptInfoEnabled
             )
         }
         .transition(.move(edge: .bottom).combined(with: .opacity))

@@ -22,6 +22,7 @@ struct AppSettings: Codable, Equatable {
     var dimInactiveSplits: Bool
     var inactiveSplitDimAmount: Double
     var inputBarEnabled: Bool
+    var inputBarPromptInfoEnabled: Bool
     var cursorStyle: CursorStyle
     var cursorBlink: Bool
     var lightThemeID: String
@@ -60,6 +61,7 @@ struct AppSettings: Codable, Equatable {
         dimInactiveSplits: Bool = true,
         inactiveSplitDimAmount: Double = 0.3,
         inputBarEnabled: Bool = true,
+        inputBarPromptInfoEnabled: Bool = false,
         cursorStyle: CursorStyle = .bar,
         cursorBlink: Bool = true,
         lightThemeID: String = BuiltInTheme.tesaraLight.id,
@@ -93,6 +95,7 @@ struct AppSettings: Codable, Equatable {
         self.dimInactiveSplits = dimInactiveSplits
         self.inactiveSplitDimAmount = inactiveSplitDimAmount
         self.inputBarEnabled = inputBarEnabled
+        self.inputBarPromptInfoEnabled = inputBarPromptInfoEnabled
         self.cursorStyle = cursorStyle
         self.cursorBlink = cursorBlink
         self.lightThemeID = lightThemeID
@@ -154,6 +157,7 @@ struct AppSettings: Codable, Equatable {
         case dimInactiveSplits
         case inactiveSplitDimAmount
         case inputBarEnabled
+        case inputBarPromptInfoEnabled
         case cursorStyle
         case cursorBlink
         case autoThemeSwitching // legacy decode only
@@ -198,6 +202,7 @@ struct AppSettings: Codable, Equatable {
         dimInactiveSplits = try container.decodeIfPresent(Bool.self, forKey: .dimInactiveSplits) ?? true
         inactiveSplitDimAmount = try container.decodeIfPresent(Double.self, forKey: .inactiveSplitDimAmount) ?? 0.3
         inputBarEnabled = try container.decodeIfPresent(Bool.self, forKey: .inputBarEnabled) ?? true
+        inputBarPromptInfoEnabled = try container.decodeIfPresent(Bool.self, forKey: .inputBarPromptInfoEnabled) ?? false
         cursorStyle = try container.decodeIfPresent(CursorStyle.self, forKey: .cursorStyle) ?? .bar
         cursorBlink = try container.decodeIfPresent(Bool.self, forKey: .cursorBlink) ?? true
         lightThemeID = try container.decodeIfPresent(String.self, forKey: .lightThemeID) ?? BuiltInTheme.tesaraLight.id
@@ -234,6 +239,7 @@ struct AppSettings: Codable, Equatable {
         try container.encode(dimInactiveSplits, forKey: .dimInactiveSplits)
         try container.encode(inactiveSplitDimAmount, forKey: .inactiveSplitDimAmount)
         try container.encode(inputBarEnabled, forKey: .inputBarEnabled)
+        try container.encode(inputBarPromptInfoEnabled, forKey: .inputBarPromptInfoEnabled)
         try container.encode(cursorStyle, forKey: .cursorStyle)
         try container.encode(cursorBlink, forKey: .cursorBlink)
         try container.encode(lightThemeID, forKey: .lightThemeID)
@@ -568,6 +574,7 @@ enum ConfigKey {
     static let bellMode = "bell-mode"
     static let pasteProtection = "paste-protection"
     static let inputBarEnabled = "input-bar-enabled"
+    static let inputBarPromptInfoEnabled = "input-bar-prompt-info-enabled"
     static let tabTitleMode = "tab-title-mode"
     static let dimInactiveSplits = "dim-inactive-splits"
     static let inactiveSplitDimAmount = "inactive-split-dim-amount"
