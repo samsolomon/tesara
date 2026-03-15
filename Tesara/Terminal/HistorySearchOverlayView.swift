@@ -10,18 +10,27 @@ struct HistorySearchOverlayView: View {
 
     @FocusState private var isSearchFieldFocused: Bool
 
-    private var isDarkTheme: Bool { theme.isDarkBackground }
+    private var dividerOpacity: Double {
+        theme.isDarkBackground ? 0.22 : 0.14
+    }
 
     var body: some View {
         VStack(spacing: 0) {
+            Rectangle()
+                .fill(theme.swiftUIColor(from: theme.foreground).opacity(dividerOpacity))
+                .frame(height: 1)
+
             if !historyController.searchResults.isEmpty {
                 resultsList
+
+                Rectangle()
+                    .fill(theme.swiftUIColor(from: theme.foreground).opacity(dividerOpacity))
+                    .frame(height: 1)
             }
+
             searchField
         }
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .background { searchBackground }
-        .shadow(color: .black.opacity(isDarkTheme ? 0.5 : 0.2), radius: 12, y: 4)
+        .background(theme.swiftUIColor(from: theme.background))
         .onAppear {
             isSearchFieldFocused = true
         }
@@ -31,11 +40,12 @@ struct HistorySearchOverlayView: View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: fontSize * 0.85))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(theme.swiftUIColor(from: theme.foreground).opacity(0.3))
 
             TextField("Search history...", text: $historyController.searchQuery)
                 .textFieldStyle(.plain)
                 .font(.custom(fontFamily, size: fontSize))
+                .foregroundStyle(theme.swiftUIColor(from: theme.foreground))
                 .focused($isSearchFieldFocused)
                 .onSubmit { onAccept() }
                 .onChange(of: historyController.searchQuery) { _, newQuery in
@@ -79,6 +89,7 @@ struct HistorySearchOverlayView: View {
         let isSelected = index == historyController.selectedSearchIndex
         return Text(command)
             .font(.custom(fontFamily, size: fontSize))
+            .foregroundStyle(theme.swiftUIColor(from: theme.foreground))
             .lineLimit(1)
             .truncationMode(.middle)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -90,26 +101,6 @@ struct HistorySearchOverlayView: View {
                 historyController.selectedSearchIndex = index
                 onAccept()
             }
-    }
-
-    @ViewBuilder
-    private var searchBackground: some View {
-        if #available(macOS 26, *) {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(.regularMaterial)
-                .overlay {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .strokeBorder(.white.opacity(isDarkTheme ? 0.15 : 0.08), lineWidth: 0.5)
-                }
-                .glassEffect(.regular, in: .rect(cornerRadius: 12))
-        } else {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(.ultraThinMaterial)
-                .overlay {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .strokeBorder(.white.opacity(isDarkTheme ? 0.12 : 0.06), lineWidth: 0.5)
-                }
-        }
     }
 
     private func selectNext() {
