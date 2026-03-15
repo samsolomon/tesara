@@ -74,11 +74,15 @@ struct TerminalWorkspaceView: View {
                     activePaneID: manager.activePaneID,
                     dimInactiveSplits: settingsStore.settings.dimInactiveSplits,
                     inactiveSplitDimAmount: settingsStore.settings.inactiveSplitDimAmount,
+                    tabTitleMode: manager.tabTitleMode,
                     onSelectPane: { paneID in
                         manager.selectPane(id: paneID)
                     },
                     onUpdateRatio: { splitID, ratio in
                         manager.updatePaneRatio(splitID: splitID, ratio: ratio)
+                    },
+                    onClosePane: { paneID in
+                        manager.closePane(id: paneID)
                     }
                 )
                 .opacity(isActive ? 1 : 0)

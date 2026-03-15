@@ -9,38 +9,44 @@ struct PaneContainerView: View {
     let activePaneID: UUID?
     let dimInactiveSplits: Bool
     let inactiveSplitDimAmount: Double
+    let tabTitleMode: TabTitleMode
     let onSelectPane: (UUID) -> Void
     let onUpdateRatio: (UUID, CGFloat) -> Void
+    var onClosePane: ((UUID) -> Void)?
     var isSplit: Bool = false
 
     var body: some View {
         switch node {
         case .leaf(let id, let session):
-            TerminalPaneLeafView(
-                id: id,
-                session: session,
-                isActive: id == activePaneID,
-                showBorder: isSplit,
-                theme: theme,
-                fontFamily: fontFamily,
-                fontSize: fontSize,
-                inputBarEnabled: inputBarEnabled,
-                dimInactiveSplit: dimInactiveSplits,
-                inactiveSplitDimAmount: inactiveSplitDimAmount,
-                onSelectPane: onSelectPane
-            )
+            paneWithHeader(id: id, session: session) {
+                TerminalPaneLeafView(
+                    id: id,
+                    session: session,
+                    isActive: id == activePaneID,
+                    showBorder: isSplit,
+                    theme: theme,
+                    fontFamily: fontFamily,
+                    fontSize: fontSize,
+                    inputBarEnabled: inputBarEnabled,
+                    dimInactiveSplit: dimInactiveSplits,
+                    inactiveSplitDimAmount: inactiveSplitDimAmount,
+                    onSelectPane: onSelectPane
+                )
+            }
 
         case .editor(let id, let editorSession):
-            EditorPaneLeafView(
-                id: id,
-                session: editorSession,
-                isActive: id == activePaneID,
-                showBorder: isSplit,
-                theme: theme,
-                dimInactiveSplit: dimInactiveSplits,
-                inactiveSplitDimAmount: inactiveSplitDimAmount,
-                onSelectPane: onSelectPane
-            )
+            editorWithHeader(id: id, session: editorSession) {
+                EditorPaneLeafView(
+                    id: id,
+                    session: editorSession,
+                    isActive: id == activePaneID,
+                    showBorder: isSplit,
+                    theme: theme,
+                    dimInactiveSplit: dimInactiveSplits,
+                    inactiveSplitDimAmount: inactiveSplitDimAmount,
+                    onSelectPane: onSelectPane
+                )
+            }
 
         case .split(let splitID, let direction, let first, let second, let ratio):
             splitContent(
@@ -50,6 +56,46 @@ struct PaneContainerView: View {
                 second: second,
                 ratio: ratio
             )
+        }
+    }
+
+    @ViewBuilder
+    private func paneWithHeader<Content: View>(id: UUID, session: TerminalSession, @ViewBuilder content: () -> Content) -> some View {
+        if isSplit {
+            VStack(spacing: 0) {
+                PaneHeaderView(
+                    title: WorkspaceManager.paneTitle(
+                        shellTitle: session.shellTitle,
+                        workingDirectory: session.currentWorkingDirectory,
+                        mode: tabTitleMode
+                    ),
+                    isActive: id == activePaneID,
+                    theme: theme,
+                    onClose: { onClosePane?(id) }
+                )
+                content()
+                    .layoutPriority(1)
+            }
+        } else {
+            content()
+        }
+    }
+
+    @ViewBuilder
+    private func editorWithHeader<Content: View>(id: UUID, session: EditorSession, @ViewBuilder content: () -> Content) -> some View {
+        if isSplit {
+            VStack(spacing: 0) {
+                PaneHeaderView(
+                    title: session.displayTitle,
+                    isActive: id == activePaneID,
+                    theme: theme,
+                    onClose: { onClosePane?(id) }
+                )
+                content()
+                    .layoutPriority(1)
+            }
+        } else {
+            content()
         }
     }
 
@@ -74,8 +120,10 @@ struct PaneContainerView: View {
                     activePaneID: activePaneID,
                     dimInactiveSplits: dimInactiveSplits,
                     inactiveSplitDimAmount: inactiveSplitDimAmount,
+                    tabTitleMode: tabTitleMode,
                     onSelectPane: onSelectPane,
                     onUpdateRatio: onUpdateRatio,
+                    onClosePane: onClosePane,
                     isSplit: true
                 )
             },
@@ -89,8 +137,10 @@ struct PaneContainerView: View {
                     activePaneID: activePaneID,
                     dimInactiveSplits: dimInactiveSplits,
                     inactiveSplitDimAmount: inactiveSplitDimAmount,
+                    tabTitleMode: tabTitleMode,
                     onSelectPane: onSelectPane,
                     onUpdateRatio: onUpdateRatio,
+                    onClosePane: onClosePane,
                     isSplit: true
                 )
             }

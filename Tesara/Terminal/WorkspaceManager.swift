@@ -60,7 +60,7 @@ final class WorkspaceManager: ObservableObject {
     weak var settingsStore: SettingsStore?
     weak var blockStore: BlockStore?
     private var confirmOnCloseRunningSessionEnabled = false
-    private var tabTitleMode: TabTitleMode = .shellTitle
+    @Published private(set) var tabTitleMode: TabTitleMode = .shellTitle
     private var paneObservers: [UUID: AnyCancellable] = [:]
     private var pendingSaveContinuation: PendingSaveContinuation?
 
@@ -676,51 +676,38 @@ final class WorkspaceManager: ObservableObject {
         }
 
         if let terminalSession = tab.rootPane.findSession(forPaneID: paneID) {
-            let shellTitle = normalizedTitle(from: terminalSession.shellTitle)
-            let workingDirectoryTitle = workingDirectoryTitle(for: terminalSession.currentWorkingDirectory)
-
-            switch tabTitleMode {
-            case .shellTitle:
-                if let shellTitle {
-                    return shellTitle
-                }
-                if let workingDirectoryTitle {
-                    return workingDirectoryTitle
-                }
-            case .workingDirectory:
-                if let workingDirectoryTitle {
-                    return workingDirectoryTitle
-                }
-                if let shellTitle {
-                    return shellTitle
-                }
-            }
+            return Self.paneTitle(
+                shellTitle: terminalSession.shellTitle,
+                workingDirectory: terminalSession.currentWorkingDirectory,
+                mode: tabTitleMode
+            )
         }
 
         return "Shell"
     }
 
-    private func normalizedTitle(from rawTitle: String?) -> String? {
-        guard let rawTitle else { return nil }
-        let trimmed = rawTitle.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty ? nil : trimmed
-    }
+    static func paneTitle(shellTitle: String?, workingDirectory: String?, mode: TabTitleMode) -> String {
+        let normalized: String? = {
+            guard let raw = shellTitle else { return nil }
+            let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            return trimmed.isEmpty ? nil : trimmed
+        }()
 
-    private func workingDirectoryTitle(for path: String?) -> String? {
-        guard let path, !path.isEmpty else { return nil }
+        let dirTitle: String? = {
+            guard let path = workingDirectory, !path.isEmpty else { return nil }
+            let url = URL(fileURLWithPath: path)
+            let homePath = FileManager.default.homeDirectoryForCurrentUser.path
+            if path == homePath { return "~" }
+            let last = url.lastPathComponent
+            return last.isEmpty ? url.path : last
+        }()
 
-        let url = URL(fileURLWithPath: path)
-        let homePath = FileManager.default.homeDirectoryForCurrentUser.path
-        if path == homePath {
-            return "~"
+        switch mode {
+        case .shellTitle:
+            return normalized ?? dirTitle ?? "Shell"
+        case .workingDirectory:
+            return dirTitle ?? normalized ?? "Shell"
         }
-
-        let lastComponent = url.lastPathComponent
-        if !lastComponent.isEmpty {
-            return lastComponent
-        }
-
-        return url.path
     }
 
     private func resolvedWorkingDirectory(from session: TerminalSession?) -> URL {

@@ -13,6 +13,7 @@
 		085CFD75DF7B4FA9B9F36894 /* KeyBindingDispatcherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44F9E6038E59B2766F11272E /* KeyBindingDispatcherTests.swift */; };
 		0FAC866DE2F0E11344222CC0 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 4914B0341A868631C86F9855 /* Sparkle */; };
 		17A1E6F4A360BF5C97590C6E /* PaneContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57E292C9A04F867FABB9662E /* PaneContainerView.swift */; };
+		1A3F5B7D9E2C4A8071F6BE50 /* PaneHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58B4C6D2A1E3F790843D5B26 /* PaneHeaderView.swift */; };
 		18519D4339772CD5A30CCECA /* ConfigFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF1B9F8F03276266294D2F0B /* ConfigFile.swift */; };
 		1851A4083C58F1F7361DB04C /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17E46BFDCDCA182651723141 /* SettingsView.swift */; };
 		1851A408AAEE0001BBBBB001 /* ThemePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17E46BFDAAEE0001BBBBB001 /* ThemePicker.swift */; };
@@ -147,6 +148,7 @@
 		570AAE7A2F968564CCF33133 /* GlyphAtlasTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlyphAtlasTests.swift; sourceTree = "<group>"; };
 		57A5490A849F9317664968E7 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		57E292C9A04F867FABB9662E /* PaneContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaneContainerView.swift; sourceTree = "<group>"; };
+		58B4C6D2A1E3F790843D5B26 /* PaneHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaneHeaderView.swift; sourceTree = "<group>"; };
 		5B184B08FFBEE976991C8F22 /* PaneDividerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaneDividerView.swift; sourceTree = "<group>"; };
 		64EFE681376FA0A5DDC2373C /* EditorSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorSessionTests.swift; sourceTree = "<group>"; };
 		64F682A08A5ECC9A73792C74 /* PaneNodeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaneNodeTests.swift; sourceTree = "<group>"; };
@@ -349,6 +351,7 @@
 				D3964FA190864920EA9CB718 /* InputBarView.swift */,
 				57E292C9A04F867FABB9662E /* PaneContainerView.swift */,
 				5B184B08FFBEE976991C8F22 /* PaneDividerView.swift */,
+				58B4C6D2A1E3F790843D5B26 /* PaneHeaderView.swift */,
 				36D96A4177859EA0D14FAFCB /* PaneNode.swift */,
 				C43028483E4CE7E65A49B780 /* TabBarView.swift */,
 				D9ACBFEB7F97B6D7DB444D4F /* TerminalSession.swift */,
@@ -562,6 +565,7 @@
 				E48ACEC8A6297E02A8E8083A /* LocalLogStore.swift in Sources */,
 				6AB4D491DF5F118108162EEA /* MainWindowView.swift in Sources */,
 				17A1E6F4A360BF5C97590C6E /* PaneContainerView.swift in Sources */,
+				1A3F5B7D9E2C4A8071F6BE50 /* PaneHeaderView.swift in Sources */,
 				B4F68462773E6A1D220DA476 /* PaneDividerView.swift in Sources */,
 				CC180D48B134574F5E21D4B4 /* PaneNode.swift in Sources */,
 				F450422C045AE78E7D5486FA /* SettingsOpenCoordinator.swift in Sources */,
