@@ -175,9 +175,6 @@ final class GhosttyApp: @unchecked Sendable {
             return handleMouseShape(action: action)
 
         case GHOSTTY_ACTION_RENDER, GHOSTTY_ACTION_SCROLLBAR:
-            if let session = sessionFromTarget(target) {
-                session.checkAlternateScreen()
-            }
             return true
 
         // Note: Standard shortcuts (Cmd+T, Cmd+W, Cmd+D) are handled by AppKit menu
@@ -375,8 +372,19 @@ final class GhosttyApp: @unchecked Sendable {
 
 // MARK: - C Callbacks (free functions required by ghostty_runtime_config_s)
 
+/// Atomic flag to coalesce redundant GCD dispatches from the IO thread.
+/// Cleared before tick() so messages arriving during drain trigger a fresh dispatch.
+private let wakeupPending = OSAllocatedUnfairLock(initialState: false)
+
 private func ghosttyWakeupCallback(_ userdata: UnsafeMutableRawPointer?) {
+    let shouldDispatch = wakeupPending.withLock { pending in
+        if pending { return false }
+        pending = true
+        return true
+    }
+    guard shouldDispatch else { return }
     DispatchQueue.main.async {
+        wakeupPending.withLock { $0 = false }
         GhosttyApp.shared.tick()
     }
 }

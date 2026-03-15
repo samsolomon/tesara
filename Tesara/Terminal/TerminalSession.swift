@@ -34,6 +34,7 @@ final class TerminalSession: ObservableObject, Identifiable {
     private var blockOrderIndex = 0
     private var cachedHasForegroundProcess = false
     private var lastForegroundProcessCheck: CFAbsoluteTime = 0
+    private var altScreenTimer: Timer?
 
     /// Temporary files created for shell integration, cleaned up on stop/deinit.
     private var temporaryURLs: [URL] = []
@@ -42,6 +43,10 @@ final class TerminalSession: ObservableObject, Identifiable {
     private(set) var shellSessionID: String = UUID().uuidString
 
     init() {}
+
+    deinit {
+        altScreenTimer?.invalidate()
+    }
 
 #if DEBUG
     var onSendTextForTesting: ((String) -> Void)?
@@ -97,6 +102,7 @@ final class TerminalSession: ObservableObject, Identifiable {
         }
 
         prepareInputBar()
+        startAltScreenPolling()
         status = .running
     }
 
@@ -125,6 +131,8 @@ final class TerminalSession: ObservableObject, Identifiable {
         if let surface = surfaceView?.surface {
             ghostty_surface_request_close(surface)
         }
+        altScreenTimer?.invalidate()
+        altScreenTimer = nil
         surfaceView = nil
         isAtPrompt = false
         isAlternateScreen = false
@@ -153,6 +161,12 @@ final class TerminalSession: ObservableObject, Identifiable {
             || cachedHasForegroundProcess(surface)
         if isTUI != isAlternateScreen {
             isAlternateScreen = isTUI
+        }
+    }
+
+    private func startAltScreenPolling() {
+        altScreenTimer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { [weak self] _ in
+            self?.checkAlternateScreen()
         }
     }
 
@@ -285,6 +299,8 @@ final class TerminalSession: ObservableObject, Identifiable {
     }
 
     func handleChildExited(exitCode: UInt32) {
+        altScreenTimer?.invalidate()
+        altScreenTimer = nil
         surfaceView = nil
         isAtPrompt = false
         isAlternateScreen = false

@@ -351,7 +351,13 @@ private struct TerminalPaneLeafView: View {
             let s = settingsStore.settings
             let cursorCfg = s.cursorStyle.editorCursorConfig(color: hexToColorU8(settingsStore.activeTheme.cursor))
             session.setupInputBar(theme: theme, fontFamily: fontFamily, fontSize: fontSize, cursorConfig: cursorCfg, cursorBlink: true)
-            session.inputBarState?.editorView?.resumeDisplayLink()
+            // Only run the cursor blink timer when at the prompt; pause it
+            // while a command is running to avoid unnecessary main-thread work.
+            if session.isAtPrompt {
+                session.inputBarState?.editorView?.resumeDisplayLink()
+            } else {
+                session.inputBarState?.editorView?.pauseDisplayLink()
+            }
             surfaceView.keyboardFocusDisabled = true
             surfaceView.setTerminalCursorHidden(true)
             focusInputBar(session: session, surfaceView: surfaceView)

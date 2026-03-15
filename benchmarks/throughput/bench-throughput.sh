@@ -59,6 +59,16 @@ run_throughput_bench() {
       launch_terminal "$bundle_id"
       sleep 1
 
+      # Normalize window size for consistent results across terminals
+      local app_name
+      app_name=$(app_name_from_bundle "$bundle_id" 2>/dev/null || echo "$name")
+      osascript -e "
+        tell application \"${app_name}\"
+          set bounds of front window to {100, 100, 740, 580}
+        end tell
+      " 2>/dev/null || true
+      sleep 0.5
+
       # Write a temp script — output must flow through the terminal to measure rendering
       # (no > /dev/null redirect; clear after to reset scrollback between runs)
       local bench_script="/tmp/tesara-bench-tp-$$.sh"

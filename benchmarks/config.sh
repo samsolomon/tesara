@@ -22,7 +22,7 @@ get_bundle_id() {
 
 # ── Iteration counts ────────────────────────────────────────────────
 STARTUP_ITERATIONS=10
-THROUGHPUT_ITERATIONS=5
+THROUGHPUT_ITERATIONS=10
 LATENCY_KEYSTROKES=100
 LATENCY_WARMUP=10
 RESOURCE_IDLE_SAMPLES=10
