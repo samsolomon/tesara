@@ -42,7 +42,6 @@ struct SettingsView: View {
                 )
             }
         }
-        .toolbar(removing: .sidebarToggle)
         .background { SidebarCollapseDisabler() }
         .onChange(of: selectedPane) { _, newValue in
             guard let pane = newValue, pane != navigationHistory[historyIndex] else { return }
@@ -229,7 +228,7 @@ private struct SidebarCollapseDisabler: NSViewRepresentable {
     }
 
     private static func configure(from view: NSView) {
-        guard let window = view.window else { return }
+        guard let window = view.window, window.toolbar?.isVisible != false else { return }
 
         // Prevent sidebar collapse on the underlying NSSplitViewController
         var responder: NSResponder? = view
