@@ -53,7 +53,7 @@ final class TerminalSession: ObservableObject, Identifiable {
 
     // MARK: - Start
 
-    func start(shellPath: String, workingDirectory: URL) {
+    func start(shellPath: String, workingDirectory: URL, bottomAlign: Bool = false) {
         guard surfaceView == nil else { return }
 
         status = .starting
@@ -74,7 +74,8 @@ final class TerminalSession: ObservableObject, Identifiable {
         let config = GhosttySurfaceConfig.withShellIntegration(
             shellPath: shellPath,
             workingDirectory: workingDirectory,
-            sessionID: shellSessionID
+            sessionID: shellSessionID,
+            bottomAlign: bottomAlign
         )
         temporaryURLs = config.temporaryURLs
 

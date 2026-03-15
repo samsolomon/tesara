@@ -57,7 +57,8 @@ struct MainWindowView: View {
         workspaceManager.newTab(
             shellPath: settingsStore.settings.shellPath,
             workingDirectory: settingsStore.settings.defaultWorkingDirectory,
-            blockStore: blockStore
+            blockStore: blockStore,
+            inputBarEnabled: settingsStore.settings.inputBarEnabled
         )
     }
 }

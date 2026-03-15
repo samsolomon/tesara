@@ -24,7 +24,8 @@ struct GhosttySurfaceConfig {
         workingDirectory: URL,
         sessionID: String = UUID().uuidString,
         fontSize: Float = 0,
-        context: ghostty_surface_context_e = GHOSTTY_SURFACE_CONTEXT_WINDOW
+        context: ghostty_surface_context_e = GHOSTTY_SURFACE_CONTEXT_WINDOW,
+        bottomAlign: Bool = false
     ) -> GhosttySurfaceConfig {
         var config = GhosttySurfaceConfig()
         config.workingDirectory = workingDirectory.path
@@ -37,6 +38,9 @@ struct GhosttySurfaceConfig {
         config.envVars["TESARA_SESSION_ID"] = sessionID
         // Ensure shell scripts write temp files to the same directory Swift reads from
         config.envVars["TESARA_TMPDIR"] = NSTemporaryDirectory()
+        if bottomAlign {
+            config.envVars["TESARA_BOTTOM_ALIGN"] = "1"
+        }
 
         let shellName = URL(fileURLWithPath: shellPath).lastPathComponent
 

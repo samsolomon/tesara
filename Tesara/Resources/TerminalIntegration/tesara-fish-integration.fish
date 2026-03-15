@@ -10,6 +10,11 @@ set -g __tesara_has_seen_prompt 0
 function __tesara_fish_prompt --on-event fish_prompt
     if test $__tesara_has_seen_prompt -eq 1
         __tesara_emit_osc133 "D;$status"
+    else
+        # On first prompt, push cursor to bottom of terminal for bottom-aligned output
+        if test "$TESARA_BOTTOM_ALIGN" = 1
+            printf '\033[%d;1H' (tput lines)
+        end
     end
     set -g __tesara_has_seen_prompt 1
     __tesara_emit_osc133 "A"

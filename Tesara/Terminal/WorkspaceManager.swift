@@ -69,7 +69,7 @@ final class WorkspaceManager: ObservableObject {
         case closeTab(UUID, remainingEditorSessionIDs: [UUID])
     }
 
-    func newTab(shellPath: String, workingDirectory: URL, blockStore: BlockStore) {
+    func newTab(shellPath: String, workingDirectory: URL, blockStore: BlockStore, inputBarEnabled: Bool = false) {
         let session = sessionFactory()
         session.configure(blockStore: blockStore)
         let paneID = UUID()
@@ -77,7 +77,7 @@ final class WorkspaceManager: ObservableObject {
         tabs.append(tab)
         activeTabID = tab.id
         activePaneID = paneID
-        session.start(shellPath: shellPath, workingDirectory: workingDirectory)
+        session.start(shellPath: shellPath, workingDirectory: workingDirectory, bottomAlign: inputBarEnabled)
         refreshWorkspaceMetadata()
     }
 
@@ -226,7 +226,7 @@ final class WorkspaceManager: ObservableObject {
         )
     }
 
-    private func performSplit(tabIndex: Int, paneID: UUID, direction: PaneNode.SplitDirection, position: PaneNode.PanePosition, shellPath: String, workingDirectory: URL, blockStore: BlockStore) {
+    private func performSplit(tabIndex: Int, paneID: UUID, direction: PaneNode.SplitDirection, position: PaneNode.PanePosition, shellPath: String, workingDirectory: URL, blockStore: BlockStore, inputBarEnabled: Bool = false) {
         let newSession = sessionFactory()
         newSession.configure(blockStore: blockStore)
         let newPaneID = UUID()
@@ -240,7 +240,7 @@ final class WorkspaceManager: ObservableObject {
         )
         tabs[tabIndex].selectedPaneID = newPaneID
         activePaneID = newPaneID
-        newSession.start(shellPath: shellPath, workingDirectory: workingDirectory)
+        newSession.start(shellPath: shellPath, workingDirectory: workingDirectory, bottomAlign: inputBarEnabled)
         refreshWorkspaceMetadata()
     }
 

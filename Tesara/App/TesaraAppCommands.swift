@@ -68,7 +68,8 @@ struct TesaraAppCommands: Commands {
                 session.stop()
                 session.start(
                     shellPath: settingsStore.settings.shellPath,
-                    workingDirectory: settingsStore.settings.defaultWorkingDirectory
+                    workingDirectory: settingsStore.settings.defaultWorkingDirectory,
+                    bottomAlign: settingsStore.settings.inputBarEnabled
                 )
             }
             .keyboardShortcut("r", modifiers: [.command, .shift])

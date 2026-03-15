@@ -10,6 +10,10 @@ __tesara_prompt_command() {
     printf '\033]133;D;%d\a' "$last_status"
   else
     TESARA_HAS_SEEN_PROMPT=1
+    # On first prompt, push cursor to bottom of terminal for bottom-aligned output
+    if [[ "${TESARA_BOTTOM_ALIGN:-}" == "1" ]]; then
+      printf '\033[%d;1H' "$(tput lines)"
+    fi
   fi
 
   printf '\033]133;A\a'
