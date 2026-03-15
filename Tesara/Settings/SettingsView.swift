@@ -655,10 +655,6 @@ private struct SettingsFooter: View {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0.0"
     }
 
-    private var year: String {
-        Calendar.current.component(.year, from: Date()).description
-    }
-
     var body: some View {
         HStack(spacing: 6) {
             Image("TesaraIcon")
@@ -672,7 +668,7 @@ private struct SettingsFooter: View {
             Button {
                 NSWorkspace.shared.open(URL(string: "https://solomon.io/")!)
             } label: {
-                Text("\u{00A9} \(year) Sam Solomon")
+                Text("Sam Solomon")
                     .underline(isHovering)
                     .foregroundStyle(isHovering ? .secondary : .tertiary)
             }
