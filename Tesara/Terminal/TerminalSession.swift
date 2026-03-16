@@ -22,6 +22,7 @@ final class TerminalSession: ObservableObject, Identifiable {
     @Published private(set) var isAtPrompt = false
     @Published private(set) var isAlternateScreen = false
     @Published private(set) var isHistorySearchActive = false
+    @Published private(set) var hoverUrl: String?
 
     /// Published so prompt-driven presentation updates can react when the input
     /// bar is created or torn down outside the same render pass.
@@ -260,6 +261,11 @@ final class TerminalSession: ObservableObject, Identifiable {
         let path = url.path
         guard path != currentWorkingDirectory else { return }
         currentWorkingDirectory = path
+    }
+
+    func updateHoverUrl(_ url: String?) {
+        guard hoverUrl != url else { return }
+        hoverUrl = url
     }
 
     func updateTitle(_ title: String) {

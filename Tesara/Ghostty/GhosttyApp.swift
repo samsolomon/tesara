@@ -148,7 +148,14 @@ final class GhosttyApp: @unchecked Sendable {
 
     // MARK: - Action Routing
 
-    /// Called during tick() which always runs on the main thread.
+    /// Routes a ghostty action to the appropriate handler.
+    ///
+    /// Called during `tick()` (main thread) and also **synchronously from AppKit event
+    /// handlers** (e.g. `flagsChanged`, `mouseMoved`) via the C action callback.
+    ///
+    /// - Important: When invoked from an event handler, ghostty's `renderer_state.mutex`
+    ///   may already be held. Handlers **must not** call `ghostty_surface_*` APIs
+    ///   synchronously — doing so would recursively lock the `os_unfair_lock` and abort.
     @MainActor
     func handleAction(
         app: ghostty_app_t,
@@ -169,10 +176,13 @@ final class GhosttyApp: @unchecked Sendable {
             return handleChildExited(target: target, action: action)
 
         case GHOSTTY_ACTION_MOUSE_SHAPE:
-            if let session = sessionFromTarget(target) {
-                session.checkAlternateScreen()
-            }
             return handleMouseShape(action: action)
+
+        case GHOSTTY_ACTION_OPEN_URL:
+            return handleOpenURL(action: action)
+
+        case GHOSTTY_ACTION_MOUSE_OVER_LINK:
+            return handleMouseOverLink(target: target, action: action)
 
         case GHOSTTY_ACTION_RENDER, GHOSTTY_ACTION_SCROLLBAR:
             return true
@@ -268,6 +278,48 @@ final class GhosttyApp: @unchecked Sendable {
             .arrow
         }
         cursor.set()
+        return true
+    }
+
+    // MARK: - Link Action Handlers
+
+    private static let allowedSchemes: Set<String> = ["http", "https", "file", "mailto", "ssh"]
+
+    @MainActor
+    private func handleOpenURL(action: ghostty_action_s) -> Bool {
+        let openUrl = action.action.open_url
+
+        let len = Int(openUrl.len)
+        guard len > 0, len <= 8192, let ptr = openUrl.url else { return true }
+
+        let data = Data(bytes: ptr, count: len)
+        guard let urlString = String(data: data, encoding: .utf8), !urlString.isEmpty else { return true }
+
+        let url: URL
+        if let candidate = URL(string: urlString), let scheme = candidate.scheme {
+            guard Self.allowedSchemes.contains(scheme.lowercased()) else { return true }
+            url = candidate
+        } else {
+            let expandedPath = NSString(string: urlString).standardizingPath
+            url = URL(fileURLWithPath: expandedPath)
+        }
+
+        NSWorkspace.shared.open(url)
+        return true
+    }
+
+    @MainActor
+    private func handleMouseOverLink(target: ghostty_target_s, action: ghostty_action_s) -> Bool {
+        guard let session = sessionFromTarget(target) else { return true }
+        let link = action.action.mouse_over_link
+
+        guard link.len > 0, let ptr = link.url else {
+            session.updateHoverUrl(nil)
+            return true
+        }
+
+        let data = Data(bytes: ptr, count: Int(link.len))
+        session.updateHoverUrl(String(data: data, encoding: .utf8))
         return true
     }
 
