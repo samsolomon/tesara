@@ -336,12 +336,12 @@ final class TerminalSessionTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: path))
     }
 
-    func testReadAndCleanupCommandFileTrimsWhitespace() throws {
+    func testReadAndCleanupCommandFileReturnsRawContent() throws {
         let path = NSTemporaryDirectory() + "tesara-cmd-\(session.shellSessionID).txt"
         try "  ls -la  \n".write(toFile: path, atomically: true, encoding: .utf8)
 
         let result = session.readAndCleanupCommandFile()
-        XCTAssertEqual(result, "ls -la")
+        XCTAssertEqual(result, "  ls -la  \n")
     }
 
     // MARK: - Stale Temp File Cleanup

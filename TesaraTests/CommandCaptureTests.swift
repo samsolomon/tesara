@@ -47,20 +47,20 @@ final class CommandCaptureTests: XCTestCase {
         XCTAssertNil(result)
     }
 
-    func testReadAndCleanupTrimsWhitespace() {
+    func testReadAndCleanupReturnsRawContent() {
         let path = NSTemporaryDirectory() + "tesara-cmd-\(session.shellSessionID).txt"
         try? "  git status  \n".write(toFile: path, atomically: true, encoding: .utf8)
 
         let result = session.readAndCleanupCommandFile()
-        XCTAssertEqual(result, "git status")
+        XCTAssertEqual(result, "  git status  \n")
     }
 
-    func testReadAndCleanupReturnsNilForEmptyContent() {
+    func testReadAndCleanupReturnsWhitespaceContent() {
         let path = NSTemporaryDirectory() + "tesara-cmd-\(session.shellSessionID).txt"
         try? "   \n  ".write(toFile: path, atomically: true, encoding: .utf8)
 
         let result = session.readAndCleanupCommandFile()
-        XCTAssertEqual(result, "")
+        XCTAssertEqual(result, "   \n  ")
     }
 
     // MARK: - handleCommandFinished
