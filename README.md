@@ -1,12 +1,10 @@
-<img src="icon.png" width="128" height="128" alt="Tesara">
+<p align="center"><img src="screenshot.png" width="800" alt="Tesara terminal showing syntax-highlighted Swift code"></p>
 
 # Tesara
 
 A modern, minimal terminal emulator for macOS.
 
 [Download](https://github.com/samsolomon/tesara/releases/latest/download/Tesara.zip)
-
-<img src="screenshot.png" width="800" alt="Tesara terminal showing syntax-highlighted Swift code">
 
 ## Features
 
