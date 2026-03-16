@@ -189,7 +189,7 @@ final class WorkspaceManager: ObservableObject {
         splitActivePane(
             direction: direction,
             shellPath: settingsStore.settings.shellPath,
-            workingDirectory: settingsStore.settings.defaultWorkingDirectory,
+            workingDirectory: resolvedWorkingDirectory(from: activeSession),
             blockStore: blockStore
         )
     }
@@ -725,7 +725,10 @@ final class WorkspaceManager: ObservableObject {
 
     private func resolvedWorkingDirectory(from session: TerminalSession?) -> URL {
         if let cwd = session?.currentWorkingDirectory {
-            return URL(fileURLWithPath: cwd)
+            var isDir: ObjCBool = false
+            if FileManager.default.fileExists(atPath: cwd, isDirectory: &isDir), isDir.boolValue {
+                return URL(fileURLWithPath: cwd)
+            }
         }
         return settingsStore?.settings.defaultWorkingDirectory ?? FileManager.default.homeDirectoryForCurrentUser
     }
