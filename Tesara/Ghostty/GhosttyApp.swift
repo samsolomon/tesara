@@ -11,6 +11,7 @@ final class GhosttyApp: @unchecked Sendable {
 
     struct TerminalBehavior {
         var pasteProtectionMode: PasteProtectionMode = .multiline
+        var clipboardAccess: ClipboardAccessMode = .ask
     }
 
     private static var didGlobalInit = false
@@ -69,6 +70,7 @@ final class GhosttyApp: @unchecked Sendable {
         }
 
         terminalBehavior.pasteProtectionMode = settings.pasteProtectionMode
+        terminalBehavior.clipboardAccess = settings.clipboardAccess
 
         let config = GhosttyConfig.makeConfig(theme: theme, settings: settings)
         guard config != nil else {
@@ -82,7 +84,7 @@ final class GhosttyApp: @unchecked Sendable {
         runtime.wakeup_cb = ghosttyWakeupCallback
         runtime.action_cb = ghosttyActionCallback
         runtime.read_clipboard_cb = ghosttyReadClipboardCallback
-        runtime.confirm_read_clipboard_cb = nil
+        runtime.confirm_read_clipboard_cb = ghosttyConfirmReadClipboardCallback
         runtime.write_clipboard_cb = ghosttyWriteClipboardCallback
         runtime.close_surface_cb = ghosttyCloseSurfaceCallback
 
@@ -144,6 +146,7 @@ final class GhosttyApp: @unchecked Sendable {
         guard let app else { return }
 
         terminalBehavior.pasteProtectionMode = settings.pasteProtectionMode
+        terminalBehavior.clipboardAccess = settings.clipboardAccess
 
         let config = GhosttyConfig.makeConfig(theme: theme, settings: settings)
         guard config != nil else { return }
@@ -293,7 +296,7 @@ final class GhosttyApp: @unchecked Sendable {
 
     // MARK: - Link Action Handlers
 
-    private static let allowedSchemes: Set<String> = ["http", "https", "file", "mailto", "ssh"]
+    private static let allowedSchemes: Set<String> = ["http", "https", "mailto", "ssh"]
 
     @MainActor
     private func handleOpenURL(action: ghostty_action_s) -> Bool {
@@ -305,16 +308,22 @@ final class GhosttyApp: @unchecked Sendable {
         let data = Data(bytes: ptr, count: len)
         guard let urlString = String(data: data, encoding: .utf8), !urlString.isEmpty else { return true }
 
-        let url: URL
-        if let candidate = URL(string: urlString), let scheme = candidate.scheme {
-            guard Self.allowedSchemes.contains(scheme.lowercased()) else { return true }
-            url = candidate
-        } else {
-            let expandedPath = NSString(string: urlString).standardizingPath
-            url = URL(fileURLWithPath: expandedPath)
+        guard let candidate = URL(string: urlString), let scheme = candidate.scheme else { return true }
+
+        let lower = scheme.lowercased()
+        if Self.allowedSchemes.contains(lower) {
+            NSWorkspace.shared.open(candidate)
+        } else if lower == "file" {
+            // Restrict file:// URLs to paths under the user's home directory
+            let homePath = FileManager.default.homeDirectoryForCurrentUser.standardizedFileURL.path
+            let filePath = candidate.standardizedFileURL.path
+            guard filePath == homePath || filePath.hasPrefix(homePath + "/") else {
+                LocalLogStore.shared.log("[GhosttyApp] Blocked file:// URL outside home directory: \(filePath)")
+                return true
+            }
+            NSWorkspace.shared.activateFileViewerSelecting([candidate])
         }
 
-        NSWorkspace.shared.open(url)
         return true
     }
 
@@ -507,6 +516,44 @@ private func ghosttyWriteClipboardCallback(
     let pasteboard = NSPasteboard.general
     pasteboard.clearContents()
     pasteboard.setString(string, forType: .string)
+    LocalLogStore.shared.log("[OSC 52] Clipboard write (\(string.utf8.count) bytes)")
+}
+
+private func ghosttyConfirmReadClipboardCallback(
+    _ userdata: UnsafeMutableRawPointer?,
+    _ string: UnsafePointer<CChar>?,
+    _ state: UnsafeMutableRawPointer?,
+    _ request: ghostty_clipboard_request_e
+) {
+    dispatchPrecondition(condition: .onQueue(.main))
+    guard let userdata, let state else { return }
+
+    let view = Unmanaged<GhosttySurfaceView>.fromOpaque(userdata).takeUnretainedValue()
+    guard let surface = view.surface else { return }
+
+    let mode = GhosttyApp.shared.terminalBehavior.clipboardAccess
+
+    switch mode {
+    case .allow:
+        ghostty_surface_complete_clipboard_request(surface, string, state, false)
+
+    case .deny:
+        ghostty_surface_complete_clipboard_request(surface, nil, state, false)
+
+    case .ask:
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = "A program wants to read your clipboard"
+        alert.informativeText = "An application running in the terminal is requesting access to your clipboard contents via OSC 52."
+        alert.addButton(withTitle: "Allow")
+        alert.addButton(withTitle: "Deny")
+
+        if alert.runModal() == .alertFirstButtonReturn {
+            ghostty_surface_complete_clipboard_request(surface, string, state, true)
+        } else {
+            ghostty_surface_complete_clipboard_request(surface, nil, state, false)
+        }
+    }
 }
 
 private func ghosttyCloseSurfaceCallback(

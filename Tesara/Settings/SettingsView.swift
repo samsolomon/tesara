@@ -442,6 +442,15 @@ private struct TerminalSettingsPane: View {
                     .labelsHidden()
                 }
 
+                settingRow("Clipboard access (OSC 52)", description: "Controls whether programs in the terminal can read your clipboard.") {
+                    Picker("", selection: $settings.clipboardAccess) {
+                        ForEach(ClipboardAccessMode.allCases) { mode in
+                            Text(mode.title).tag(mode)
+                        }
+                    }
+                    .labelsHidden()
+                }
+
                 settingRow("Confirm close running session", description: "Shows a confirmation dialog before closing a tab with a running process.") {
                     Toggle("", isOn: $settings.confirmOnCloseRunningSession)
                         .labelsHidden()
