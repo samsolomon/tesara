@@ -28,9 +28,12 @@ final class BlockStore: ObservableObject {
         migrator = BlockStore.makeMigrator()
 
         do {
-            let dbQueue = try DatabaseQueue(path: try BlockStore.databasePath())
+            let dbPath = try BlockStore.databasePath()
+            let dbQueue = try DatabaseQueue(path: dbPath)
             try migrator.migrate(dbQueue)
             self.dbQueue = dbQueue
+            // Restrict database file permissions — WAL/SHM are protected by the 0700 directory
+            try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: dbPath)
             reloadRecentBlocks()
         } catch {
             self.dbQueue = nil
@@ -230,7 +233,7 @@ final class BlockStore: ObservableObject {
             create: true
         )
         let directory = appSupportDirectory.appendingPathComponent("Tesara", isDirectory: true)
-        try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
+        try fileManager.createDirectory(at: directory, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
         return directory.appendingPathComponent("tesara.sqlite").path
     }
 

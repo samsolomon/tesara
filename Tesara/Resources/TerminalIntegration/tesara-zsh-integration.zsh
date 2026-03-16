@@ -26,7 +26,7 @@ function _tesara_preexec() {
   printf '\e]133;C\a'
   # Write command text for Tesara's command history capture
   if [[ -n "${TESARA_SESSION_ID:-}" && -n "${TESARA_TMPDIR:-}" ]]; then
-    printf '%s' "$1" > "${TESARA_TMPDIR}/tesara-cmd-${TESARA_SESSION_ID}.txt" 2>/dev/null || true
+    (umask 077; printf '%s' "$1" > "${TESARA_TMPDIR}/tesara-cmd-${TESARA_SESSION_ID}.txt") 2>/dev/null || true
   fi
 }
 

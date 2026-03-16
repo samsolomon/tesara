@@ -44,12 +44,21 @@ final class LocalLogStore: @unchecked Sendable {
         }
     }
 
+    /// Maximum log file size before rotation (5 MB).
+    private let maxLogSize: UInt64 = 5 * 1024 * 1024
+
+    private var rotatedLogFileURL: URL {
+        directoryURL.appendingPathComponent(logFileName + ".1")
+    }
+
     func log(_ message: String) {
         queue.async {
             guard self.isEnabled else { return }
 
             do {
                 try self.fileManager.createDirectory(at: self.directoryURL, withIntermediateDirectories: true)
+
+                self.rotateIfNeeded()
 
                 let timestamp = self.formatter.string(from: Date())
                 let line = "[\(timestamp)] \(message)\n"
@@ -65,6 +74,7 @@ final class LocalLogStore: @unchecked Sendable {
                     self.fileHandle = handle
                 } else {
                     try data.write(to: self.logFileURL, options: .atomic)
+                    try? self.fileManager.setAttributes([.posixPermissions: 0o600], ofItemAtPath: self.logFileURL.path)
                     self.fileHandle = try? FileHandle(forWritingTo: self.logFileURL)
                     _ = self.fileHandle.map { try? $0.seekToEnd() }
                 }
@@ -74,9 +84,19 @@ final class LocalLogStore: @unchecked Sendable {
         }
     }
 
+    private func rotateIfNeeded() {
+        guard let attrs = try? fileManager.attributesOfItem(atPath: logFileURL.path),
+              let size = attrs[.size] as? UInt64,
+              size > maxLogSize else { return }
+        closeHandle()
+        try? fileManager.removeItem(at: rotatedLogFileURL)
+        try? fileManager.moveItem(at: logFileURL, to: rotatedLogFileURL)
+    }
+
     func clearLogs() {
         queue.sync {
             closeHandle()
+            try? fileManager.removeItem(at: rotatedLogFileURL)
             guard fileManager.fileExists(atPath: directoryURL.path) else { return }
             try? fileManager.removeItem(at: directoryURL)
         }

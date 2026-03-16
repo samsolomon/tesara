@@ -71,7 +71,7 @@ struct GhosttySurfaceConfig {
             .appendingPathComponent("tesara-zsh-\(UUID().uuidString)", isDirectory: true)
 
         do {
-            try FileManager.default.createDirectory(at: dotDirectory, withIntermediateDirectories: true)
+            try FileManager.default.createDirectory(at: dotDirectory, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
 
             try writeFile(named: ".zshenv", in: dotDirectory, contents: """
             # For non-login shells, source /etc/zprofile to get system PATH and LANG
@@ -152,6 +152,7 @@ struct GhosttySurfaceConfig {
               trap '__tesara_run_logout' EXIT
             fi
             """.write(to: rcFileURL, atomically: true, encoding: .utf8)
+            try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: rcFileURL.path)
 
             // ghostty's `command` field is used to launch the shell with --rcfile
             // Quote the path to handle spaces in temp directory paths
@@ -176,7 +177,7 @@ struct GhosttySurfaceConfig {
             .appendingPathComponent("conf.d", isDirectory: true)
 
         do {
-            try FileManager.default.createDirectory(at: confDDir, withIntermediateDirectories: true)
+            try FileManager.default.createDirectory(at: confDDir, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
             try FileManager.default.copyItem(
                 at: integrationURL,
                 to: confDDir.appendingPathComponent("tesara-fish-integration.fish")
@@ -244,6 +245,8 @@ struct GhosttySurfaceConfig {
     // MARK: - Helpers
 
     private static func writeFile(named name: String, in directory: URL, contents: String) throws {
-        try contents.write(to: directory.appendingPathComponent(name), atomically: true, encoding: .utf8)
+        let url = directory.appendingPathComponent(name)
+        try contents.write(to: url, atomically: true, encoding: .utf8)
+        try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
     }
 }
