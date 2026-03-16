@@ -4,7 +4,7 @@
 
 A modern, minimal terminal emulator for macOS.
 
-[Download](https://github.com/samsolomon/tesara/releases/latest/download/Tesara-0.1.0.zip)
+[Download](https://github.com/samsolomon/tesara/releases/latest/download/Tesara.zip)
 
 <img src="screenshot.png" width="800" alt="Tesara terminal showing syntax-highlighted Swift code">
 
@@ -23,7 +23,7 @@ Tesara is a native macOS terminal that prioritizes clarity, speed, and restraint
 
 Download the latest release from the [releases page](https://github.com/samsolomon/tesara/releases/latest).
 
-1. Unzip `Tesara-0.1.0.zip`
+1. Unzip `Tesara.zip`
 2. Move `Tesara.app` to `/Applications`
 3. Right-click the app and choose **Open** (required on first launch since the app is not yet notarized)
 
