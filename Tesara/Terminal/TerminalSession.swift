@@ -149,6 +149,11 @@ final class TerminalSession: ObservableObject, Identifiable {
 
     func checkAlternateScreen() {
         guard let surface = surfaceView?.surface else { return }
+
+        // Skip when the ghostty action callback is in progress — the Zig
+        // caller may hold renderer_state.mutex and these APIs would deadlock.
+        guard !GhosttyApp.isInActionCallback else { return }
+
         // Detect TUI apps via three complementary signals:
         // 1. Alternate screen buffer (vim, less, htop)
         // 2. Mouse capture enabled (some modern TUIs)

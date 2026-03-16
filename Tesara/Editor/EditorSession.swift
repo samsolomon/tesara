@@ -256,8 +256,31 @@ final class EditorSession: ObservableObject, Identifiable {
     }
 
     func paste() {
-        guard let text = NSPasteboard.general.string(forType: .string) else { return }
+        let pb = NSPasteboard.general
+        let text: String? = {
+            if let urls = pb.readObjects(forClasses: [NSURL.self]) as? [URL], !urls.isEmpty {
+                return urls
+                    .map { $0.isFileURL ? Self.shellEscape($0.path) : $0.absoluteString }
+                    .joined(separator: " ")
+            }
+            return pb.string(forType: .string)
+        }()
+        guard let text else { return }
         insertText(text)
+    }
+
+    /// Escape shell-sensitive characters in a path by prefixing each with a backslash.
+    private static let shellMetacharacters: Set<Character> = Set("\\ ()[]{}<>\"'`!#$&;|*?~\t")
+    private static func shellEscape(_ str: String) -> String {
+        var result = ""
+        result.reserveCapacity(str.count + str.count / 4)
+        for char in str {
+            if shellMetacharacters.contains(char) {
+                result.append("\\")
+            }
+            result.append(char)
+        }
+        return result
     }
 
     func cut() {

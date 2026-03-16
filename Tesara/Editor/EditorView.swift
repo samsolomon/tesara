@@ -971,11 +971,6 @@ class EditorView: NSView, NSTextInputClient {
 
     // MARK: - Suppress Character Palette
 
-    override func doCommand(by selector: Selector) {
-        if selector == #selector(orderFrontCharacterPalette(_:)) { return }
-        super.doCommand(by: selector)
-    }
-
     @objc override func orderFrontCharacterPalette(_ sender: Any?) {
         // No-op: prevent fn/Globe from opening the emoji picker
     }
