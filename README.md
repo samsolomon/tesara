@@ -3,6 +3,7 @@
 # Tesara
 
 A modern, minimal terminal emulator for macOS.
+
 [Download](https://github.com/samsolomon/tesara/releases/latest/download/Tesara-0.1.0.zip)
 
 
