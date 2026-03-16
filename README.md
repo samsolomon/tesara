@@ -15,6 +15,14 @@ Tesara is a native macOS terminal that prioritizes clarity, speed, and restraint
 - **Command history** — persistent, searchable history across sessions
 - **Themes and settings** — configurable via `~/.config/tesara/config` with live reload
 
+## Install
+
+Download the latest release from the [releases page](https://github.com/samsolomon/tesara/releases/latest).
+
+1. Unzip `Tesara-0.1.0.zip`
+2. Move `Tesara.app` to `/Applications`
+3. Right-click the app and choose **Open** (required on first launch since the app is not yet notarized)
+
 ## Stack
 
 - SwiftUI + AppKit
