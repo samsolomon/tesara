@@ -313,7 +313,7 @@ final class GhosttyApp: @unchecked Sendable {
         guard let session = sessionFromTarget(target) else { return true }
         let link = action.action.mouse_over_link
 
-        guard link.len > 0, let ptr = link.url else {
+        guard link.len > 0, link.len <= 8192, let ptr = link.url else {
             session.updateHoverUrl(nil)
             return true
         }
