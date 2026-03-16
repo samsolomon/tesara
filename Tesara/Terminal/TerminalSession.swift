@@ -150,20 +150,17 @@ final class TerminalSession: ObservableObject, Identifiable {
     func checkAlternateScreen() {
         guard let surface = surfaceView?.surface else { return }
 
-        // Skip when the ghostty action callback is in progress — the Zig
-        // caller may hold renderer_state.mutex and these APIs would deadlock.
-        guard !GhosttyApp.isInActionCallback else { return }
+        // Use non-blocking tryLock variants so the main thread never stalls
+        // waiting on renderer_state.mutex (which the renderer thread holds
+        // during frame updates). If the lock is contested we just skip this
+        // tick — the 200ms timer will catch up.
+        let altScreen = ghostty_surface_is_alternate_screen_try(surface)
+        guard altScreen >= 0 else { return } // lock contested
+        let mouseCap = ghostty_surface_mouse_captured_try(surface)
+        guard mouseCap >= 0 else { return } // lock contested
 
-        // Detect TUI apps via three complementary signals:
-        // 1. Alternate screen buffer (vim, less, htop)
-        // 2. Mouse capture enabled (some modern TUIs)
-        // 3. Foreground process differs from shell (Claude Code, any child process)
-        //
-        // Signals 1 & 2 are cheap memory reads behind a mutex.
-        // Signal 3 calls tcgetpgrp (a syscall), so we cache it at ~1 Hz
-        // and invalidate in handleCommandFinished().
-        let isTUI = ghostty_surface_is_alternate_screen(surface)
-            || ghostty_surface_mouse_captured(surface)
+        let isTUI = altScreen == 1
+            || mouseCap == 1
             || cachedHasForegroundProcess(surface)
         if isTUI != isAlternateScreen {
             isAlternateScreen = isTUI

@@ -39,13 +39,6 @@ final class GhosttyApp: @unchecked Sendable {
     /// Only accessed from @MainActor context (handleAction is @MainActor).
     private var didLogNewWindowUnsupported = false
 
-    /// True while the ghostty action callback is executing on the main thread.
-    /// When set, code must not call `ghostty_surface_*` APIs that acquire
-    /// `renderer_state.mutex` — the mutex may already be held by the Zig caller
-    /// (e.g. `Surface.keyCallback` locks it before calling `mouseRefreshLinks`
-    /// which calls `performAction` back into Swift).
-    @MainActor static var isInActionCallback = false
-
     private init() {}
 
     // MARK: - Lifecycle
@@ -162,19 +155,12 @@ final class GhosttyApp: @unchecked Sendable {
     ///
     /// Called during `tick()` (main thread) and also **synchronously from AppKit event
     /// handlers** (e.g. `flagsChanged`, `mouseMoved`) via the C action callback.
-    ///
-    /// - Important: When invoked from an event handler, ghostty's `renderer_state.mutex`
-    ///   may already be held. Handlers **must not** call `ghostty_surface_*` APIs
-    ///   synchronously — doing so would recursively lock the `os_unfair_lock` and abort.
     @MainActor
     func handleAction(
         app: ghostty_app_t,
         target: ghostty_target_s,
         action: ghostty_action_s
     ) -> Bool {
-        Self.isInActionCallback = true
-        defer { Self.isInActionCallback = false }
-
         switch action.tag {
         case GHOSTTY_ACTION_PWD:
             return handlePwd(target: target, action: action)
