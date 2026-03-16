@@ -63,7 +63,7 @@ struct AppSettings: Codable, Equatable {
         dimInactiveSplits: Bool = true,
         inactiveSplitDimAmount: Double = 0.5,
         inputBarEnabled: Bool = true,
-        inputBarPromptInfoEnabled: Bool = false,
+        inputBarPromptInfoEnabled: Bool = true,
         cursorStyle: CursorStyle = .bar,
         cursorBlink: Bool = false,
         lightThemeID: String = BuiltInTheme.tesaraLight.id,
@@ -207,7 +207,7 @@ struct AppSettings: Codable, Equatable {
         dimInactiveSplits = try container.decodeIfPresent(Bool.self, forKey: .dimInactiveSplits) ?? true
         inactiveSplitDimAmount = try container.decodeIfPresent(Double.self, forKey: .inactiveSplitDimAmount) ?? 0.5
         inputBarEnabled = try container.decodeIfPresent(Bool.self, forKey: .inputBarEnabled) ?? true
-        inputBarPromptInfoEnabled = try container.decodeIfPresent(Bool.self, forKey: .inputBarPromptInfoEnabled) ?? false
+        inputBarPromptInfoEnabled = try container.decodeIfPresent(Bool.self, forKey: .inputBarPromptInfoEnabled) ?? true
         cursorStyle = try container.decodeIfPresent(CursorStyle.self, forKey: .cursorStyle) ?? .bar
         cursorBlink = try container.decodeIfPresent(Bool.self, forKey: .cursorBlink) ?? false
         lightThemeID = try container.decodeIfPresent(String.self, forKey: .lightThemeID) ?? BuiltInTheme.tesaraLight.id
