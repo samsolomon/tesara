@@ -283,7 +283,9 @@ final class TerminalSession: ObservableObject, Identifiable {
     func handleCommandFinished(exitCode: Int16, durationNs: UInt64) {
         let code = exitCode == -1 ? nil : Int(exitCode)
 
-        let commandText = readAndCleanupCommandFile()
+        let rawCommandText = readAndCleanupCommandFile()
+        // Respect HIST_IGNORE_SPACE: commands starting with a space are not recorded
+        let commandText = rawCommandText?.hasPrefix(" ") == true ? nil : rawCommandText?.trimmingCharacters(in: .whitespacesAndNewlines)
         if let commandText, !commandText.isEmpty {
             var capture = TerminalBlockCapture(
                 startedAt: Date(timeIntervalSinceNow: -Double(durationNs) / 1_000_000_000),
@@ -306,7 +308,7 @@ final class TerminalSession: ObservableObject, Identifiable {
         let path = NSTemporaryDirectory() + "tesara-cmd-\(shellSessionID).txt"
         guard let data = FileManager.default.contents(atPath: path) else { return nil }
         try? FileManager.default.removeItem(atPath: path)
-        return String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
+        return String(data: data, encoding: .utf8)
     }
 
     func handleChildExited(exitCode: UInt32) {
@@ -383,13 +385,16 @@ final class TerminalSession: ObservableObject, Identifiable {
         let tmpDir = NSTemporaryDirectory()
         let fm = FileManager.default
         let cutoff = Date().addingTimeInterval(-threshold)
+        // Command capture files contain sensitive data — use a shorter threshold
+        let cmdCutoff = Date().addingTimeInterval(-3600)
         guard let contents = try? fm.contentsOfDirectory(atPath: tmpDir) else { return }
         let prefixes = ["tesara-cmd-", "tesara-ba-", "tesara-zsh-", "tesara-bash-", "tesara-fish-"]
         for entry in contents where prefixes.contains(where: { entry.hasPrefix($0) }) {
             let path = (tmpDir as NSString).appendingPathComponent(entry)
             guard let attrs = try? fm.attributesOfItem(atPath: path),
-                  let modified = attrs[.modificationDate] as? Date,
-                  modified < cutoff else { continue }
+                  let modified = attrs[.modificationDate] as? Date else { continue }
+            let effectiveCutoff = entry.hasPrefix("tesara-cmd-") ? cmdCutoff : cutoff
+            guard modified < effectiveCutoff else { continue }
             try? fm.removeItem(atPath: path)
         }
     }
