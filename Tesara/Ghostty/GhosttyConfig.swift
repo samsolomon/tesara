@@ -75,6 +75,8 @@ enum GhosttyConfig {
         // Shell integration — disabled because Tesara provides its own
         lines.append("shell-integration = none")
 
+        // Unbind ghostty's default Cmd+, so it reaches Tesara's Settings menu item
+        lines.append("keybind = super+comma=unbind")
 
         // Font options
         if !settings.fontLigatures {
