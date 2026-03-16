@@ -644,33 +644,51 @@ class GhosttySurfaceView: NSView, NSTextInputClient {
     }
 
     @IBAction func paste(_ sender: Any?) {
-        guard confirmPasteIfNeeded() else { return }
-        performBindingAction("paste_from_clipboard")
+        // Capture clipboard content once to prevent TOCTOU attacks (pastejacking).
+        // If confirmed, paste the captured text directly instead of re-reading the pasteboard.
+        guard let surface else { return }
+        guard let pastedText = NSPasteboard.general.string(forType: .string), !pastedText.isEmpty else { return }
+
+        if confirmPaste(pastedText) {
+            pastedText.withCString { ptr in
+                ghostty_surface_text(surface, ptr, UInt(pastedText.utf8.count))
+            }
+        }
     }
 
-    private func confirmPasteIfNeeded() -> Bool {
-        switch GhosttyApp.shared.terminalBehavior.pasteProtectionMode {
+    private func confirmPaste(_ text: String) -> Bool {
+        let mode = GhosttyApp.shared.terminalBehavior.pasteProtectionMode
+        let lines = text.split(omittingEmptySubsequences: false, whereSeparator: \.isNewline)
+
+        switch mode {
         case .never:
             return true
         case .multiline:
-            guard let pastedText = NSPasteboard.general.string(forType: .string) else {
-                return true
-            }
-
-            let lineCount = pastedText
-                .split(omittingEmptySubsequences: false, whereSeparator: \.isNewline)
-                .count
-
-            guard lineCount > 1 else { return true }
-
-            let alert = NSAlert()
-            alert.alertStyle = .warning
-            alert.messageText = "Paste \(lineCount) lines into the terminal?"
-            alert.informativeText = "This paste contains multiple lines and may execute more than one command."
-            alert.addButton(withTitle: "Paste")
-            alert.addButton(withTitle: "Cancel")
-            return alert.runModal() == .alertFirstButtonReturn
+            guard lines.count > 1 else { return true }
+            return showPasteAlert(lines: lines)
+        case .always:
+            return showPasteAlert(lines: lines)
         }
+    }
+
+    private func showPasteAlert(lines: [Substring]) -> Bool {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = "Paste \(lines.count) line\(lines.count == 1 ? "" : "s") into the terminal?"
+
+        // Show a preview of the content: first 5 lines, truncated to 120 chars each
+        var preview = lines.prefix(5).map { line in
+            let s = String(line)
+            return s.count > 120 ? String(s.prefix(117)) + "..." : s
+        }.joined(separator: "\n")
+        if lines.count > 5 {
+            preview += "\n... and \(lines.count - 5) more line\(lines.count - 5 == 1 ? "" : "s")"
+        }
+        alert.informativeText = preview
+
+        alert.addButton(withTitle: "Paste")
+        alert.addButton(withTitle: "Cancel")
+        return alert.runModal() == .alertFirstButtonReturn
     }
 
     private func performBindingAction(_ action: String) {

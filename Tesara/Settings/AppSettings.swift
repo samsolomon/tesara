@@ -17,6 +17,7 @@ struct AppSettings: Codable, Equatable {
     var localLoggingEnabled: Bool
     var historyCaptureEnabled: Bool
     var pasteProtectionMode: PasteProtectionMode
+    var clipboardAccess: ClipboardAccessMode
     var confirmOnCloseRunningSession: Bool
     var tabTitleMode: TabTitleMode
     var dimInactiveSplits: Bool
@@ -56,6 +57,7 @@ struct AppSettings: Codable, Equatable {
         localLoggingEnabled: Bool = true,
         historyCaptureEnabled: Bool = true,
         pasteProtectionMode: PasteProtectionMode = .multiline,
+        clipboardAccess: ClipboardAccessMode = .ask,
         confirmOnCloseRunningSession: Bool = false,
         tabTitleMode: TabTitleMode = .shellTitle,
         dimInactiveSplits: Bool = true,
@@ -90,6 +92,7 @@ struct AppSettings: Codable, Equatable {
         self.localLoggingEnabled = localLoggingEnabled
         self.historyCaptureEnabled = historyCaptureEnabled
         self.pasteProtectionMode = pasteProtectionMode
+        self.clipboardAccess = clipboardAccess
         self.confirmOnCloseRunningSession = confirmOnCloseRunningSession
         self.tabTitleMode = tabTitleMode
         self.dimInactiveSplits = dimInactiveSplits
@@ -152,6 +155,7 @@ struct AppSettings: Codable, Equatable {
         case localLoggingEnabled
         case historyCaptureEnabled
         case pasteProtectionMode
+        case clipboardAccess
         case confirmOnCloseRunningSession
         case tabTitleMode
         case dimInactiveSplits
@@ -197,6 +201,7 @@ struct AppSettings: Codable, Equatable {
         localLoggingEnabled = try container.decodeIfPresent(Bool.self, forKey: .localLoggingEnabled) ?? true
         historyCaptureEnabled = try container.decodeIfPresent(Bool.self, forKey: .historyCaptureEnabled) ?? true
         pasteProtectionMode = try container.decodeIfPresent(PasteProtectionMode.self, forKey: .pasteProtectionMode) ?? .multiline
+        clipboardAccess = try container.decodeIfPresent(ClipboardAccessMode.self, forKey: .clipboardAccess) ?? .ask
         confirmOnCloseRunningSession = try container.decodeIfPresent(Bool.self, forKey: .confirmOnCloseRunningSession) ?? false
         tabTitleMode = try container.decodeIfPresent(TabTitleMode.self, forKey: .tabTitleMode) ?? .shellTitle
         dimInactiveSplits = try container.decodeIfPresent(Bool.self, forKey: .dimInactiveSplits) ?? true
@@ -234,6 +239,7 @@ struct AppSettings: Codable, Equatable {
         try container.encode(localLoggingEnabled, forKey: .localLoggingEnabled)
         try container.encode(historyCaptureEnabled, forKey: .historyCaptureEnabled)
         try container.encode(pasteProtectionMode, forKey: .pasteProtectionMode)
+        try container.encode(clipboardAccess, forKey: .clipboardAccess)
         try container.encode(confirmOnCloseRunningSession, forKey: .confirmOnCloseRunningSession)
         try container.encode(tabTitleMode, forKey: .tabTitleMode)
         try container.encode(dimInactiveSplits, forKey: .dimInactiveSplits)
@@ -261,6 +267,7 @@ struct AppSettings: Codable, Equatable {
 enum PasteProtectionMode: String, Codable, CaseIterable, Identifiable {
     case never
     case multiline
+    case always
 
     var id: String { rawValue }
 
@@ -269,7 +276,28 @@ enum PasteProtectionMode: String, Codable, CaseIterable, Identifiable {
         case .never:
             "Never"
         case .multiline:
-            "Confirm Multiline Paste"
+            "Confirm multiline paste"
+        case .always:
+            "Confirm all pastes"
+        }
+    }
+}
+
+enum ClipboardAccessMode: String, Codable, CaseIterable, Identifiable {
+    case ask
+    case allow
+    case deny
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .ask:
+            "Ask every time"
+        case .allow:
+            "Always allow"
+        case .deny:
+            "Always deny"
         }
     }
 }
@@ -573,6 +601,7 @@ enum ConfigKey {
     static let clipboardTrimTrailingSpaces = "clipboard-trim-trailing-spaces"
     static let bellMode = "bell-mode"
     static let pasteProtection = "paste-protection"
+    static let clipboardAccess = "clipboard-access"
     static let inputBarEnabled = "input-bar-enabled"
     static let inputBarPromptInfoEnabled = "input-bar-prompt-info-enabled"
     static let tabTitleMode = "tab-title-mode"
