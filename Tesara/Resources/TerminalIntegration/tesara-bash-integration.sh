@@ -3,6 +3,10 @@ if [[ -n "${TESARA_BASH_INTEGRATION_LOADED:-}" ]]; then
 fi
 TESARA_BASH_INTEGRATION_LOADED=1
 
+__tesara_report_pwd() {
+  printf '\033]7;kitty-shell-cwd://%s%s\a' "${HOSTNAME}" "${PWD}"
+}
+
 __tesara_prompt_command() {
   local last_status=$?
 
@@ -18,6 +22,8 @@ __tesara_prompt_command() {
       printf '\033[%d;1H' "$(tput lines)"
     fi
   fi
+
+  __tesara_report_pwd
 
   printf '\033]133;A\a'
   printf '\033]133;B\a'

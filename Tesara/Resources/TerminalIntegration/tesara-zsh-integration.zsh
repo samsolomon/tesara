@@ -30,8 +30,16 @@ function _tesara_preexec() {
   fi
 }
 
+function _tesara_report_pwd() {
+  printf '\e]7;kitty-shell-cwd://%s%s\a' "${HOST}" "${PWD}"
+}
+
 add-zsh-hook precmd _tesara_precmd
 add-zsh-hook preexec _tesara_preexec
+chpwd_functions+=(_tesara_report_pwd)
+
+# Report initial working directory
+_tesara_report_pwd
 
 # Re-align cursor to bottom row when the app signals via a temp file.
 # Triggered by SIGWINCH after the input bar appears/resizes the terminal.

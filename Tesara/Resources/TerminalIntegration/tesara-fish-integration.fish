@@ -34,6 +34,13 @@ function __tesara_fish_prompt --on-event fish_prompt
     __tesara_emit_osc133 "B"
 end
 
+function __tesara_report_pwd --on-variable PWD
+    printf '\033]7;kitty-shell-cwd://%s%s\007' $hostname $PWD
+end
+
+# Report initial working directory
+__tesara_report_pwd
+
 function __tesara_fish_preexec --on-event fish_preexec
     __tesara_emit_osc133 "C"
     # Write command text for Tesara's command history capture
