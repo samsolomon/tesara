@@ -19,6 +19,7 @@ struct TesaraApp: App {
                 .environmentObject(workspaceManager)
                 .frame(minWidth: minimumWindowSize.width, minHeight: minimumWindowSize.height)
                 .onAppear {
+                    CrashHandler.install()
                     updaterController.updater.automaticallyChecksForUpdates = settingsStore.settings.updateChecksEnabled
                     blockStore.setHistoryCaptureEnabled(settingsStore.settings.historyCaptureEnabled)
                     LocalLogStore.shared.setEnabled(settingsStore.settings.localLoggingEnabled)

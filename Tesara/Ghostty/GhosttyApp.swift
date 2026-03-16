@@ -56,7 +56,7 @@ final class GhosttyApp: @unchecked Sendable {
         if !Self.didGlobalInit {
             let initResult = ghostty_init(0, nil)
             guard initResult == GHOSTTY_SUCCESS else {
-                LocalLogStore.shared.log("[GhosttyApp] ghostty_init failed with code \(initResult)")
+                LocalLogStore.shared.log("[GhosttyApp] ghostty_init failed with code \(initResult)", level: .error)
                 return
             }
             Self.didGlobalInit = true
@@ -67,7 +67,7 @@ final class GhosttyApp: @unchecked Sendable {
 
         let config = GhosttyConfig.makeConfig(theme: theme, settings: settings)
         guard config != nil else {
-            LocalLogStore.shared.log("[GhosttyApp] Failed to create config")
+            LocalLogStore.shared.log("[GhosttyApp] Failed to create config", level: .error)
             return
         }
 
@@ -85,7 +85,7 @@ final class GhosttyApp: @unchecked Sendable {
         // ghostty_app_new copies config data — always free the config after use
         ghostty_config_free(config)
         if app == nil {
-            LocalLogStore.shared.log("[GhosttyApp] Failed to create ghostty app")
+            LocalLogStore.shared.log("[GhosttyApp] Failed to create ghostty app", level: .error)
         }
 
     }
@@ -205,7 +205,7 @@ final class GhosttyApp: @unchecked Sendable {
 
         case GHOSTTY_ACTION_NEW_WINDOW:
             if !didLogNewWindowUnsupported {
-                LocalLogStore.shared.log("[GhosttyApp] NEW_WINDOW action not supported (single-window app)")
+                LocalLogStore.shared.log("[GhosttyApp] NEW_WINDOW action not supported (single-window app)", level: .warn)
                 didLogNewWindowUnsupported = true
             }
             return false
@@ -304,7 +304,7 @@ final class GhosttyApp: @unchecked Sendable {
             let homePath = FileManager.default.homeDirectoryForCurrentUser.standardizedFileURL.path
             let filePath = candidate.standardizedFileURL.path
             guard filePath == homePath || filePath.hasPrefix(homePath + "/") else {
-                LocalLogStore.shared.log("[GhosttyApp] Blocked file:// URL outside home directory: \(filePath)")
+                LocalLogStore.shared.log("[GhosttyApp] Blocked file:// URL outside home directory: \(filePath)", level: .warn)
                 return true
             }
             NSWorkspace.shared.activateFileViewerSelecting([candidate])
@@ -333,7 +333,7 @@ final class GhosttyApp: @unchecked Sendable {
     @MainActor
     private func handleNewTab(target: ghostty_target_s) -> Bool {
         guard let delegate = actionDelegate else {
-            LocalLogStore.shared.log("[GhosttyApp] Action delegate not set, dropping NEW_TAB")
+            LocalLogStore.shared.log("[GhosttyApp] Action delegate not set, dropping NEW_TAB", level: .warn)
             return false
         }
         let session = sessionFromTarget(target)
@@ -344,7 +344,7 @@ final class GhosttyApp: @unchecked Sendable {
     @MainActor
     private func handleNewSplit(target: ghostty_target_s, direction: ghostty_action_split_direction_e) -> Bool {
         guard let delegate = actionDelegate else {
-            LocalLogStore.shared.log("[GhosttyApp] Action delegate not set, dropping NEW_SPLIT")
+            LocalLogStore.shared.log("[GhosttyApp] Action delegate not set, dropping NEW_SPLIT", level: .warn)
             return false
         }
         guard let session = sessionFromTarget(target) else { return false }
@@ -377,7 +377,7 @@ final class GhosttyApp: @unchecked Sendable {
     @MainActor
     private func handleCloseTab(target: ghostty_target_s, mode: ghostty_action_close_tab_mode_e) -> Bool {
         guard let delegate = actionDelegate else {
-            LocalLogStore.shared.log("[GhosttyApp] Action delegate not set, dropping CLOSE_TAB")
+            LocalLogStore.shared.log("[GhosttyApp] Action delegate not set, dropping CLOSE_TAB", level: .warn)
             return false
         }
         guard let session = sessionFromTarget(target) else { return false }
@@ -398,7 +398,7 @@ final class GhosttyApp: @unchecked Sendable {
     @MainActor
     private func handleCloseWindow() -> Bool {
         guard let delegate = actionDelegate else {
-            LocalLogStore.shared.log("[GhosttyApp] Action delegate not set, dropping CLOSE_WINDOW")
+            LocalLogStore.shared.log("[GhosttyApp] Action delegate not set, dropping CLOSE_WINDOW", level: .warn)
             return false
         }
         delegate.ghosttyCloseWindow()
@@ -408,7 +408,7 @@ final class GhosttyApp: @unchecked Sendable {
     @MainActor
     private func handleQuit() -> Bool {
         guard let delegate = actionDelegate else {
-            LocalLogStore.shared.log("[GhosttyApp] Action delegate not set, dropping QUIT")
+            LocalLogStore.shared.log("[GhosttyApp] Action delegate not set, dropping QUIT", level: .warn)
             return false
         }
         delegate.ghosttyRequestQuit()

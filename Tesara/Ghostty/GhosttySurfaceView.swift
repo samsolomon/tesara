@@ -72,7 +72,7 @@ class GhosttySurfaceView: NSView, NSTextInputClient {
             ghostty_surface_new(app, &cfg)
         }
         guard let surface else {
-            LocalLogStore.shared.log("[GhosttySurfaceView] Failed to create ghostty surface")
+            LocalLogStore.shared.log("[GhosttySurfaceView] Failed to create ghostty surface", level: .error)
             return
         }
         self.surface = surface
@@ -126,12 +126,13 @@ class GhosttySurfaceView: NSView, NSTextInputClient {
     private func setSurfaceSize(width: UInt32, height: UInt32) {
         guard let surface else { return }
         ghostty_surface_set_size(surface, width, height)
-        #if DEBUG
-        let size = ghostty_surface_size(surface)
         LocalLogStore.shared.log(
-            "[GhosttyResize] requestPx=\(width)x\(height) actualPx=\(size.width_px)x\(size.height_px) cols=\(size.columns) rows=\(size.rows)"
+            {
+                let size = ghostty_surface_size(surface)
+                return "[GhosttyResize] requestPx=\(width)x\(height) actualPx=\(size.width_px)x\(size.height_px) cols=\(size.columns) rows=\(size.rows)"
+            }(),
+            level: .debug
         )
-        #endif
     }
 
     override func viewDidChangeBackingProperties() {

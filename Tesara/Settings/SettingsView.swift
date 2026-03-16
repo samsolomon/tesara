@@ -630,6 +630,12 @@ private struct UpdatesPrivacySettingsPane: View {
                             .labelsHidden()
                     }
                 }
+
+                settingRow("Diagnostics", description: "Export logs, system info, and config for troubleshooting.") {
+                    Button("Export") {
+                        exportDiagnostics()
+                    }
+                }
             } header: {
                 Text("Local data")
             }
@@ -656,6 +662,17 @@ private struct UpdatesPrivacySettingsPane: View {
             Button("Delete logs", role: .destructive) {
                 LocalLogStore.shared.clearLogs()
             }
+        }
+    }
+
+    private func exportDiagnostics() {
+        guard let url = DiagnosticExport.gather() else { return }
+        guard let window = NSApp.keyWindow else { return }
+        let picker = NSSharingServicePicker(items: [url])
+        // Present anchored to the window's content view
+        if let contentView = window.contentView {
+            let rect = CGRect(x: contentView.bounds.midX, y: contentView.bounds.midY, width: 1, height: 1)
+            picker.show(relativeTo: rect, of: contentView, preferredEdge: .minY)
         }
     }
 

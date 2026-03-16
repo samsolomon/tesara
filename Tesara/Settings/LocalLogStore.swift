@@ -3,6 +3,19 @@ import Foundation
 final class LocalLogStore: @unchecked Sendable {
     static let shared = LocalLogStore()
 
+    enum LogLevel: Int, Comparable {
+        case debug = 0, info = 1, warn = 2, error = 3
+        static func < (lhs: Self, rhs: Self) -> Bool { lhs.rawValue < rhs.rawValue }
+        var label: String {
+            switch self {
+            case .debug: "DEBUG"
+            case .info:  "INFO"
+            case .warn:  "WARN"
+            case .error: "ERROR"
+            }
+        }
+    }
+
     let directoryURL: URL
 
     private let queue = DispatchQueue(label: "com.tesara.local-log-store")
@@ -11,6 +24,14 @@ final class LocalLogStore: @unchecked Sendable {
     private let logFileName = "Tesara.log"
     private var isEnabled = true
     private var fileHandle: FileHandle?
+
+    let minimumLevel: LogLevel = {
+        #if DEBUG
+        return .debug
+        #else
+        return .info
+        #endif
+    }()
 
     init(directoryURL: URL? = nil, fileManager: FileManager = .default) {
         self.fileManager = fileManager
@@ -47,11 +68,13 @@ final class LocalLogStore: @unchecked Sendable {
     /// Maximum log file size before rotation (5 MB).
     private let maxLogSize: UInt64 = 5 * 1024 * 1024
 
-    private var rotatedLogFileURL: URL {
+    var rotatedLogFileURL: URL {
         directoryURL.appendingPathComponent(logFileName + ".1")
     }
 
-    func log(_ message: String) {
+    func log(_ message: @autoclosure () -> String, level: LogLevel = .info) {
+        guard isEnabled, level >= minimumLevel else { return }
+        let msg = message()
         queue.async {
             guard self.isEnabled else { return }
 
@@ -61,7 +84,7 @@ final class LocalLogStore: @unchecked Sendable {
                 self.rotateIfNeeded()
 
                 let timestamp = self.formatter.string(from: Date())
-                let line = "[\(timestamp)] \(message)\n"
+                let line = "[\(timestamp)] [\(level.label)] \(msg)\n"
                 let data = Data(line.utf8)
 
                 if let handle = self.fileHandle {
