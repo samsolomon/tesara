@@ -6,6 +6,8 @@ A modern, minimal terminal emulator for macOS.
 
 Tesara is a native macOS terminal that prioritizes clarity, speed, and restraint. It pairs a SwiftUI/AppKit shell with [Ghostty](https://ghostty.org)'s GPU-accelerated renderer to deliver fast, accurate terminal output inside a calm, intentional interface. [Download the latest release.](https://github.com/samsolomon/tesara/releases/latest/download/Tesara-0.1.0.zip)
 
+<img src="screenshot.png" width="800" alt="Tesara terminal showing syntax-highlighted Swift code">
+
 ## Features
 
 - **Native macOS experience** — proper windowing, tabs, and keyboard shortcuts that feel at home on the platform
