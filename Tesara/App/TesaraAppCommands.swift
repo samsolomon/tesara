@@ -98,7 +98,7 @@ struct TesaraAppCommands: Commands {
                     fontFamily: s.fontFamily,
                     fontSize: s.fontSize,
                     cursorConfig: cursorCfg,
-                    cursorBlink: true
+                    cursorBlink: s.cursorBlink
                 )
             }
             .keyboardShortcut("e", modifiers: [.command, .shift])

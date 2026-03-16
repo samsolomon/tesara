@@ -63,7 +63,7 @@ struct AppSettings: Codable, Equatable {
         inputBarEnabled: Bool = true,
         inputBarPromptInfoEnabled: Bool = false,
         cursorStyle: CursorStyle = .bar,
-        cursorBlink: Bool = true,
+        cursorBlink: Bool = false,
         lightThemeID: String = BuiltInTheme.tesaraLight.id,
         darkThemeID: String = BuiltInTheme.tesaraDark.id,
         windowOpacity: Double = 1.0,
@@ -204,7 +204,7 @@ struct AppSettings: Codable, Equatable {
         inputBarEnabled = try container.decodeIfPresent(Bool.self, forKey: .inputBarEnabled) ?? true
         inputBarPromptInfoEnabled = try container.decodeIfPresent(Bool.self, forKey: .inputBarPromptInfoEnabled) ?? false
         cursorStyle = try container.decodeIfPresent(CursorStyle.self, forKey: .cursorStyle) ?? .bar
-        cursorBlink = try container.decodeIfPresent(Bool.self, forKey: .cursorBlink) ?? true
+        cursorBlink = try container.decodeIfPresent(Bool.self, forKey: .cursorBlink) ?? false
         lightThemeID = try container.decodeIfPresent(String.self, forKey: .lightThemeID) ?? BuiltInTheme.tesaraLight.id
         darkThemeID = try container.decodeIfPresent(String.self, forKey: .darkThemeID) ?? BuiltInTheme.tesaraDark.id
         windowOpacity = try container.decodeIfPresent(Double.self, forKey: .windowOpacity) ?? 1.0

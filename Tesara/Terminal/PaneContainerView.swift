@@ -350,7 +350,7 @@ private struct TerminalPaneLeafView: View {
             // Ensure the input bar editor exists and always owns keyboard focus
             let s = settingsStore.settings
             let cursorCfg = s.cursorStyle.editorCursorConfig(color: hexToColorU8(settingsStore.activeTheme.cursor))
-            session.setupInputBar(theme: theme, fontFamily: fontFamily, fontSize: fontSize, cursorConfig: cursorCfg, cursorBlink: true)
+            session.setupInputBar(theme: theme, fontFamily: fontFamily, fontSize: fontSize, cursorConfig: cursorCfg, cursorBlink: s.cursorBlink)
             // Only run the cursor blink timer when at the prompt; pause it
             // while a command is running to avoid unnecessary main-thread work.
             if session.isAtPrompt {

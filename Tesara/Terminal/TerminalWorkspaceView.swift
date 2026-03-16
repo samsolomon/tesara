@@ -53,7 +53,7 @@ struct TerminalWorkspaceView: View {
                         fontFamily: s.fontFamily,
                         fontSize: s.fontSize,
                         cursorConfig: cursorCfg,
-                        cursorBlink: true
+                        cursorBlink: s.cursorBlink
                     )
                 }
             }
