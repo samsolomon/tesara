@@ -36,7 +36,7 @@ struct HistoryPopupView: View {
     private func resultRow(command: String, index: Int) -> some View {
         let isSelected = index == historyController.selectedPopupIndex
         return Text(command)
-            .font(.custom(fontFamily, size: fontSize))
+            .font(.custom(fontFamily, size: fontSize * 0.85))
             .foregroundStyle(theme.swiftUIColor(from: theme.foreground))
             .lineLimit(1)
             .truncationMode(.middle)
