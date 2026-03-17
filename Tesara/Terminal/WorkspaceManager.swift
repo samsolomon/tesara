@@ -136,12 +136,20 @@ final class WorkspaceManager: ObservableObject {
 
     func selectTab(id: UUID) {
         guard let tabIndex = tabs.firstIndex(where: { $0.id == id }) else { return }
+
+        // Defocus the previous tab's active pane
+        if let oldTabID = activeTabID, oldTabID != id,
+           let oldTab = tabs.first(where: { $0.id == oldTabID }) {
+            defocusPane(id: oldTab.selectedPaneID, in: oldTab)
+        }
+
         activeTabID = id
         let selectedPaneID = resolvedSelectedPaneID(for: tabs[tabIndex])
         tabs[tabIndex].selectedPaneID = selectedPaneID
         activePaneID = selectedPaneID
         clearNotificationsForTab(id: id)
         refreshWorkspaceMetadata()
+        focusPane(id: selectedPaneID, in: tabs[tabIndex])
     }
 
     private func resolvedSelectedPaneID(for tab: Tab) -> UUID {
@@ -392,26 +400,11 @@ final class WorkspaceManager: ObservableObject {
 
         // Defocus previous pane
         if let previousPaneID {
-            if let prevTermSession = activeTab.rootPane.findSession(forPaneID: previousPaneID) {
-                prevTermSession.surfaceView?.focusDidChange(false)
-            } else if let prevEditorSession = activeTab.rootPane.findEditorSession(forPaneID: previousPaneID) {
-                (prevEditorSession.editorView as? EditorView)?.focusDidChange(false)
-            }
+            defocusPane(id: previousPaneID, in: activeTab)
         }
 
         // Focus new pane
-        if let newTermSession = activeTab.rootPane.findSession(forPaneID: id) {
-            newTermSession.surfaceView?.focusDidChange(true)
-            if let surface = newTermSession.surfaceView?.surface {
-                GhosttyApp.shared.setFocusedSurface(surface)
-            }
-        } else if let newEditorSession = activeTab.rootPane.findEditorSession(forPaneID: id) {
-            (newEditorSession.editorView as? EditorView)?.focusDidChange(true)
-            // Check for stale file on focus gain
-            if newEditorSession.filePath != nil, newEditorSession.checkFileStale() {
-                pendingStaleReload = id
-            }
-        }
+        focusPane(id: id, in: activeTab)
     }
 
     func selectNextPane() { selectPaneByOffset(1) }
@@ -441,6 +434,30 @@ final class WorkspaceManager: ObservableObject {
 
         selectPane(id: adjacentID)
         return true
+    }
+
+    // MARK: - Pane Focus
+
+    private func focusPane(id paneID: UUID, in tab: Tab) {
+        setPaneFocus(id: paneID, in: tab, focused: true)
+    }
+
+    private func defocusPane(id paneID: UUID, in tab: Tab) {
+        setPaneFocus(id: paneID, in: tab, focused: false)
+    }
+
+    private func setPaneFocus(id paneID: UUID, in tab: Tab, focused: Bool) {
+        if let session = tab.rootPane.findSession(forPaneID: paneID) {
+            session.surfaceView?.focusDidChange(focused)
+            if focused, let surface = session.surfaceView?.surface {
+                GhosttyApp.shared.setFocusedSurface(surface)
+            }
+        } else if let editorSession = tab.rootPane.findEditorSession(forPaneID: paneID) {
+            (editorSession.editorView as? EditorView)?.focusDidChange(focused)
+            if focused, editorSession.filePath != nil, editorSession.checkFileStale() {
+                pendingStaleReload = paneID
+            }
+        }
     }
 
     // MARK: - File I/O
