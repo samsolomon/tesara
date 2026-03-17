@@ -17,13 +17,6 @@ struct PaneHeaderView: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            Image(systemName: "line.3.horizontal")
-                .font(.system(size: 9, weight: .medium))
-                .foregroundStyle(theme.swiftUIColor(from: theme.foreground).opacity(0.4))
-                .opacity(isHovered ? 1 : 0)
-                .frame(width: 14)
-                .animation(.easeInOut(duration: 0.12), value: isHovered)
-
             Text(title)
                 .font(.system(size: 12))
                 .foregroundStyle(theme.swiftUIColor(from: theme.foreground).opacity(isActive ? 0.7 : 0.4))
@@ -36,8 +29,8 @@ struct PaneHeaderView: View {
                 isActive: isActive,
                 action: onClose
             )
-            .opacity(isDragSource ? 0 : 1)
-            .allowsHitTesting(!isDragSource)
+            .opacity(isHovered && !isDragSource ? 1 : 0)
+            .allowsHitTesting(isHovered && !isDragSource)
         }
         .padding(.leading, 4)
         .padding(.trailing, 8)
