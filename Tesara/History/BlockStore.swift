@@ -186,9 +186,12 @@ final class BlockStore: ObservableObject {
             try String.fetchAll(
                 db,
                 sql: """
-                SELECT DISTINCT commandText
-                FROM terminal_blocks
-                ORDER BY startedAt DESC
+                SELECT commandText FROM (
+                    SELECT commandText, MAX(startedAt) AS lastSeen
+                    FROM terminal_blocks
+                    GROUP BY commandText
+                )
+                ORDER BY lastSeen DESC
                 LIMIT ?
                 """,
                 arguments: [limit]
@@ -213,10 +216,13 @@ final class BlockStore: ObservableObject {
             try String.fetchAll(
                 db,
                 sql: """
-                SELECT DISTINCT commandText
-                FROM terminal_blocks
-                WHERE \(whereClause)
-                ORDER BY startedAt DESC
+                SELECT commandText FROM (
+                    SELECT commandText, MAX(startedAt) AS lastSeen
+                    FROM terminal_blocks
+                    WHERE \(whereClause)
+                    GROUP BY commandText
+                )
+                ORDER BY lastSeen DESC
                 LIMIT ?
                 """,
                 arguments: StatementArguments(args + [String(limit)])!
