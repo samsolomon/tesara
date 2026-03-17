@@ -5,7 +5,6 @@ private let dividerColor = Color.gray.opacity(0.3)
 struct TitleBarTabStrip: View {
     @ObservedObject var manager: WorkspaceManager
     let theme: TerminalTheme
-    let onNewTab: () -> Void
 
     private var foregroundColor: Color {
         theme.swiftUIColor(from: theme.foreground)
@@ -39,14 +38,6 @@ struct TitleBarTabStrip: View {
                         .opacity(isActive || nextIsActive ? 0 : 1)
                 }
             }
-
-            // Vertical divider before new-tab button
-            Rectangle()
-                .fill(dividerColor)
-                .frame(width: 1, height: 14)
-                .padding(.horizontal, 4)
-
-            NewTabButton(foregroundColor: foregroundColor, action: onNewTab)
         }
         .frame(height: 24)
         .background(backgroundColor)
@@ -124,28 +115,3 @@ private struct TabSegmentButton: View {
     }
 }
 
-private struct NewTabButton: View {
-    let foregroundColor: Color
-    let action: () -> Void
-
-    @State private var isHovering = false
-
-    var body: some View {
-        Button(action: action) {
-            Image(systemName: "plus")
-                .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(foregroundColor.opacity(0.4))
-                .frame(width: 24, height: 24)
-                .background(
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(foregroundColor.opacity(isHovering ? 0.12 : 0))
-                )
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .animation(.snappy(duration: 0.18), value: isHovering)
-        .onHover { hovering in
-            isHovering = hovering
-        }
-    }
-}
