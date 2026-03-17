@@ -25,23 +25,10 @@ struct HistoryPopupView: View {
         .accessibilityLabel("Command history")
     }
 
-    private var rowHeight: CGFloat {
-        fontSize * 1.5 + 12
-    }
-
     private var resultsList: some View {
-        ScrollViewReader { proxy in
-            ScrollView {
-                LazyVStack(spacing: 0) {
-                    ForEach(Array(historyController.popupItems.enumerated()), id: \.offset) { index, command in
-                        resultRow(command: command, index: index)
-                            .id(index)
-                    }
-                }
-            }
-            .frame(maxHeight: CGFloat(min(historyController.popupItems.count, 10)) * rowHeight)
-            .onChange(of: historyController.selectedPopupIndex) { _, newIndex in
-                proxy.scrollTo(newIndex, anchor: .center)
+        VStack(spacing: 0) {
+            ForEach(Array(historyController.popupItems.enumerated()), id: \.offset) { index, command in
+                resultRow(command: command, index: index)
             }
         }
     }

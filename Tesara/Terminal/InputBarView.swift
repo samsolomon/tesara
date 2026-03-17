@@ -216,9 +216,12 @@ final class InputBarKeyHandler: EditorViewDelegate {
             }
         }
 
-        // Dismiss history popup on any unhandled key; restore original input,
-        // then let the character pass through to the editor.
-        if let state = terminalSession?.inputBarState, state.historyController.isPopupActive {
+        // Dismiss history popup on any unhandled character key; restore original
+        // input, then let the character pass through to the editor.
+        // Skip special keys (arrows, enter, tab, etc.) — they are handled in
+        // handleSpecialKey with their own popup-aware logic.
+        if event.specialKey == nil,
+           let state = terminalSession?.inputBarState, state.historyController.isPopupActive {
             state.historyController.dismissPopup(inputBarState: state)
         }
 
