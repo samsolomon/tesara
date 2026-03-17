@@ -28,6 +28,7 @@ final class TerminalSession: ObservableObject, Identifiable {
     @Published private(set) var isAtPrompt = false
     @Published private(set) var isAlternateScreen = false
     @Published private(set) var isHistorySearchActive = false
+    @Published private(set) var isHistoryPopupActive = false
     @Published private(set) var hoverUrl: String?
     @Published private(set) var pendingNotification: TerminalNotification?
 
@@ -37,6 +38,7 @@ final class TerminalSession: ObservableObject, Identifiable {
 
     private var blockStore: BlockStore?
     private var searchStateCancellable: AnyCancellable?
+    private var popupStateCancellable: AnyCancellable?
     private var activeSessionID: UUID?
     private var activeCapture: TerminalBlockCapture?
     private var blockOrderIndex = 0
@@ -246,6 +248,13 @@ final class TerminalSession: ObservableObject, Identifiable {
                     self?.isHistorySearchActive = active
                 }
             }
+
+        popupStateCancellable = state.historyController.$isPopupActive
+            .sink { [weak self] active in
+                if self?.isHistoryPopupActive != active {
+                    self?.isHistoryPopupActive = active
+                }
+            }
     }
 
     /// Create the editor view inside the existing InputBarState once theme info
@@ -260,8 +269,10 @@ final class TerminalSession: ObservableObject, Identifiable {
         inputBarState?.editorView?.focusDidChange(false)
         inputBarState?.editorView?.pauseDisplayLink()
         searchStateCancellable = nil
+        popupStateCancellable = nil
         inputBarState = nil
         isHistorySearchActive = false
+        isHistoryPopupActive = false
     }
 
     // MARK: - Action Handlers

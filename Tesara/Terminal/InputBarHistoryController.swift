@@ -9,40 +9,66 @@ final class InputBarHistoryController: ObservableObject {
     @Published private(set) var searchResults: [String] = []
     @Published var selectedSearchIndex = 0
 
-    var isNavigatingHistory: Bool { historyIndex >= 0 }
+    @Published var isPopupActive = false
+    @Published private(set) var popupItems: [String] = []
+    @Published private(set) var selectedPopupIndex = 0
+    private var savedPopupInput = ""
 
-    private var historyIndex = -1
-    private var savedCurrentInput = ""
-    private var cachedHistory: [String] = []
+    // MARK: - History Popup
 
-    // MARK: - Up/Down Navigation
+    func openPopup(currentText: String, inputBarState: InputBarState) {
+        let history = blockStore?.recentCommandTexts() ?? []
+        savedPopupInput = currentText
 
-    func navigateUp(currentText: String, inputBarState: InputBarState) {
-        if historyIndex == -1 {
-            refreshHistory()
-            savedCurrentInput = currentText
+        let candidates: [String]
+        if currentText.isEmpty {
+            candidates = history
+        } else {
+            candidates = history.filter { $0.hasPrefix(currentText) }
         }
 
-        let candidates = filteredCandidates
-        guard !candidates.isEmpty else { return }
+        let items = Array(candidates.prefix(10))
+        guard !items.isEmpty else { return }
 
-        let nextIndex = historyIndex + 1
-        guard nextIndex < candidates.count else { return }
-        historyIndex = nextIndex
-        inputBarState.setText(candidates[nextIndex])
+        popupItems = items
+        selectedPopupIndex = 0
+        isPopupActive = true
+        inputBarState.setText(items[0])
     }
 
-    func navigateDown(currentText: String, inputBarState: InputBarState) {
-        guard historyIndex >= 0 else { return }
+    func popupSelectPrevious(inputBarState: InputBarState) {
+        guard selectedPopupIndex > 0 else { return }
+        selectedPopupIndex -= 1
+        inputBarState.setText(popupItems[selectedPopupIndex])
+    }
 
-        let candidates = filteredCandidates
-        historyIndex -= 1
-        if historyIndex < 0 {
-            historyIndex = -1
-            inputBarState.setText(savedCurrentInput)
-        } else if historyIndex < candidates.count {
-            inputBarState.setText(candidates[historyIndex])
-        }
+    func popupSelectNext(inputBarState: InputBarState) {
+        guard selectedPopupIndex < popupItems.count - 1 else { return }
+        selectedPopupIndex += 1
+        inputBarState.setText(popupItems[selectedPopupIndex])
+    }
+
+    func dismissPopup(inputBarState: InputBarState) {
+        inputBarState.setText(savedPopupInput)
+        dismissPopupSilently()
+    }
+
+    func dismissPopupSilently() {
+        guard isPopupActive else { return }
+        isPopupActive = false
+        popupItems = []
+        selectedPopupIndex = 0
+        savedPopupInput = ""
+    }
+
+    func acceptPopupSelection() {
+        dismissPopupSilently()
+    }
+
+    func acceptPopupItem(at index: Int, inputBarState: InputBarState) {
+        guard index >= 0, index < popupItems.count else { return }
+        inputBarState.setText(popupItems[index])
+        dismissPopupSilently()
     }
 
     // MARK: - Search (Ctrl+R)
@@ -88,18 +114,8 @@ final class InputBarHistoryController: ObservableObject {
     // MARK: - Reset
 
     func reset() {
-        historyIndex = -1
-        savedCurrentInput = ""
+        dismissPopupSilently()
         cancelSearch()
     }
 
-    // MARK: - Private
-
-    private var filteredCandidates: [String] {
-        savedCurrentInput.isEmpty ? cachedHistory : cachedHistory.filter { $0.hasPrefix(savedCurrentInput) }
-    }
-
-    private func refreshHistory() {
-        cachedHistory = blockStore?.recentCommandTexts() ?? []
-    }
 }

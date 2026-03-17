@@ -308,6 +308,20 @@ private struct TerminalPaneLeafView: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
 
+            if session.isHistoryPopupActive {
+                HistoryPopupView(
+                    historyController: inputBarState.historyController,
+                    theme: theme,
+                    fontFamily: fontFamily,
+                    fontSize: fontSize,
+                    onAccept: { index in
+                        inputBarState.historyController.acceptPopupItem(at: index, inputBarState: inputBarState)
+                        focusInputBar(session: session, surfaceView: surfaceView)
+                    }
+                )
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+
             if inputBarState.completionController.isActive {
                 CompletionOverlayView(
                     completionController: inputBarState.completionController,
@@ -327,6 +341,7 @@ private struct TerminalPaneLeafView: View {
                 maxHeight: maxInputBarHeight
             )
         }
+        .animation(.easeInOut(duration: 0.12), value: session.isHistoryPopupActive)
         .animation(.easeInOut(duration: 0.12), value: inputBarState.completionController.isActive)
         .transition(.move(edge: .bottom).combined(with: .opacity))
         .onAppear {

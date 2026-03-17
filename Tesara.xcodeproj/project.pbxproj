@@ -111,6 +111,7 @@
 		TABCOMP001A00000000000001 /* CompletionContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = TABCOMP001B00000000000001 /* CompletionContext.swift */; };
 		TABCOMP001A00000000000002 /* CompletionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = TABCOMP001B00000000000002 /* CompletionProvider.swift */; };
 		TABCOMP001A00000000000003 /* TabCompletionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = TABCOMP001B00000000000003 /* TabCompletionController.swift */; };
+		HISTPOP001A00000000000001 /* HistoryPopupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = HISTPOP001B00000000000001 /* HistoryPopupView.swift */; };
 		TABCOMP001A00000000000004 /* CompletionOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TABCOMP001B00000000000004 /* CompletionOverlayView.swift */; };
 		TABCOMP001A00000000000010 /* TabCompletionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TABCOMP001B00000000000010 /* TabCompletionTests.swift */; };
 /* End PBXBuildFile section */
@@ -127,6 +128,7 @@
 
 /* Begin PBXFileReference section */
 		025C0C0CA0E7477A899440FC /* CoreText.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreText.framework; path = System/Library/Frameworks/CoreText.framework; sourceTree = SDKROOT; };
+		HISTPOP001B00000000000001 /* HistoryPopupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryPopupView.swift; sourceTree = "<group>"; };
 		0265AE3B30D51A6B57910DEB /* HistorySearchOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistorySearchOverlayView.swift; sourceTree = "<group>"; };
 		085DF302ED385DA3320C4E00 /* WorkspaceManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceManager.swift; sourceTree = "<group>"; };
 		0A3302C81E3683C9C6F70DE2 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -389,6 +391,7 @@
 				TABCOMP001B00000000000004 /* CompletionOverlayView.swift */,
 				TABCOMP001B00000000000002 /* CompletionProvider.swift */,
 				36A1B2C3D4E5F607GITBRA02 /* GitBranchReader.swift */,
+				HISTPOP001B00000000000001 /* HistoryPopupView.swift */,
 				0265AE3B30D51A6B57910DEB /* HistorySearchOverlayView.swift */,
 				4C1F323FA7FDDFD3E4A544A8 /* InputBarHistoryController.swift */,
 				D3964FA190864920EA9CB718 /* InputBarView.swift */,
@@ -612,6 +615,7 @@
 				TABCOMP001A00000000000002 /* CompletionProvider.swift in Sources */,
 				TABCOMP001A00000000000003 /* TabCompletionController.swift in Sources */,
 				36A1B2C3D4E5F607GITBRA01 /* GitBranchReader.swift in Sources */,
+				HISTPOP001A00000000000001 /* HistoryPopupView.swift in Sources */,
 				222EC9F7F53F29D795F54208 /* HistorySearchOverlayView.swift in Sources */,
 				81D353BEAF13304C4935B40F /* HistoryView.swift in Sources */,
 				35B61853D56E1060ECD8923D /* InputBarHistoryController.swift in Sources */,

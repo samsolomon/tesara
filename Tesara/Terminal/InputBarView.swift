@@ -131,8 +131,8 @@ final class InputBarState: ObservableObject {
             return
         }
 
-        // No ghost during history navigation, search, or tab completion
-        guard !historyController.isSearchActive && !historyController.isNavigatingHistory && !completionController.isActive else {
+        // No ghost during history popup, search, or tab completion
+        guard !historyController.isSearchActive && !historyController.isPopupActive && !completionController.isActive else {
             ghostSuffix = nil
             return
         }
@@ -160,20 +160,21 @@ final class InputBarKeyHandler: EditorViewDelegate {
     func editorView(_ editorView: EditorView, handleKeyDown event: NSEvent) -> Bool {
         let mods = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
 
-        // Escape — dismiss completion, cancel search, dismiss ghost text, or clear input
+        // Escape — dismiss completion, dismiss popup, cancel search, dismiss ghost text, or clear input
         if let chars = event.charactersIgnoringModifiers, chars == "\u{1b}" {
-            if let state = terminalSession?.inputBarState,
-               state.completionController.isActive {
-                state.completionController.dismiss()
-            } else if let state = terminalSession?.inputBarState,
-               state.historyController.isSearchActive {
-                state.historyController.cancelSearch()
-            } else if let state = terminalSession?.inputBarState,
-                      state.ghostSuffix != nil {
-                state.ghostSuffix = nil
-                editorView.setNeedsRender()
-            } else {
-                terminalSession?.inputBarState?.clear()
+            if let state = terminalSession?.inputBarState {
+                if state.completionController.isActive {
+                    state.completionController.dismiss()
+                } else if state.historyController.isPopupActive {
+                    state.historyController.dismissPopup(inputBarState: state)
+                } else if state.historyController.isSearchActive {
+                    state.historyController.cancelSearch()
+                } else if state.ghostSuffix != nil {
+                    state.ghostSuffix = nil
+                    editorView.setNeedsRender()
+                } else {
+                    state.clear()
+                }
             }
             return true
         }
@@ -192,8 +193,19 @@ final class InputBarKeyHandler: EditorViewDelegate {
             case "j":
                 editorView.session?.insertNewline()
                 return true
+            case "p":
+                let isSingleLine = (editorView.session?.storage.lineCount ?? 1) <= 1
+                guard isSingleLine else { return true }
+                historyPopupUp()
+                return true
+            case "n":
+                let isSingleLine = (editorView.session?.storage.lineCount ?? 1) <= 1
+                guard isSingleLine else { return true }
+                historyPopupDown()
+                return true
             case "r":
                 terminalSession?.inputBarState?.completionController.dismiss()
+                terminalSession?.inputBarState?.historyController.dismissPopupSilently()
                 terminalSession?.inputBarState?.historyController.beginSearch()
                 return true
             case "z":
@@ -202,6 +214,12 @@ final class InputBarKeyHandler: EditorViewDelegate {
             default:
                 break
             }
+        }
+
+        // Dismiss history popup on any unhandled key; restore original input,
+        // then let the character pass through to the editor.
+        if let state = terminalSession?.inputBarState, state.historyController.isPopupActive {
+            state.historyController.dismissPopup(inputBarState: state)
         }
 
         return false
@@ -220,6 +238,10 @@ final class InputBarKeyHandler: EditorViewDelegate {
                 state.completionController.acceptSelected()
                 return true
             }
+            if let state = terminalSession?.inputBarState, state.historyController.isPopupActive {
+                state.historyController.acceptPopupSelection()
+                // Fall through — input bar already has the selected command
+            }
             guard let terminalSession else { return true }
             let text = session.storage.entireString()
             terminalSession.sendFromInputBar(text: text)
@@ -235,6 +257,7 @@ final class InputBarKeyHandler: EditorViewDelegate {
             if state.completionController.isActive {
                 state.completionController.acceptSelected()
             } else {
+                state.historyController.dismissPopupSilently()
                 let pos = session.cursorPosition
                 let lineText = session.storage.lineContent(pos.line)
                 state.completionController.triggerCompletion(
@@ -252,12 +275,7 @@ final class InputBarKeyHandler: EditorViewDelegate {
                 return true
             }
             if isSingleLine && !mods.contains(.command) && !mods.contains(.option) {
-                if let state = terminalSession?.inputBarState {
-                    state.historyController.navigateUp(
-                        currentText: state.currentText(),
-                        inputBarState: state
-                    )
-                }
+                historyPopupUp()
                 return true
             }
             return false
@@ -268,12 +286,7 @@ final class InputBarKeyHandler: EditorViewDelegate {
                 return true
             }
             if isSingleLine && !mods.contains(.command) && !mods.contains(.option) {
-                if let state = terminalSession?.inputBarState {
-                    state.historyController.navigateDown(
-                        currentText: state.currentText(),
-                        inputBarState: state
-                    )
-                }
+                historyPopupDown()
                 return true
             }
             return false
@@ -298,6 +311,23 @@ final class InputBarKeyHandler: EditorViewDelegate {
 
         default:
             return false
+        }
+    }
+
+    private func historyPopupUp() {
+        guard let state = terminalSession?.inputBarState else { return }
+        if state.historyController.isPopupActive {
+            state.historyController.popupSelectPrevious(inputBarState: state)
+        } else {
+            state.completionController.dismiss()
+            state.historyController.openPopup(currentText: state.currentText(), inputBarState: state)
+        }
+    }
+
+    private func historyPopupDown() {
+        guard let state = terminalSession?.inputBarState else { return }
+        if state.historyController.isPopupActive {
+            state.historyController.popupSelectNext(inputBarState: state)
         }
     }
 

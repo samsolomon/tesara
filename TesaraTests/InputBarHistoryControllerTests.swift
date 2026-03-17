@@ -6,43 +6,42 @@ import GRDB
 final class InputBarHistoryControllerTests: XCTestCase {
     private var controller: InputBarHistoryController!
     private var blockStore: BlockStore!
+    private var dbQueue: DatabaseQueue!
     private var inputBarState: InputBarState!
 
     override func setUp() async throws {
         try await super.setUp()
         controller = InputBarHistoryController()
-        blockStore = try BlockStore(dbQueue: DatabaseQueue())
+        dbQueue = try DatabaseQueue()
+        blockStore = try BlockStore(dbQueue: dbQueue)
         controller.blockStore = blockStore
         inputBarState = InputBarState()
     }
 
     // MARK: - Helpers
 
+    /// Write a command directly to the database, bypassing the async dispatch
+    /// in `BlockStore.recordBlock` to avoid race conditions in tests.
     private func recordCommand(_ text: String) {
-        let sessionID = blockStore.startSession(
-            shellPath: "/bin/zsh",
-            workingDirectory: URL(fileURLWithPath: "/tmp")
-        )
-        let block = TerminalBlockCapture(
-            commandText: text,
-            outputText: "",
-            exitCode: 0,
-            startedAt: Date(),
-            finishedAt: Date(),
-            stage: .output
-        )
-        blockStore.recordBlock(sessionID: sessionID, block: block, orderIndex: 0)
-        waitForAsyncWrites()
-    }
-
-    private func waitForAsyncWrites() {
-        let expectation = XCTestExpectation(description: "async writes")
-        DispatchQueue.global(qos: .utility).async {
-            DispatchQueue.global(qos: .utility).async {
-                DispatchQueue.main.async { expectation.fulfill() }
-            }
+        let sessionID = UUID().uuidString
+        let blockID = UUID().uuidString
+        let now = Date()
+        try! dbQueue.write { db in
+            try db.execute(
+                sql: """
+                INSERT INTO terminal_sessions (id, shellPath, workingDirectory, startedAt)
+                VALUES (?, ?, ?, ?)
+                """,
+                arguments: [sessionID, "/bin/zsh", "/tmp", now]
+            )
+            try db.execute(
+                sql: """
+                INSERT INTO terminal_blocks (id, sessionID, orderIndex, commandText, outputText, exitCode, startedAt, finishedAt)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                arguments: [blockID, sessionID, 0, text, "", 0, now, now]
+            )
         }
-        wait(for: [expectation], timeout: 2)
     }
 
     // MARK: - Initial State
@@ -52,56 +51,125 @@ final class InputBarHistoryControllerTests: XCTestCase {
         XCTAssertEqual(controller.searchQuery, "")
         XCTAssertTrue(controller.searchResults.isEmpty)
         XCTAssertEqual(controller.selectedSearchIndex, 0)
+        XCTAssertFalse(controller.isPopupActive)
+        XCTAssertTrue(controller.popupItems.isEmpty)
+        XCTAssertEqual(controller.selectedPopupIndex, 0)
     }
 
-    // MARK: - Up/Down Navigation
+    // MARK: - History Popup
 
-    func testNavigateUpWithNoHistoryIsNoOp() {
+    func testOpenPopupWithEmptyHistoryIsNoOp() {
         inputBarState.setText("current")
-        controller.navigateUp(currentText: "current", inputBarState: inputBarState)
+        controller.openPopup(currentText: "current", inputBarState: inputBarState)
+        XCTAssertFalse(controller.isPopupActive)
         XCTAssertEqual(inputBarState.currentText(), "current")
     }
 
-    func testNavigateUpShowsHistory() {
+    func testOpenPopupShowsItems() {
         recordCommand("ls -la")
         inputBarState.setText("")
-        controller.navigateUp(currentText: "", inputBarState: inputBarState)
-        XCTAssertEqual(inputBarState.currentText(), "ls -la")
+        controller.openPopup(currentText: "", inputBarState: inputBarState)
+        XCTAssertTrue(controller.isPopupActive)
+        guard !controller.popupItems.isEmpty else { return XCTFail("Expected popup items") }
+        XCTAssertEqual(controller.selectedPopupIndex, 0)
+        XCTAssertEqual(inputBarState.currentText(), controller.popupItems[0])
     }
 
-    func testNavigateUpThenDownRestoresInput() {
+    func testDismissPopupRestoresInput() {
         recordCommand("ls -la")
-        inputBarState.setText("typed")
-        controller.navigateUp(currentText: "typed", inputBarState: inputBarState)
-        let afterUp = inputBarState.currentText()
-        // After navigating up, should show a history entry
-        XCTAssertFalse(afterUp.isEmpty)
-        controller.navigateDown(currentText: afterUp, inputBarState: inputBarState)
-        // After navigating back down, should restore saved input
-        XCTAssertEqual(inputBarState.currentText(), "typed")
+        inputBarState.setText("ls")
+        controller.openPopup(currentText: "ls", inputBarState: inputBarState)
+        // After opening, input bar should show first matching item
+        XCTAssertTrue(controller.isPopupActive)
+        controller.dismissPopup(inputBarState: inputBarState)
+        XCTAssertFalse(controller.isPopupActive)
+        XCTAssertEqual(inputBarState.currentText(), "ls")
     }
 
-    func testNavigateDownWithNoHistoryIsNoOp() {
-        inputBarState.setText("current")
-        controller.navigateDown(currentText: "current", inputBarState: inputBarState)
-        XCTAssertEqual(inputBarState.currentText(), "current")
+    func testPopupSelectPreviousClampsAtZero() {
+        recordCommand("first")
+        recordCommand("second")
+        inputBarState.setText("")
+        controller.openPopup(currentText: "", inputBarState: inputBarState)
+        XCTAssertEqual(controller.selectedPopupIndex, 0)
+        controller.popupSelectPrevious(inputBarState: inputBarState)
+        XCTAssertEqual(controller.selectedPopupIndex, 0)
     }
 
-    func testNavigateUpStopsAtEnd() {
+    func testPopupSelectNextClampsAtEnd() {
         recordCommand("only")
         inputBarState.setText("")
-        controller.navigateUp(currentText: "", inputBarState: inputBarState)
-        controller.navigateUp(currentText: inputBarState.currentText(), inputBarState: inputBarState)
-        XCTAssertEqual(inputBarState.currentText(), "only")
+        controller.openPopup(currentText: "", inputBarState: inputBarState)
+        XCTAssertEqual(controller.popupItems.count, 1)
+        controller.popupSelectNext(inputBarState: inputBarState)
+        XCTAssertEqual(controller.selectedPopupIndex, 0)
     }
 
-    func testNavigateUpWithPrefixFilter() {
+    func testOpenPopupWithPrefixFilter() {
         recordCommand("git status")
         recordCommand("ls -la")
         recordCommand("git push")
         inputBarState.setText("git")
-        controller.navigateUp(currentText: "git", inputBarState: inputBarState)
-        XCTAssertTrue(inputBarState.currentText().hasPrefix("git"))
+        controller.openPopup(currentText: "git", inputBarState: inputBarState)
+        XCTAssertTrue(controller.isPopupActive)
+        for item in controller.popupItems {
+            XCTAssertTrue(item.hasPrefix("git"))
+        }
+    }
+
+    func testOpenPopupWithNilBlockStoreIsNoOp() {
+        controller.blockStore = nil
+        inputBarState.setText("test")
+        controller.openPopup(currentText: "test", inputBarState: inputBarState)
+        XCTAssertFalse(controller.isPopupActive)
+        XCTAssertEqual(inputBarState.currentText(), "test")
+    }
+
+    func testPopupMaxTenItems() {
+        for i in 0..<15 {
+            recordCommand("cmd\(i)")
+        }
+        inputBarState.setText("")
+        controller.openPopup(currentText: "", inputBarState: inputBarState)
+        XCTAssertTrue(controller.isPopupActive)
+        XCTAssertLessThanOrEqual(controller.popupItems.count, 10)
+    }
+
+    func testAcceptPopupSelection() {
+        recordCommand("first")
+        recordCommand("second")
+        inputBarState.setText("")
+        controller.openPopup(currentText: "", inputBarState: inputBarState)
+        guard !controller.popupItems.isEmpty else { return XCTFail("Expected popup items") }
+        let selectedCommand = controller.popupItems[controller.selectedPopupIndex]
+        controller.acceptPopupSelection()
+        XCTAssertFalse(controller.isPopupActive)
+        // Input bar should still contain the selected command (not restored)
+        XCTAssertEqual(inputBarState.currentText(), selectedCommand)
+    }
+
+    func testResetDismissesPopup() {
+        recordCommand("ls -la")
+        inputBarState.setText("")
+        controller.openPopup(currentText: "", inputBarState: inputBarState)
+        XCTAssertTrue(controller.isPopupActive)
+        controller.reset()
+        XCTAssertFalse(controller.isPopupActive)
+        XCTAssertTrue(controller.popupItems.isEmpty)
+    }
+
+    func testPopupPreviewsSelectedItem() {
+        recordCommand("first")
+        recordCommand("second")
+        inputBarState.setText("")
+        controller.openPopup(currentText: "", inputBarState: inputBarState)
+        guard !controller.popupItems.isEmpty else { return XCTFail("Expected popup items") }
+        let firstItem = controller.popupItems[0]
+        XCTAssertEqual(inputBarState.currentText(), firstItem)
+        guard controller.popupItems.count > 1 else { return }
+        controller.popupSelectNext(inputBarState: inputBarState)
+        let secondItem = controller.popupItems[1]
+        XCTAssertEqual(inputBarState.currentText(), secondItem)
     }
 
     // MARK: - Search (Ctrl+R)
@@ -178,13 +246,6 @@ final class InputBarHistoryControllerTests: XCTestCase {
     }
 
     // MARK: - Nil BlockStore
-
-    func testNavigateUpWithNilBlockStoreIsNoOp() {
-        controller.blockStore = nil
-        inputBarState.setText("test")
-        controller.navigateUp(currentText: "test", inputBarState: inputBarState)
-        XCTAssertEqual(inputBarState.currentText(), "test")
-    }
 
     func testSearchWithNilBlockStoreReturnsEmpty() {
         controller.blockStore = nil
