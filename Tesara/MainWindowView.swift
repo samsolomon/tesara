@@ -37,7 +37,9 @@ struct MainWindowView: View {
             }
             .safeAreaInset(edge: .top, spacing: 0) {
                 if showTabBar {
-                    TitleBarTabStrip(manager: workspaceManager, theme: settingsStore.activeTheme)
+                    TitleBarTabStrip(manager: workspaceManager, isDarkBackground: settingsStore.activeTheme.isDarkBackground)
+                        .padding(.horizontal, CGFloat(settingsStore.settings.windowPaddingX))
+                        .padding(.vertical, 4)
                 }
             }
             .animation(.easeInOut(duration: 0.15), value: showTabBar)
