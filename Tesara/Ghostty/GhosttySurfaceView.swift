@@ -168,6 +168,10 @@ class GhosttySurfaceView: NSView, NSTextInputClient {
 
     // MARK: - Focus
 
+    /// Pending focus work item — cancel-and-replace ensures at most one
+    /// deferred `ghostty_surface_set_focus` call is in flight at a time.
+    private var pendingFocusWork: DispatchWorkItem?
+
     func focusDidChange(_ isFocused: Bool) {
         guard let surface, self.focused != isFocused else { return }
         self.focused = isFocused
@@ -176,16 +180,33 @@ class GhosttySurfaceView: NSView, NSTextInputClient {
             suppressNextLeftMouseUp = false
         }
 
-        ghostty_surface_set_focus(surface, isFocused)
+        deferFocusNotification(isFocused)
     }
 
     /// Unconditionally update Ghostty's focus state and our tracked flag.
     /// Use when the guard in focusDidChange would skip (e.g. initial startup).
+    /// Calls ghostty synchronously — callers depend on immediate delivery.
     func setGhosttyFocus(_ isFocused: Bool) {
         focused = isFocused
         if !isFocused { suppressNextLeftMouseUp = false }
         guard let surface else { return }
+        pendingFocusWork?.cancel()
+        pendingFocusWork = nil
         ghostty_surface_set_focus(surface, isFocused)
+    }
+
+    /// Defers `ghostty_surface_set_focus` to the next run-loop iteration so the
+    /// main thread doesn't block on `renderer_state.mutex` while the renderer is
+    /// mid-frame.  Uses cancel-and-replace to coalesce rapid focus changes.
+    private func deferFocusNotification(_ isFocused: Bool) {
+        pendingFocusWork?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            guard let self, let surface = self.surface,
+                  self.focused == isFocused else { return }
+            ghostty_surface_set_focus(surface, isFocused)
+        }
+        pendingFocusWork = work
+        DispatchQueue.main.async(execute: work)
     }
 
     private var cursorHidden = false
