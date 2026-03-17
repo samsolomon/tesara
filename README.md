@@ -15,6 +15,7 @@ Tesara is a native macOS terminal that prioritizes clarity, speed, and restraint
 - **Split panes** — divide your workspace without leaving the window
 - **Inline editor** — native text editing surfaces alongside your terminal
 - **Command history** — persistent, searchable history across sessions
+- **Agent notifications** — tab badges and macOS notifications when a background process needs attention (via OSC 9/777)
 - **Themes and settings** — configurable via `~/.config/tesara/config` with live reload
 
 ## Install
