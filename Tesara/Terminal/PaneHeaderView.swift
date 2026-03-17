@@ -6,6 +6,7 @@ struct PaneHeaderView: View {
     let paneID: UUID
     let title: String
     let isActive: Bool
+    let hasNotification: Bool
     let theme: TerminalTheme
     let onClose: () -> Void
 
@@ -17,6 +18,10 @@ struct PaneHeaderView: View {
 
     var body: some View {
         HStack(spacing: 0) {
+            NotificationDot()
+                .padding(.trailing, 4)
+                .visible(hasNotification && !isActive)
+
             Text(title)
                 .font(.system(size: 12))
                 .foregroundStyle(theme.swiftUIColor(from: theme.foreground).opacity(isActive ? 0.7 : 0.4))
@@ -54,6 +59,24 @@ struct PaneHeaderView: View {
         .onDrag {
             dragState.dragStarted(sourceID: paneID)
             return NSItemProvider(object: "tesara-pane:\(paneID.uuidString)" as NSString)
+        }
+    }
+}
+
+struct NotificationDot: View {
+    var body: some View {
+        Circle()
+            .fill(Color.accentColor)
+            .frame(width: 6, height: 6)
+            .transition(.scale.combined(with: .opacity))
+    }
+}
+
+extension View {
+    @ViewBuilder
+    func visible(_ condition: Bool) -> some View {
+        if condition {
+            self
         }
     }
 }

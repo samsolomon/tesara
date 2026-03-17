@@ -73,6 +73,7 @@ struct PaneContainerView: View {
                             mode: tabTitleMode
                         ),
                         isActive: id == activePaneID,
+                        hasNotification: session.pendingNotification != nil,
                         theme: theme,
                         onClose: { onClosePane?(id) }
                     )
@@ -94,6 +95,7 @@ struct PaneContainerView: View {
                         paneID: id,
                         title: session.displayTitle,
                         isActive: id == activePaneID,
+                        hasNotification: false,
                         theme: theme,
                         onClose: { onClosePane?(id) }
                     )

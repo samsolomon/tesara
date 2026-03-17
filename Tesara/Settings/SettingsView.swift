@@ -70,6 +70,8 @@ struct SettingsDetailView: View {
                 settings: $settingsStore.settings,
                 onChooseDirectory: { isDirectoryPickerPresented = true }
             )
+        case .notifications:
+            NotificationsSettingsPane(settings: $settingsStore.settings)
         case .workspace:
             WorkspaceSettingsPane(settings: $settingsStore.settings)
         case .keyboard:
@@ -113,6 +115,7 @@ struct SettingsDetailView: View {
 enum SettingsPane: String, CaseIterable, Identifiable {
     case appearance
     case terminal
+    case notifications
     case workspace
     case keyboard
     case privacy
@@ -125,6 +128,8 @@ enum SettingsPane: String, CaseIterable, Identifiable {
             "Appearance"
         case .terminal:
             "Terminal"
+        case .notifications:
+            "Notifications"
         case .workspace:
             "Workspace"
         case .keyboard:
@@ -140,6 +145,8 @@ enum SettingsPane: String, CaseIterable, Identifiable {
             "Theme, font, and visual presentation for terminal and editor panes."
         case .terminal:
             "Default shell, startup directory, and session safety controls."
+        case .notifications:
+            "Bell behavior and desktop notification preferences."
         case .workspace:
             "How tabs and split panes behave throughout the workspace."
         case .keyboard:
@@ -155,6 +162,8 @@ enum SettingsPane: String, CaseIterable, Identifiable {
             "paintpalette"
         case .terminal:
             "terminal"
+        case .notifications:
+            "bell"
         case .workspace:
             "square.split.2x1"
         case .keyboard:
@@ -421,17 +430,6 @@ private struct TerminalSettingsPane: View {
                 }
             }
 
-            Section("Notifications") {
-                settingRow("Bell", description: "Controls how terminal bell characters are handled.") {
-                    Picker("", selection: $settings.bellMode) {
-                        ForEach(BellMode.allCases) { mode in
-                            Text(mode.title).tag(mode)
-                        }
-                    }
-                    .labelsHidden()
-                }
-            }
-
             Section("Safety") {
                 settingRow("Paste protection", description: "Warns before pasting text that contains multiple lines.") {
                     Picker("", selection: $settings.pasteProtectionMode) {
@@ -495,6 +493,42 @@ private struct TerminalSettingsPane: View {
             return (presets + [settings.scrollbackLines]).sorted()
         }
         return presets
+    }
+}
+
+private struct NotificationsSettingsPane: View {
+    @Binding var settings: AppSettings
+
+    var body: some View {
+        Form {
+            Section("Bell") {
+                settingRow("Bell mode", description: "Controls how terminal bell characters are handled.") {
+                    Picker("", selection: $settings.bellMode) {
+                        ForEach(BellMode.allCases) { mode in
+                            Text(mode.title).tag(mode)
+                        }
+                    }
+                    .labelsHidden()
+                }
+            }
+
+            Section("Desktop notifications") {
+                settingRow("Notification mode", description: "Controls how OSC 9/777 desktop notification requests from terminal programs are handled.") {
+                    Picker("", selection: $settings.notificationMode) {
+                        ForEach(NotificationMode.allCases) { mode in
+                            Text(mode.title).tag(mode)
+                        }
+                    }
+                    .labelsHidden()
+                }
+            }
+
+            Section {
+            } footer: {
+                SettingsFooter()
+            }
+        }
+        .formStyle(.grouped)
     }
 }
 

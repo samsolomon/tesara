@@ -149,6 +149,12 @@ struct TesaraAppCommands: Commands {
             }
             .keyboardShortcut("]", modifiers: [.command, .shift])
 
+            Button("Jump to unread") {
+                manager.selectNextUnreadTab()
+            }
+            .keyboardShortcut("u", modifiers: [.command, .shift])
+            .disabled(manager.tabsWithNotifications.isEmpty)
+
             Divider()
 
             ForEach(0..<9, id: \.self) { index in

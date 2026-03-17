@@ -43,6 +43,7 @@ struct AppSettings: Codable, Equatable {
     var copyOnSelect: Bool
     var clipboardTrimTrailingSpaces: Bool
     var bellMode: BellMode
+    var notificationMode: NotificationMode
 
     init(
         schemaVersion: Int = currentSchemaVersion,
@@ -78,7 +79,8 @@ struct AppSettings: Codable, Equatable {
         scrollbackLines: Int = 10000,
         copyOnSelect: Bool = false,
         clipboardTrimTrailingSpaces: Bool = false,
-        bellMode: BellMode = .system
+        bellMode: BellMode = .system,
+        notificationMode: NotificationMode = .full
     ) {
         self.schemaVersion = schemaVersion
         self.fontFamily = fontFamily
@@ -114,6 +116,7 @@ struct AppSettings: Codable, Equatable {
         self.copyOnSelect = copyOnSelect
         self.clipboardTrimTrailingSpaces = clipboardTrimTrailingSpaces
         self.bellMode = bellMode
+        self.notificationMode = notificationMode
     }
 
     static var `default`: AppSettings {
@@ -178,6 +181,7 @@ struct AppSettings: Codable, Equatable {
         case copyOnSelect
         case clipboardTrimTrailingSpaces
         case bellMode
+        case notificationMode
     }
 
     init(from decoder: Decoder) throws {
@@ -223,6 +227,7 @@ struct AppSettings: Codable, Equatable {
         copyOnSelect = try container.decodeIfPresent(Bool.self, forKey: .copyOnSelect) ?? false
         clipboardTrimTrailingSpaces = try container.decodeIfPresent(Bool.self, forKey: .clipboardTrimTrailingSpaces) ?? false
         bellMode = try container.decodeIfPresent(BellMode.self, forKey: .bellMode) ?? .system
+        notificationMode = try container.decodeIfPresent(NotificationMode.self, forKey: .notificationMode) ?? .full
     }
 
     func encode(to encoder: Encoder) throws {
@@ -261,6 +266,7 @@ struct AppSettings: Codable, Equatable {
         try container.encode(copyOnSelect, forKey: .copyOnSelect)
         try container.encode(clipboardTrimTrailingSpaces, forKey: .clipboardTrimTrailingSpaces)
         try container.encode(bellMode, forKey: .bellMode)
+        try container.encode(notificationMode, forKey: .notificationMode)
     }
 }
 
@@ -402,6 +408,22 @@ enum BellMode: String, Codable, CaseIterable, Identifiable {
         case .none: "None"
         case .system: "System Sound"
         case .visual: "Visual Flash"
+        }
+    }
+}
+
+enum NotificationMode: String, Codable, CaseIterable, Identifiable {
+    case off
+    case badgeOnly
+    case full
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .off: "Off"
+        case .badgeOnly: "Badge only"
+        case .full: "Badge and system notification"
         }
     }
 }
@@ -611,6 +633,7 @@ enum ConfigKey {
     static let updateChecksEnabled = "update-checks-enabled"
     static let localLoggingEnabled = "local-logging-enabled"
     static let historyCaptureEnabled = "history-capture-enabled"
+    static let notificationMode = "notification-mode"
     static let keybind = "keybind"
 }
 

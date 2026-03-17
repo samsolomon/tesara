@@ -220,6 +220,9 @@ final class GhosttyApp: @unchecked Sendable {
         case GHOSTTY_ACTION_QUIT:
             return handleQuit()
 
+        case GHOSTTY_ACTION_DESKTOP_NOTIFICATION:
+            return handleDesktopNotification(target: target, action: action)
+
         default:
             return false
         }
@@ -409,6 +412,17 @@ final class GhosttyApp: @unchecked Sendable {
             return false
         }
         delegate.ghosttyCloseWindow()
+        return true
+    }
+
+    @MainActor
+    private func handleDesktopNotification(target: ghostty_target_s, action: ghostty_action_s) -> Bool {
+        guard let session = sessionFromTarget(target) else { return false }
+        let notification = action.action.desktop_notification
+        let title = notification.title.map(String.init(cString:)) ?? "Terminal"
+        let body = notification.body.map(String.init(cString:)) ?? ""
+        LocalLogStore.shared.log("[GhosttyApp] Desktop notification: title=\"\(title)\" body=\"\(body)\"")
+        actionDelegate?.ghosttyDesktopNotification(for: session, title: title, body: body)
         return true
     }
 

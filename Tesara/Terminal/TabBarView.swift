@@ -38,6 +38,7 @@ struct TitleBarTabStrip: View {
             title: tab.title,
             shortcutLabel: index < 9 ? "⌘\(index + 1)" : nil,
             isActive: isActive,
+            hasNotification: manager.tabsWithNotifications.contains(tab.id),
             isDarkBackground: isDarkBackground,
             onSelect: { manager.selectTab(id: tab.id) },
             onClose: { manager.closeTab(id: tab.id) }
@@ -52,6 +53,7 @@ private struct TabCapsuleButton: View {
     let title: String
     let shortcutLabel: String?
     let isActive: Bool
+    let hasNotification: Bool
     let isDarkBackground: Bool
     let onSelect: () -> Void
     let onClose: () -> Void
@@ -106,6 +108,9 @@ private struct TabCapsuleButton: View {
         Button(action: onSelect) {
             HStack(spacing: 6) {
                 HStack(spacing: 4) {
+                    NotificationDot()
+                        .visible(hasNotification && !isActive)
+
                     Text(title)
                         .font(.system(size: 12, weight: isActive ? .semibold : .medium))
                         .foregroundStyle(primaryColor)
@@ -153,6 +158,7 @@ private struct TabCapsuleButton: View {
         .clipShape(Capsule())
         .animation(animation, value: isHovering)
         .animation(animation, value: isActive)
+        .animation(animation, value: hasNotification)
         .animation(animation, value: controlActiveState)
         .onHover { hovering in
             isHovering = hovering

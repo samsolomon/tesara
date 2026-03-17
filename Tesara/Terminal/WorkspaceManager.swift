@@ -1,6 +1,7 @@
 import AppKit
 import Combine
 import Foundation
+import UserNotifications
 
 /// Protocol for routing Ghostty keybinding actions to workspace operations.
 /// Handlers take the originating session so they operate on the correct tab/pane,
@@ -14,6 +15,7 @@ import Foundation
     func ghosttySplit(for session: TerminalSession, direction: PaneNode.SplitDirection, newPanePosition: PaneNode.PanePosition)
     func ghosttyCloseWindow()
     func ghosttyRequestQuit()
+    func ghosttyDesktopNotification(for session: TerminalSession, title: String, body: String)
 }
 
 @MainActor
@@ -56,6 +58,8 @@ final class WorkspaceManager: ObservableObject {
     @Published var pendingStaleReload: UUID?
     @Published var lastFileError: Error?
 
+    @Published private(set) var tabsWithNotifications: Set<UUID> = []
+
     var sessionFactory: () -> TerminalSession = { TerminalSession() }
     weak var settingsStore: SettingsStore?
     weak var blockStore: BlockStore?
@@ -63,6 +67,11 @@ final class WorkspaceManager: ObservableObject {
     @Published private(set) var tabTitleMode: TabTitleMode = .shellTitle
     private var paneObservers: [UUID: AnyCancellable] = [:]
     private var pendingSaveContinuation: PendingSaveContinuation?
+    private var notificationOrder: [UUID] = []
+    private var lastNotificationTime: [UUID: Date] = [:]
+    private var hasRequestedNotificationAuth = false
+    private static let notificationIdentifierPrefix = "tesara-osc-"
+    private static let notificationThrottleInterval: TimeInterval = 2
 
     private enum PendingSaveContinuation {
         case closePane(UUID)
@@ -99,6 +108,15 @@ final class WorkspaceManager: ObservableObject {
     private func performCloseTab(id: UUID) {
         guard let index = tabs.firstIndex(where: { $0.id == id }) else { return }
 
+        // Clean up notification state for all sessions in the closing tab
+        for (_, session) in tabs[index].rootPane.allTerminalSessions() {
+            lastNotificationTime.removeValue(forKey: session.id)
+        }
+        tabsWithNotifications.remove(id)
+        if let orderIndex = notificationOrder.firstIndex(of: id) {
+            notificationOrder.remove(at: orderIndex)
+        }
+
         stopAllSessions(in: tabs[index].rootPane)
         tabs.remove(at: index)
 
@@ -122,6 +140,7 @@ final class WorkspaceManager: ObservableObject {
         let selectedPaneID = resolvedSelectedPaneID(for: tabs[tabIndex])
         tabs[tabIndex].selectedPaneID = selectedPaneID
         activePaneID = selectedPaneID
+        clearNotificationsForTab(id: id)
         refreshWorkspaceMetadata()
     }
 
@@ -155,6 +174,23 @@ final class WorkspaceManager: ObservableObject {
         guard let activeTabID, let index = tabs.firstIndex(where: { $0.id == activeTabID }), tabs.count > 1 else { return }
         let newIndex = index < tabs.count - 1 ? index + 1 : 0
         selectTab(id: tabs[newIndex].id)
+    }
+
+    func selectNextUnreadTab() {
+        guard let nextID = notificationOrder.first else { return }
+        selectTab(id: nextID)
+    }
+
+    func clearNotificationsForTab(id tabID: UUID) {
+        guard tabsWithNotifications.remove(tabID) != nil else { return }
+        if let orderIndex = notificationOrder.firstIndex(of: tabID) {
+            notificationOrder.remove(at: orderIndex)
+        }
+        guard let tab = tabs.first(where: { $0.id == tabID }) else { return }
+        for (_, session) in tab.rootPane.allTerminalSessions() {
+            session.clearNotification()
+            lastNotificationTime.removeValue(forKey: session.id)
+        }
     }
 
     var activeTab: Tab? {
@@ -842,6 +878,53 @@ extension WorkspaceManager: GhosttyActionDelegate {
             workingDirectory: resolvedWorkingDirectory(from: session),
             blockStore: blockStore
         )
+    }
+
+    func ghosttyDesktopNotification(for session: TerminalSession, title: String, body: String) {
+        guard let (tabID, _) = tabAndPaneID(for: session) else { return }
+
+        let mode = settingsStore?.settings.notificationMode ?? .full
+        guard mode != .off else { return }
+
+        let isBackgrounded = tabID != activeTabID || !NSApp.isActive
+
+        // Always update session state so the badge can reflect it
+        session.handleDesktopNotification(title: title, body: body)
+
+        guard isBackgrounded else { return }
+
+        // Add to unread tracking (deduplicate)
+        if !tabsWithNotifications.contains(tabID) {
+            tabsWithNotifications.insert(tabID)
+            notificationOrder.append(tabID)
+        }
+
+        // Rate-limit system notifications: 2s per session
+        let now = Date()
+        let sessionID = session.id
+        if let last = lastNotificationTime[sessionID], now.timeIntervalSince(last) < Self.notificationThrottleInterval {
+            return
+        }
+        lastNotificationTime[sessionID] = now
+
+        guard mode == .full else { return }
+
+        // Lazily request notification authorization
+        if !hasRequestedNotificationAuth {
+            hasRequestedNotificationAuth = true
+            UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
+        }
+
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = .default
+        let request = UNNotificationRequest(
+            identifier: "\(Self.notificationIdentifierPrefix)\(UUID())",
+            content: content,
+            trigger: nil
+        )
+        UNUserNotificationCenter.current().add(request)
     }
 
     func ghosttyCloseWindow() {

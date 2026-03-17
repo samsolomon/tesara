@@ -61,6 +61,7 @@ enum ConfigFile {
         lines.append("\(K.dimInactiveSplits) = \(settings.dimInactiveSplits)")
         lines.append("\(K.inactiveSplitDimAmount) = \(fmt(settings.inactiveSplitDimAmount))")
         lines.append("\(K.confirmOnCloseRunningSession) = \(settings.confirmOnCloseRunningSession)")
+        lines.append("\(K.notificationMode) = \(settings.notificationMode.rawValue)")
         lines.append("")
         lines.append("# Privacy")
         lines.append("\(K.updateChecksEnabled) = \(settings.updateChecksEnabled)")
@@ -153,6 +154,7 @@ enum ConfigFile {
         settings.dimInactiveSplits = bool(K.dimInactiveSplits, d.dimInactiveSplits)
         settings.inactiveSplitDimAmount = double(K.inactiveSplitDimAmount, d.inactiveSplitDimAmount)
         settings.confirmOnCloseRunningSession = bool(K.confirmOnCloseRunningSession, d.confirmOnCloseRunningSession)
+        settings.notificationMode = enumVal(K.notificationMode, d.notificationMode)
 
         settings.updateChecksEnabled = bool(K.updateChecksEnabled, d.updateChecksEnabled)
         settings.localLoggingEnabled = bool(K.localLoggingEnabled, d.localLoggingEnabled)

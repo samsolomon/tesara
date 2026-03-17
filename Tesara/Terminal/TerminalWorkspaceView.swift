@@ -40,6 +40,11 @@ struct TerminalWorkspaceView: View {
             .onChange(of: settingsStore.cursorConfigInputs) { _, _ in
                 propagateCursorToEditors()
             }
+            .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+                if let activeTabID = manager.activeTabID {
+                    manager.clearNotificationsForTab(id: activeTabID)
+                }
+            }
             .fileImporter(
                 isPresented: $manager.showOpenPanel,
                 allowedContentTypes: [.plainText, .sourceCode, .data]

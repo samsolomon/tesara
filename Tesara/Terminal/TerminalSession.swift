@@ -1,6 +1,12 @@
 import Combine
 import Foundation
 
+struct TerminalNotification {
+    let title: String
+    let body: String
+    let receivedAt: Date
+}
+
 @MainActor
 final class TerminalSession: ObservableObject, Identifiable {
     enum Status: String {
@@ -23,6 +29,7 @@ final class TerminalSession: ObservableObject, Identifiable {
     @Published private(set) var isAlternateScreen = false
     @Published private(set) var isHistorySearchActive = false
     @Published private(set) var hoverUrl: String?
+    @Published private(set) var pendingNotification: TerminalNotification?
 
     /// Published so prompt-driven presentation updates can react when the input
     /// bar is created or torn down outside the same render pass.
@@ -268,6 +275,15 @@ final class TerminalSession: ObservableObject, Identifiable {
     func updateHoverUrl(_ url: String?) {
         guard hoverUrl != url else { return }
         hoverUrl = url
+    }
+
+    func handleDesktopNotification(title: String, body: String) {
+        pendingNotification = TerminalNotification(title: title, body: body, receivedAt: Date())
+    }
+
+    func clearNotification() {
+        guard pendingNotification != nil else { return }
+        pendingNotification = nil
     }
 
     func updateTitle(_ title: String) {
