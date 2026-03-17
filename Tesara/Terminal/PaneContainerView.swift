@@ -458,9 +458,9 @@ private struct TerminalPaneLeafView: View {
                     .allowsHitTesting(false)
             }
         }
-        .contentShape(Rectangle())
-        .onTapGesture {
-            onSelectPane(id)
-        }
+        // No SwiftUI tap gesture — focus transfer is handled by
+        // GhosttySurfaceView.onPaneFocusRequest in localEventLeftMouseDown.
+        // A tap gesture here would intercept the click before AppKit,
+        // preventing first-responder transfer on the first click.
     }
 }

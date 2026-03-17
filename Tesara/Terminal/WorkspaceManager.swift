@@ -182,7 +182,8 @@ final class WorkspaceManager: ObservableObject {
     }
 
     func clearNotificationsForTab(id tabID: UUID) {
-        guard tabsWithNotifications.remove(tabID) != nil else { return }
+        guard tabsWithNotifications.contains(tabID) else { return }
+        tabsWithNotifications.remove(tabID)
         if let orderIndex = notificationOrder.firstIndex(of: tabID) {
             notificationOrder.remove(at: orderIndex)
         }
