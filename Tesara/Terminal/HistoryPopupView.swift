@@ -43,7 +43,7 @@ struct HistoryPopupView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
-            .background(isSelected ? theme.swiftUIColor(from: theme.blue).opacity(0.3) : .clear)
+            .background(isSelected ? theme.swiftUIColor(from: theme.cursor).opacity(0.2) : .clear)
             .contentShape(Rectangle())
             .onTapGesture {
                 onAccept(index)
