@@ -2,9 +2,9 @@
 
 # Tesara
 
-A modern, minimal terminal emulator for macOS.
+A modern, minimal terminal emulator for the agentic age.
 
-[Download](https://github.com/samsolomon/tesara/releases/latest/download/Tesara.zip)
+[MacOS Download](https://github.com/samsolomon/tesara/releases/latest/download/Tesara.zip)
 
 ## Features
 
@@ -12,10 +12,10 @@ Tesara is a native macOS terminal that prioritizes clarity, speed, and restraint
 
 - **Native macOS experience** — proper windowing, tabs, and keyboard shortcuts that feel at home on the platform
 - **GPU-accelerated rendering** — powered by Ghostty's Metal-backed `libghostty` for fast, accurate terminal output
+- **Agent notifications** — tab badges and macOS notifications when a background process needs attention
 - **Split panes** — divide your workspace without leaving the window
-- **Inline editor** — native text editing surfaces alongside your terminal
+- **Inline editor** — native text editing surfaces within your terminal
 - **Command history** — persistent, searchable history across sessions
-- **Agent notifications** — tab badges and macOS notifications when a background process needs attention (via OSC 9/777)
 - **Themes and settings** — configurable via `~/.config/tesara/config` with live reload
 
 ## Install
