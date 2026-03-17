@@ -27,13 +27,13 @@ final class InputBarHistoryController: ObservableObject {
             candidates = history.filter { $0.hasPrefix(currentText) }
         }
 
-        let items = Array(candidates.prefix(10))
+        let items = Array(candidates.prefix(10).reversed())
         guard !items.isEmpty else { return }
 
         popupItems = items
-        selectedPopupIndex = 0
+        selectedPopupIndex = items.count - 1
         isPopupActive = true
-        inputBarState.setText(items[0])
+        inputBarState.setText(items[selectedPopupIndex])
     }
 
     func popupSelectPrevious(inputBarState: InputBarState) {

@@ -373,9 +373,11 @@ final class TerminalSession: ObservableObject, Identifiable {
     }
 
     private func sanitizeCommand(_ command: String) -> String {
-        command
+        let normalized = command
             .replacingOccurrences(of: "\r\n", with: "\n")
             .replacingOccurrences(of: "\r", with: "\n")
+        return normalized
+            .removingAnsiSequences()
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
@@ -421,5 +423,66 @@ final class TerminalSession: ObservableObject, Identifiable {
             guard modified < effectiveCutoff else { continue }
             try? fm.removeItem(atPath: path)
         }
+    }
+}
+
+private extension String {
+    func removingAnsiSequences() -> String {
+        var cleaned = ""
+        let scalars = Array(self.unicodeScalars)
+        var index = 0
+        while index < scalars.count {
+            let scalar = scalars[index]
+            if scalar == "\u{001b}" {
+                index += 1
+                guard index < scalars.count else { break }
+                let next = scalars[index]
+                switch next {
+                case "[":
+                    index += 1
+                    while index < scalars.count {
+                        let c = scalars[index]
+                        index += 1
+                        if (0x40...0x7e).contains(c.value) {
+                            break
+                        }
+                    }
+                case "]":
+                    index += 1
+                    while index < scalars.count {
+                        let c = scalars[index]
+                        if c == "\u{0007}" {
+                            index += 1
+                            break
+                        }
+                        if c == "\u{001b}", index + 1 < scalars.count, scalars[index + 1] == "\\" {
+                            index += 2
+                            break
+                        }
+                        index += 1
+                    }
+                case "P", "_", "X":
+                    index += 1
+                    while index < scalars.count {
+                        let c = scalars[index]
+                        if c == "\u{001b}", index + 1 < scalars.count, scalars[index + 1] == "\\" {
+                            index += 2
+                            break
+                        }
+                        index += 1
+                    }
+                default:
+                    index += 1
+                }
+                continue
+            }
+            if scalar == "\u{0007}" {
+                index += 1
+                continue
+            }
+            cleaned.append(Character(scalar))
+            index += 1
+        }
+        return cleaned
     }
 }
