@@ -65,7 +65,7 @@ struct PaneHeaderView: View {
     }
 }
 
-private struct CloseButton: View {
+struct CloseButton: View {
     let foregroundColor: Color
     let isActive: Bool
     let action: () -> Void

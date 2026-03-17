@@ -37,11 +37,10 @@ struct MainWindowView: View {
             }
             .safeAreaInset(edge: .top, spacing: 0) {
                 if showTabBar {
-                    TitleBarTabStrip(manager: workspaceManager, isDarkBackground: settingsStore.activeTheme.isDarkBackground, onNewTab: addTab)
-                        .padding(.horizontal, CGFloat(settingsStore.settings.windowPaddingX))
-                        .padding(.vertical, 4)
+                    TitleBarTabStrip(manager: workspaceManager, theme: settingsStore.activeTheme, onNewTab: addTab)
                 }
             }
+            .animation(.easeInOut(duration: 0.15), value: showTabBar)
     }
 
     private func addTab() {
