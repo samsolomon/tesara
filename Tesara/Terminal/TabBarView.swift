@@ -88,7 +88,7 @@ private struct TabSegmentButton: View {
             HStack(spacing: 6) {
                 HStack(spacing: 4) {
                     Text(title)
-                        .font(.system(size: 12))
+                        .font(.system(size: 14))
                         .foregroundStyle(foregroundColor.opacity(titleOpacity))
                         .lineLimit(1)
 
@@ -114,12 +114,6 @@ private struct TabSegmentButton: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .background {
-            if !isActive && isHovering {
-                Rectangle()
-                    .fill(foregroundColor.opacity(0.05))
-            }
-        }
         .animation(animation, value: isHovering)
         .animation(animation, value: isActive)
         .onHover { hovering in
