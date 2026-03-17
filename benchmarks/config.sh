@@ -4,7 +4,7 @@
 set -euo pipefail
 
 # ── Terminal names (order matters for iteration) ─────────────────────
-TERMINAL_NAMES="Tesara Terminal iTerm2 Ghostty Alacritty Kitty Warp"
+TERMINAL_NAMES="Tesara Terminal iTerm2 Ghostty Alacritty Kitty Warp cmux"
 
 # ── Terminal bundle ID lookup ────────────────────────────────────────
 get_bundle_id() {
@@ -16,6 +16,7 @@ get_bundle_id() {
     Alacritty) echo "org.alacritty" ;;
     Kitty)     echo "net.kovidgoyal.kitty" ;;
     Warp)      echo "dev.warp.Warp-Stable" ;;
+    cmux)      echo "com.cmuxterm.app" ;;
     *)         echo "" ;;
   esac
 }
