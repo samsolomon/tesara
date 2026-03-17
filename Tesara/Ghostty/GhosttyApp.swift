@@ -102,9 +102,12 @@ final class GhosttyApp: @unchecked Sendable {
         }
         app = nil
         focusedSurface = nil
-        lock.withLock {
+        let old = lock.withLock {
+            let snapshot = surfaceRegistry
             surfaceRegistry.removeAll()
+            return snapshot
         }
+        _ = old  // deallocate sessions outside the lock
     }
 
     // MARK: - Surface Registry
@@ -116,8 +119,12 @@ final class GhosttyApp: @unchecked Sendable {
     }
 
     func unregister(surfaceUserdata: UnsafeRawPointer) {
-        lock.withLock {
-            surfaceRegistry[surfaceUserdata] = nil
+        // Use removeValue so the old TerminalSession reference is returned and
+        // deallocated *after* the lock is released.  TerminalSession is @MainActor;
+        // releasing it inside the lock can deadlock when deinit needs the main
+        // thread while the main thread is waiting on this same lock.
+        let _ = lock.withLock {
+            surfaceRegistry.removeValue(forKey: surfaceUserdata)
         }
     }
 
