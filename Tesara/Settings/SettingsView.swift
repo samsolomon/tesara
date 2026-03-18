@@ -575,6 +575,17 @@ private struct WorkspaceSettingsPane: View {
     var body: some View {
         Form {
             Section("Tabs") {
+                settingRow("Tab bar style", description: "Show tabs in a horizontal strip or a vertical sidebar.") {
+                    Picker("", selection: $settings.tabBarStyle) {
+                        ForEach(TabBarStyle.allCases) { style in
+                            Text(style.title).tag(style)
+                        }
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.segmented)
+                    .fixedSize()
+                }
+
                 settingRow("Tab title", description: "Whether tabs display the shell-provided title or the current working directory.") {
                     Picker("", selection: $settings.tabTitleMode) {
                         ForEach(TabTitleMode.allCases) { mode in

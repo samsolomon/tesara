@@ -36,13 +36,22 @@ struct MainWindowView: View {
                 )
             }
             .safeAreaInset(edge: .top, spacing: 0) {
-                if showTabBar {
+                if showTabBar && settingsStore.settings.tabBarStyle == .strip {
                     TitleBarTabStrip(manager: workspaceManager, isDarkBackground: settingsStore.activeTheme.isDarkBackground)
                         .padding(.horizontal, CGFloat(settingsStore.settings.windowPaddingX))
                         .padding(.vertical, 4)
                 }
             }
+            .safeAreaInset(edge: .leading, spacing: 0) {
+                if showTabBar && settingsStore.settings.tabBarStyle == .sidebar {
+                    TabSidebarList(
+                        manager: workspaceManager,
+                        isDarkBackground: settingsStore.activeTheme.isDarkBackground
+                    )
+                }
+            }
             .animation(.easeInOut(duration: 0.15), value: showTabBar)
+            .animation(.easeInOut(duration: 0.15), value: settingsStore.settings.tabBarStyle)
     }
 
     private func addTab() {

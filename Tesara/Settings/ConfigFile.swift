@@ -57,6 +57,7 @@ enum ConfigFile {
         lines.append("\(K.inputBarPromptInfoEnabled) = \(settings.inputBarPromptInfoEnabled)")
         lines.append("")
         lines.append("# Workspace")
+        lines.append("\(K.tabBarStyle) = \(settings.tabBarStyle.rawValue)")
         lines.append("\(K.tabTitleMode) = \(settings.tabTitleMode.rawValue)")
         lines.append("\(K.dimInactiveSplits) = \(settings.dimInactiveSplits)")
         lines.append("\(K.inactiveSplitDimAmount) = \(fmt(settings.inactiveSplitDimAmount))")
@@ -150,6 +151,7 @@ enum ConfigFile {
         settings.inputBarEnabled = bool(K.inputBarEnabled, d.inputBarEnabled)
         settings.inputBarPromptInfoEnabled = bool(K.inputBarPromptInfoEnabled, d.inputBarPromptInfoEnabled)
 
+        settings.tabBarStyle = enumVal(K.tabBarStyle, d.tabBarStyle)
         settings.tabTitleMode = enumVal(K.tabTitleMode, d.tabTitleMode)
         settings.dimInactiveSplits = bool(K.dimInactiveSplits, d.dimInactiveSplits)
         settings.inactiveSplitDimAmount = double(K.inactiveSplitDimAmount, d.inactiveSplitDimAmount)

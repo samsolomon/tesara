@@ -19,6 +19,7 @@ struct AppSettings: Codable, Equatable {
     var pasteProtectionMode: PasteProtectionMode
     var clipboardAccess: ClipboardAccessMode
     var confirmOnCloseRunningSession: Bool
+    var tabBarStyle: TabBarStyle
     var tabTitleMode: TabTitleMode
     var dimInactiveSplits: Bool
     var inactiveSplitDimAmount: Double
@@ -47,7 +48,7 @@ struct AppSettings: Codable, Equatable {
 
     init(
         schemaVersion: Int = currentSchemaVersion,
-        fontFamily: String = "SF Mono",
+        fontFamily: String = "IBM Plex Mono",
         fontSize: Double = 13,
         colorMode: ColorMode = .system,
         importedThemes: [ImportedTheme] = [],
@@ -60,6 +61,7 @@ struct AppSettings: Codable, Equatable {
         pasteProtectionMode: PasteProtectionMode = .multiline,
         clipboardAccess: ClipboardAccessMode = .ask,
         confirmOnCloseRunningSession: Bool = false,
+        tabBarStyle: TabBarStyle = .strip,
         tabTitleMode: TabTitleMode = .shellTitle,
         dimInactiveSplits: Bool = true,
         inactiveSplitDimAmount: Double = 0.5,
@@ -96,6 +98,7 @@ struct AppSettings: Codable, Equatable {
         self.pasteProtectionMode = pasteProtectionMode
         self.clipboardAccess = clipboardAccess
         self.confirmOnCloseRunningSession = confirmOnCloseRunningSession
+        self.tabBarStyle = tabBarStyle
         self.tabTitleMode = tabTitleMode
         self.dimInactiveSplits = dimInactiveSplits
         self.inactiveSplitDimAmount = inactiveSplitDimAmount
@@ -160,6 +163,7 @@ struct AppSettings: Codable, Equatable {
         case pasteProtectionMode
         case clipboardAccess
         case confirmOnCloseRunningSession
+        case tabBarStyle
         case tabTitleMode
         case dimInactiveSplits
         case inactiveSplitDimAmount
@@ -188,7 +192,7 @@ struct AppSettings: Codable, Equatable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         schemaVersion = try container.decodeIfPresent(Int.self, forKey: .schemaVersion) ?? 1
-        fontFamily = try container.decodeIfPresent(String.self, forKey: .fontFamily) ?? "SF Mono"
+        fontFamily = try container.decodeIfPresent(String.self, forKey: .fontFamily) ?? "IBM Plex Mono"
         fontSize = try container.decodeIfPresent(Double.self, forKey: .fontSize) ?? 13
         if let decoded = try container.decodeIfPresent(ColorMode.self, forKey: .colorMode) {
             colorMode = decoded
@@ -207,6 +211,7 @@ struct AppSettings: Codable, Equatable {
         pasteProtectionMode = try container.decodeIfPresent(PasteProtectionMode.self, forKey: .pasteProtectionMode) ?? .multiline
         clipboardAccess = try container.decodeIfPresent(ClipboardAccessMode.self, forKey: .clipboardAccess) ?? .ask
         confirmOnCloseRunningSession = try container.decodeIfPresent(Bool.self, forKey: .confirmOnCloseRunningSession) ?? false
+        tabBarStyle = try container.decodeIfPresent(TabBarStyle.self, forKey: .tabBarStyle) ?? .strip
         tabTitleMode = try container.decodeIfPresent(TabTitleMode.self, forKey: .tabTitleMode) ?? .shellTitle
         dimInactiveSplits = try container.decodeIfPresent(Bool.self, forKey: .dimInactiveSplits) ?? true
         inactiveSplitDimAmount = try container.decodeIfPresent(Double.self, forKey: .inactiveSplitDimAmount) ?? 0.5
@@ -246,6 +251,7 @@ struct AppSettings: Codable, Equatable {
         try container.encode(pasteProtectionMode, forKey: .pasteProtectionMode)
         try container.encode(clipboardAccess, forKey: .clipboardAccess)
         try container.encode(confirmOnCloseRunningSession, forKey: .confirmOnCloseRunningSession)
+        try container.encode(tabBarStyle, forKey: .tabBarStyle)
         try container.encode(tabTitleMode, forKey: .tabTitleMode)
         try container.encode(dimInactiveSplits, forKey: .dimInactiveSplits)
         try container.encode(inactiveSplitDimAmount, forKey: .inactiveSplitDimAmount)
@@ -304,6 +310,20 @@ enum ClipboardAccessMode: String, Codable, CaseIterable, Identifiable {
             "Always allow"
         case .deny:
             "Always deny"
+        }
+    }
+}
+
+enum TabBarStyle: String, Codable, CaseIterable, Identifiable {
+    case strip
+    case sidebar
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .strip: "Strip"
+        case .sidebar: "Sidebar"
         }
     }
 }
@@ -626,6 +646,7 @@ enum ConfigKey {
     static let clipboardAccess = "clipboard-access"
     static let inputBarEnabled = "input-bar-enabled"
     static let inputBarPromptInfoEnabled = "input-bar-prompt-info-enabled"
+    static let tabBarStyle = "tab-bar-style"
     static let tabTitleMode = "tab-title-mode"
     static let dimInactiveSplits = "dim-inactive-splits"
     static let inactiveSplitDimAmount = "inactive-split-dim-amount"
