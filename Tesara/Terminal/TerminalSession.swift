@@ -46,6 +46,13 @@ final class TerminalSession: ObservableObject, Identifiable {
     private var lastForegroundProcessCheck: CFAbsoluteTime = 0
     private var altScreenTimer: Timer?
 
+    /// Tracks launch parameters for auto-restart on immediate crash.
+    private var launchParams: (shellPath: String, workingDirectory: URL, bottomAlign: Bool)?
+    private var launchTime: Date?
+    private var restartCount = 0
+    private static let maxRestarts = 2
+    private static let immediateExitThreshold: TimeInterval = 2
+
     /// Temporary files created for shell integration, cleaned up on stop/deinit.
     private var temporaryURLs: [URL] = []
 
@@ -77,6 +84,8 @@ final class TerminalSession: ObservableObject, Identifiable {
     func start(shellPath: String, workingDirectory: URL, bottomAlign: Bool = false, initialSize: NSSize? = nil) {
         guard surfaceView == nil else { return }
 
+        launchParams = (shellPath, workingDirectory, bottomAlign)
+        launchTime = Date()
         status = .starting
         launchError = nil
         capturedBlockCount = 0
@@ -336,6 +345,8 @@ final class TerminalSession: ObservableObject, Identifiable {
     }
 
     func handleChildExited(exitCode: UInt32) {
+        let wasImmediate = launchTime.map { Date().timeIntervalSince($0) < Self.immediateExitThreshold } ?? false
+
         altScreenTimer?.invalidate()
         altScreenTimer = nil
         surfaceView = nil
@@ -344,6 +355,18 @@ final class TerminalSession: ObservableObject, Identifiable {
         teardownInputBar()
         cleanupTemporaryFiles()
         finalizeActiveCaptureIfNeeded(exitCode: Int(exitCode))
+
+        // Auto-restart if the shell died immediately (e.g. race during app init).
+        if wasImmediate, restartCount < Self.maxRestarts, let params = launchParams {
+            restartCount += 1
+            shellSessionID = UUID().uuidString
+            // Delay slightly to avoid tight restart loops
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+                self?.start(shellPath: params.shellPath, workingDirectory: params.workingDirectory, bottomAlign: params.bottomAlign)
+            }
+            return
+        }
+
         status = .stopped
     }
 
@@ -414,7 +437,7 @@ final class TerminalSession: ObservableObject, Identifiable {
         // Command capture files contain sensitive data — use a shorter threshold
         let cmdCutoff = Date().addingTimeInterval(-3600)
         guard let contents = try? fm.contentsOfDirectory(atPath: tmpDir) else { return }
-        let prefixes = ["tesara-cmd-", "tesara-ba-", "tesara-zsh-", "tesara-bash-", "tesara-fish-"]
+        let prefixes = ["tesara-cmd-", "tesara-ba-", "tesara-zsh-", "tesara-bash-", "tesara-fish-", "tesara-paste-"]
         for entry in contents where prefixes.contains(where: { entry.hasPrefix($0) }) {
             let path = (tmpDir as NSString).appendingPathComponent(entry)
             guard let attrs = try? fm.attributesOfItem(atPath: path),
