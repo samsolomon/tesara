@@ -495,8 +495,7 @@ private func ghosttyReadClipboardCallback(
 
     let pasteboard = NSPasteboard.general
     guard let content = pasteboard.string(forType: .string) else {
-        ghostty_surface_complete_clipboard_request(surface, nil, state, false)
-        return true
+        return false
     }
 
     content.withCString { cString in
