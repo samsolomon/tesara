@@ -917,6 +917,13 @@ class GhosttySurfaceView: NSView, NSTextInputClient {
         }
         session?.setDragTarget(true)
         onPaneFocusRequest?()
+
+        // Synchronously set keyboardFocusDisabled so performDragOperation routes
+        // correctly even if SwiftUI's syncInputBarPresentation hasn't run yet.
+        if let session, session.inputBarState != nil, !session.isAlternateScreen {
+            keyboardFocusDisabled = true
+        }
+
         return .copy
     }
 
@@ -927,7 +934,15 @@ class GhosttySurfaceView: NSView, NSTextInputClient {
     override func performDragOperation(_ sender: any NSDraggingInfo) -> Bool {
         session?.setDragTarget(false)
         guard let resolved = resolveContent(from: sender.draggingPasteboard) else { return false }
-        sendText(resolved.text)
+
+        if keyboardFocusDisabled, let inputBarState = session?.inputBarState {
+            inputBarState.completionController.dismiss()
+            let text = resolved.isPath ? resolved.text + " " : resolved.text
+            inputBarState.editorSession.insertText(text)
+        } else {
+            sendText(resolved.text)
+        }
+
         return true
     }
 
