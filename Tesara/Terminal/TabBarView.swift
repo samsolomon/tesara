@@ -274,5 +274,6 @@ struct TabSidebarList: View {
                 .fill(Color.gray.opacity(0.3))
                 .frame(width: 1)
         }
+        .ignoresSafeArea(.container, edges: .top)
     }
 }
