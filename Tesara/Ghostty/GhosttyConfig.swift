@@ -75,6 +75,17 @@ enum GhosttyConfig {
         // Shell integration — disabled because Tesara provides its own
         lines.append("shell-integration = none")
 
+        // Launch the user's shell — the Exec.zig patch removed macOS login(1)
+        // so ghostty defaults to "sh" without this. Set via config (not surface
+        // config) to avoid triggering wait-after-command in embedded.zig.
+        lines.append("command = \(sanitize(settings.shellPath))")
+
+        // Disable ghostty's abnormal exit detection — Tesara handles child exit
+        // via GHOSTTY_ACTION_SHOW_CHILD_EXITED and manages session lifecycle itself.
+        // Without this, fast-exiting shells get stuck (ghostty returns from
+        // childExited without calling close when the native GUI handles the action).
+        lines.append("abnormal-command-exit-runtime = 0")
+
         // Unbind ghostty's default Cmd+, so it reaches Tesara's Settings menu item
         lines.append("keybind = super+comma=unbind")
 
