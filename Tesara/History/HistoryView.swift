@@ -6,13 +6,13 @@ struct HistoryView: View {
     var body: some View {
         if let startupErrorMessage = blockStore.startupErrorMessage {
             ContentUnavailableView(
-                "History Unavailable",
+                "History unavailable",
                 systemImage: "externaldrive.badge.exclamationmark",
                 description: Text(startupErrorMessage)
             )
         } else if blockStore.recentBlocks.isEmpty {
             ContentUnavailableView(
-                "No Blocks Yet",
+                "No blocks yet",
                 systemImage: "clock.arrow.circlepath",
                 description: Text("Run commands in the terminal and Tesara will capture finished command blocks here.")
             )
@@ -56,7 +56,7 @@ struct HistoryView: View {
 
     private func exitBadge(for exitCode: Int?) -> String {
         guard let exitCode else {
-            return "No Status"
+            return "No status"
         }
 
         return exitCode == 0 ? "Success" : "Exit \(exitCode)"

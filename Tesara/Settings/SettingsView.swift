@@ -37,7 +37,7 @@ struct SettingsDetailView: View {
             allowsMultipleSelection: false,
             onCompletion: selectWorkingDirectory
         )
-        .alert("Theme Import Failed", isPresented: Binding(
+        .alert("Theme import failed", isPresented: Binding(
             get: { importErrorMessage != nil },
             set: { newValue in
                 if !newValue {

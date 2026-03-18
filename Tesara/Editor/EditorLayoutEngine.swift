@@ -311,7 +311,7 @@ final class EditorLayoutEngine {
         let rasterFont = scale > 1 ? scaledRasterFont(scale: scale) : font
 
         for layoutLine in layoutLines {
-            let runs = CTLineGetGlyphRuns(layoutLine.ctLine) as! [CTRun]
+            let runs = (CTLineGetGlyphRuns(layoutLine.ctLine) as? [CTRun]) ?? []
             let baselineY = round(layoutLine.origin.y + layoutLine.ascent)
 
             // Get syntax tokens for this storage line
@@ -422,7 +422,7 @@ final class EditorLayoutEngine {
         let ghostColor = SIMD4<UInt8>(foregroundColor.x, foregroundColor.y, foregroundColor.z, 77)
 
         let rasterFont = scale > 1 ? scaledRasterFont(scale: scale) : font
-        let runs = CTLineGetGlyphRuns(ghostLine) as! [CTRun]
+        let runs = (CTLineGetGlyphRuns(ghostLine) as? [CTRun]) ?? []
         let baselineY = round(cursorLayoutLine.origin.y + cursorLayoutLine.ascent)
 
         for run in runs {

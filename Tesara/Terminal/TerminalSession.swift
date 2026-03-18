@@ -426,7 +426,7 @@ final class TerminalSession: ObservableObject, Identifiable {
     }
 }
 
-private extension String {
+extension String {
     func removingAnsiSequences() -> String {
         var cleaned = ""
         let scalars = Array(self.unicodeScalars)

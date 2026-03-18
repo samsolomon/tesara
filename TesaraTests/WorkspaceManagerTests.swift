@@ -692,7 +692,7 @@ final class WorkspaceManagerTests: XCTestCase {
             workingDirectory: URL(fileURLWithPath: "/tmp"),
             blockStore: blockStore
         )
-        let secondPaneID = try XCTUnwrap(manager.activePaneID)
+        _ = try XCTUnwrap(manager.activePaneID)
         let secondSession = try XCTUnwrap(manager.activeSession)
 
         manager.ghosttyClosePane(for: secondSession)

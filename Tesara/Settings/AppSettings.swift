@@ -317,9 +317,9 @@ enum TabTitleMode: String, Codable, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .shellTitle:
-            "Prefer Shell Title"
+            "Prefer shell title"
         case .workingDirectory:
-            "Prefer Working Directory"
+            "Prefer working directory"
         }
     }
 }
@@ -380,8 +380,8 @@ enum OptionAsAlt: String, Codable, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .off: "Off"
-        case .left: "Left Only"
-        case .right: "Right Only"
+        case .left: "Left only"
+        case .right: "Right only"
         case .both: "Both"
         }
     }
@@ -406,8 +406,8 @@ enum BellMode: String, Codable, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .none: "None"
-        case .system: "System Sound"
-        case .visual: "Visual Flash"
+        case .system: "System sound"
+        case .visual: "Visual flash"
         }
     }
 }

@@ -180,7 +180,7 @@ private struct FixedPitchFontPickerPopover: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Font Family")
+            Text("Font family")
                 .font(.headline)
 
             FontSearchField(text: $searchText, onCommand: handleSearchCommand)
@@ -194,7 +194,7 @@ private struct FixedPitchFontPickerPopover: View {
 
             if filteredFamilies.isEmpty {
                 ContentUnavailableView(
-                    "No Fonts Found",
+                    "No fonts found",
                     systemImage: "magnifyingglass",
                     description: Text("Try a different search term.")
                 )

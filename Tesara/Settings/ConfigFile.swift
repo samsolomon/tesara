@@ -192,7 +192,8 @@ enum ConfigFile {
             default: return nil
             }
         }
-        let key = reverseConfigKeyNames[parts.last!.lowercased()] ?? parts.last!
+        guard let lastPart = parts.last else { return nil }
+        let key = reverseConfigKeyNames[lastPart.lowercased()] ?? lastPart
         return KeyShortcut(key: key, modifiers: modifiers)
     }
 

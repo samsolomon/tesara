@@ -111,7 +111,7 @@ enum KeyboardLayout {
               let sourceIdPointer = TISGetInputSourceProperty(source, kTISPropertyInputSourceID) else {
             return nil
         }
-        return unsafeBitCast(sourceIdPointer, to: CFString.self) as String
+        return Unmanaged<CFString>.fromOpaque(sourceIdPointer).takeUnretainedValue() as String
     }
 }
 

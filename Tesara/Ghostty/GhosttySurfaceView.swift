@@ -87,10 +87,13 @@ class GhosttySurfaceView: NSView, NSTextInputClient {
     /// Deferred registration — call after session is set.
     /// Must be called exactly once after assigning `session`.
     func registerWithApp() {
-        precondition(session != nil, "GhosttySurfaceView.registerWithApp() called before session was set")
+        guard let session else {
+            assertionFailure("GhosttySurfaceView.registerWithApp() called before session was set")
+            return
+        }
         let userdata = UnsafeRawPointer(Unmanaged.passUnretained(self).toOpaque())
         surfaceUserdata = userdata
-        GhosttyApp.shared.register(session: session!, for: userdata)
+        GhosttyApp.shared.register(session: session, for: userdata)
     }
 
     @available(*, unavailable)

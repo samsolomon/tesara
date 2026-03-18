@@ -241,7 +241,7 @@ private struct FileErrorAlert: ViewModifier {
             .onChange(of: manager.lastFileError != nil) { _, hasError in
                 showAlert = hasError
             }
-            .alert("File Error", isPresented: $showAlert) {
+            .alert("File error", isPresented: $showAlert) {
                 Button("OK") { manager.lastFileError = nil }
             } message: {
                 Text(manager.lastFileError?.localizedDescription ?? "An unknown error occurred.")
@@ -290,11 +290,11 @@ private struct CloseConfirmationAlert: ViewModifier {
     private var alertTitle: String {
         switch manager.pendingCloseConfirmation {
         case .dirtyPane:
-            return "Unsaved Changes"
+            return "Unsaved changes"
         case .dirtyTab:
-            return "Unsaved Changes in Tab"
+            return "Unsaved changes in tab"
         case .runningPane, .runningTab:
-            return "Close Running Session?"
+            return "Close running session?"
         case nil:
             return ""
         }
@@ -325,7 +325,7 @@ private struct StaleReloadAlert: ViewModifier {
             .onChange(of: manager.pendingStaleReload) { _, paneID in
                 showAlert = paneID != nil
             }
-            .alert("File Changed on Disk", isPresented: $showAlert) {
+            .alert("File changed on disk", isPresented: $showAlert) {
                 Button("Reload") {
                     if let paneID = manager.pendingStaleReload,
                        let tab = manager.activeTab,
@@ -335,7 +335,7 @@ private struct StaleReloadAlert: ViewModifier {
                     }
                     manager.pendingStaleReload = nil
                 }
-                Button("Keep Current", role: .cancel) {
+                Button("Keep current", role: .cancel) {
                     manager.pendingStaleReload = nil
                 }
             } message: {

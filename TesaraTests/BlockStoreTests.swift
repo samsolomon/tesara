@@ -200,4 +200,77 @@ final class BlockStoreTests: XCTestCase {
         store.reloadRecentBlocks(limit: 2)
         XCTAssertEqual(store.recentBlocks.count, 2)
     }
+
+    // MARK: - History Dedup Tests
+
+    func testRecentCommandTextsDedupsSameCommand() throws {
+        let store = try makeStore()
+        let sessionID = store.startSession(shellPath: "/bin/zsh", workingDirectory: URL(fileURLWithPath: "/tmp"))
+
+        let now = Date()
+        for i in 0..<2 {
+            let block = TerminalBlockCapture(
+                commandText: "echo hello",
+                outputText: "",
+                exitCode: 0,
+                startedAt: now.addingTimeInterval(Double(i)),
+                finishedAt: now.addingTimeInterval(Double(i) + 0.1),
+                stage: .output
+            )
+            store.recordBlock(sessionID: sessionID, block: block, orderIndex: i)
+        }
+
+        waitForAsyncWrites()
+        let commands = store.recentCommandTexts()
+        XCTAssertEqual(commands.filter { $0 == "echo hello" }.count, 1, "Duplicate command should appear only once")
+    }
+
+    func testRecentCommandTextsOrderedByMostRecent() throws {
+        let store = try makeStore()
+        let sessionID = store.startSession(shellPath: "/bin/zsh", workingDirectory: URL(fileURLWithPath: "/tmp"))
+
+        let now = Date()
+        let commands = ["ls", "pwd", "ls"]  // "ls" re-run last, should appear first
+        for (i, cmd) in commands.enumerated() {
+            let block = TerminalBlockCapture(
+                commandText: cmd,
+                outputText: "",
+                exitCode: 0,
+                startedAt: now.addingTimeInterval(Double(i)),
+                finishedAt: now.addingTimeInterval(Double(i) + 0.1),
+                stage: .output
+            )
+            store.recordBlock(sessionID: sessionID, block: block, orderIndex: i)
+        }
+
+        waitForAsyncWrites()
+        let result = store.recentCommandTexts()
+        XCTAssertEqual(result, ["ls", "pwd"], "Most recently used command should come first")
+    }
+
+    func testSearchCommandsMatchesSubset() throws {
+        let store = try makeStore()
+        let sessionID = store.startSession(shellPath: "/bin/zsh", workingDirectory: URL(fileURLWithPath: "/tmp"))
+
+        let now = Date()
+        let cmds = ["git status", "git log", "echo hello"]
+        for (i, cmd) in cmds.enumerated() {
+            let block = TerminalBlockCapture(
+                commandText: cmd,
+                outputText: "",
+                exitCode: 0,
+                startedAt: now.addingTimeInterval(Double(i)),
+                finishedAt: now.addingTimeInterval(Double(i) + 0.1),
+                stage: .output
+            )
+            store.recordBlock(sessionID: sessionID, block: block, orderIndex: i)
+        }
+
+        waitForAsyncWrites()
+        let results = store.searchCommands(query: "git")
+        XCTAssertEqual(results.count, 2)
+        // Most recent first
+        XCTAssertEqual(results[0], "git log")
+        XCTAssertEqual(results[1], "git status")
+    }
 }

@@ -232,11 +232,12 @@ final class EditorSession: ObservableObject, Identifiable {
 
     func selectAll() {
         let lastLine = storage.lineCount - 1
+        let end = TextStorage.Position(line: lastLine, column: storage.lineLength(lastLine))
         selection = TextStorage.Range(
             start: TextStorage.Position(line: 0, column: 0),
-            end: TextStorage.Position(line: lastLine, column: storage.lineLength(lastLine))
+            end: end
         )
-        cursorPosition = selection!.end
+        cursorPosition = end
         needsRenderCallback?()
     }
 
