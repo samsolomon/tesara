@@ -11,6 +11,7 @@
 		04C5D01461574B2DC70B2976 /* GhosttyInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C880ADE2985F2564FE074A9 /* GhosttyInput.swift */; };
 		072331F12CC7007794B08CF1 /* JSONTokenizerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D7963110E1A9AC988CD6C8 /* JSONTokenizerTests.swift */; };
 		085CFD75DF7B4FA9B9F36894 /* KeyBindingDispatcherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44F9E6038E59B2766F11272E /* KeyBindingDispatcherTests.swift */; };
+		086B4883029266FFA0A7071B /* IBM-Plex-Mono-LICENSE.txt in Resources */ = {isa = PBXBuildFile; fileRef = 40660932CAC32FE1AFC89C52 /* IBM-Plex-Mono-LICENSE.txt */; };
 		0FAC866DE2F0E11344222CC0 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 4914B0341A868631C86F9855 /* Sparkle */; };
 		17A1E6F4A360BF5C97590C6E /* PaneContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57E292C9A04F867FABB9662E /* PaneContainerView.swift */; };
 		18519D4339772CD5A30CCECA /* ConfigFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF1B9F8F03276266294D2F0B /* ConfigFile.swift */; };
@@ -19,8 +20,10 @@
 		1A3F5B7D9E2C4A8071F6BE50 /* PaneHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58B4C6D2A1E3F790843D5B26 /* PaneHeaderView.swift */; };
 		1A3F5B7D9E2C4A8071F6BE51 /* PaneDragState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58B4C6D2A1E3F790843D5B27 /* PaneDragState.swift */; };
 		1A68BB74DD68235FD70B8CC8 /* EditorFileIOTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 701EC8B00AF61720A7DECCDE /* EditorFileIOTests.swift */; };
+		1BA74F617A15D8119B4AB51E /* IBMPlexMono-LightItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 90CEF4F81961802BE3C6AA58 /* IBMPlexMono-LightItalic.ttf */; };
 		1CED6DD8299D1750E4C66631 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BA08886415B515EB410905D /* SettingsStore.swift */; };
 		1D208652A6CF443FFD84D919 /* BlockStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D89D726E46FBCEF09C9F3737 /* BlockStore.swift */; };
+		1F4CDE1FE16333AAD9ED0B2A /* IBMPlexMono-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6FF1CB969704653B690C0409 /* IBMPlexMono-Medium.ttf */; };
 		20E83390D91A14BBAFD615CC /* GhosttyConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF7543B634720042FBCD3C12 /* GhosttyConfig.swift */; };
 		21B8B24014BA7BEB3D16003F /* FixedPitchFontLibraryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F327F83FF7CD1A1B4166DD1 /* FixedPitchFontLibraryTests.swift */; };
 		222EC9F7F53F29D795F54208 /* HistorySearchOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0265AE3B30D51A6B57910DEB /* HistorySearchOverlayView.swift */; };
@@ -36,6 +39,7 @@
 		36A1B2C3D4E5F607SUGGEST01 /* SuggestionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36A1B2C3D4E5F607SUGGEST02 /* SuggestionEngine.swift */; };
 		37429BDCCFCD0878073F997A /* TerminalSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99905701CAB7B5AB4F5558C2 /* TerminalSessionTests.swift */; };
 		382CB238251A357EA4EE3218 /* InputBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3964FA190864920EA9CB718 /* InputBarView.swift */; };
+		38729101B039AC3D3BF0595D /* IBMPlexMono-MediumItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 897161F4E6F9E8FBC42A3433 /* IBMPlexMono-MediumItalic.ttf */; };
 		3A9CB9669EA9FFC856BD0681 /* GhosttyConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 388B787A886EB7129E51A67D /* GhosttyConfigTests.swift */; };
 		3AFF98CD9A850B462ECF6743 /* InputBarHistoryControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43468B64F11255855055B63A /* InputBarHistoryControllerTests.swift */; };
 		3C4D0617D38D2820033C25E8 /* TextStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = D118CDF87413CB215B414521 /* TextStorage.swift */; };
@@ -43,19 +47,23 @@
 		3EEE11C653E36FBD7149E9B0 /* CLikeTokenizerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F964C1A41A90CF9F4FFD4D42 /* CLikeTokenizerTests.swift */; };
 		406A4786F958C46D88472E0F /* TerminalBlockCaptureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9098467F6B5E13AF93A1ECD /* TerminalBlockCaptureTests.swift */; };
 		4210A267A3E924FC287E3E71 /* GlyphAtlas.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD687D9481D6B35B308BF99F /* GlyphAtlas.swift */; };
+		43FC0EB207211E54A9AA7254 /* IBMPlexMono-BoldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 5739B8EABAF71D0D3005E4D3 /* IBMPlexMono-BoldItalic.ttf */; };
 		480CC20DFE863BE9FB9DBE73 /* EditorShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 4074C48037FD5CC3A1A36ED3 /* EditorShaders.metal */; };
 		4D81B97C370955E3A0CEEBC5 /* FixedPitchFontPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C6234624E5534716267294D /* FixedPitchFontPicker.swift */; };
 		4E0D6A7833B8D0D29A262ADE /* SyntaxHighlighterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1ECA0C36B15092EB9B6D368 /* SyntaxHighlighterTests.swift */; };
 		557CAC20FEDDC988A2A62617 /* GhosttyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0FB01095EFA9F4ABC5E58EC /* GhosttyApp.swift */; };
 		5AA7A60643A0EC3F1EABDB83 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 17813D398B505968462B467F /* QuartzCore.framework */; };
 		5B230117551D0D8524F02002 /* GlyphCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C5CBA5E962136E2559C5185 /* GlyphCache.swift */; };
+		5D571ED6731E7C649F61992C /* IBMPlexMono-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 0160AEA7D130C2BF58C96F2C /* IBMPlexMono-Bold.ttf */; };
 		67946EE861023962AF28FA7B /* GhosttySurfaceConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BEFEA907D720F797090FCEE /* GhosttySurfaceConfigTests.swift */; };
 		68D5579883F02571544A846D /* TerminalWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDDA22FF0E3CCF02CE8BCD05 /* TerminalWorkspaceView.swift */; };
 		6AA10AC1A5725D9460FA0F8C /* IOSurface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1EE22681A74E38D510DFCDA3 /* IOSurface.framework */; };
 		6AB4D491DF5F118108162EEA /* MainWindowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8CF6564CD0AF8278F222619 /* MainWindowView.swift */; };
 		6AF0589C77DB137229E55557 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = DF6EF21EAA4938CD8F036D14 /* GRDB */; };
 		709751EB77B064BBA84FE7E3 /* EditorSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB4D314057C9761952E8D5E8 /* EditorSession.swift */; };
+		70E4B65B6151540CBA83A3A6 /* IBMPlexMono-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6C2A321434AC84B2082182CA /* IBMPlexMono-Light.ttf */; };
 		7670B2AA1436F65F63F74F82 /* VisualLineMapTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFF93FE1D36161CBB3AAAC4C /* VisualLineMapTests.swift */; };
+		787FB578D8617B4B2242AA0B /* IBMPlexMono-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 1953DFB626DF1596EDA9CECC /* IBMPlexMono-SemiBold.ttf */; };
 		79F0B4BD6843110ADF62D883 /* CheckForUpdatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D87C2B989F7DF6FA07307499 /* CheckForUpdatesView.swift */; };
 		7C4EC6EB70E96401AD27AFB9 /* SettingsStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0913B2DEDB933D3E3356B83 /* SettingsStoreTests.swift */; };
 		81D353BEAF13304C4935B40F /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6D9B1F4149EB9724158875C /* HistoryView.swift */; };
@@ -65,6 +73,7 @@
 		8BA932E6071B80EC1738CFF7 /* GhosttySurfaceConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = C22B629EF42855D98028F0C4 /* GhosttySurfaceConfig.swift */; };
 		8BEFF95B8A28543324D86FDF /* EditorLayoutEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 184475D4AC3B8EEBA142F5C1 /* EditorLayoutEngine.swift */; };
 		8F50B109818FA08FF12D63F2 /* GlyphCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F52B6FCC6732906AA75CFDBF /* GlyphCacheTests.swift */; };
+		9059B9F6A9EF7BAA4481AB2A /* IBMPlexMono-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 05DE6BFEC2527D3D1051A687 /* IBMPlexMono-Regular.ttf */; };
 		930B4A96AEFFBD8443B5EA71 /* ConfigFileTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92F0C126DD5D57B46F0CB0C9 /* ConfigFileTests.swift */; };
 		984A29B50C6127DD3BC92DB0 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F55C30259BAA845533624745 /* Metal.framework */; };
 		98FA319CCB290CC39E9EEF73 /* TerminalTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BB4D282162AFDF0A2DB5D51 /* TerminalTheme.swift */; };
@@ -81,11 +90,13 @@
 		A5607FF9E3A43338204C259B /* GhosttySurfaceRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFFBF769DCCA796E1A27EF05 /* GhosttySurfaceRepresentable.swift */; };
 		AABB001122334455GHOSTTY01 /* GhosttyThemeLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB001122334455GHOSTTY02 /* GhosttyThemeLoader.swift */; };
 		AABB001122334455GHOSTTY03 /* GhosttyThemes in Resources */ = {isa = PBXBuildFile; fileRef = AABB001122334455GHOSTTY04 /* GhosttyThemes */; };
+		AB78080F4A3765D2EDADBD16 /* IBMPlexMono-Italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 9FB3059DFA732836CA53E7F8 /* IBMPlexMono-Italic.ttf */; };
 		B19F8A6FD18540988A5B2C7D /* ShellTokenizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16B35BDA82EE46F1A93E02A4 /* ShellTokenizer.swift */; };
 		B2C3D4E5F607182A3B4C5D6E /* GhosttyThemeLoaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5C /* GhosttyThemeLoaderTests.swift */; };
 		B2C3D4E5F607182A3B4C5D6F /* PaneDragStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5D /* PaneDragStateTests.swift */; };
 		B2C3D4E5F607182A3B4C5D70 /* BuiltInThemeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5E /* BuiltInThemeTests.swift */; };
 		B2C3D4E5F607182A3B4C5D71 /* ConfigFileWatcherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5F /* ConfigFileWatcherTests.swift */; };
+		B3496D228B8DC7E7F6F1536A /* IBMPlexMono-SemiBoldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 51CCFB4CE4ECC236C6F664A4 /* IBMPlexMono-SemiBoldItalic.ttf */; };
 		B4F68462773E6A1D220DA476 /* PaneDividerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B184B08FFBEE976991C8F22 /* PaneDividerView.swift */; };
 		BD773D1042EF68102567BF4B /* WorkspaceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 085DF302ED385DA3320C4E00 /* WorkspaceManager.swift */; };
 		BDBC77980C44DF22A0C670BE /* EditorLayoutEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55C3D9E0E1A4305FC7BC9C6E /* EditorLayoutEngineTests.swift */; };
@@ -128,8 +139,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0160AEA7D130C2BF58C96F2C /* IBMPlexMono-Bold.ttf */ = {isa = PBXFileReference; includeInIndex = 1; path = "IBMPlexMono-Bold.ttf"; sourceTree = "<group>"; };
 		025C0C0CA0E7477A899440FC /* CoreText.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreText.framework; path = System/Library/Frameworks/CoreText.framework; sourceTree = SDKROOT; };
 		0265AE3B30D51A6B57910DEB /* HistorySearchOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistorySearchOverlayView.swift; sourceTree = "<group>"; };
+		05DE6BFEC2527D3D1051A687 /* IBMPlexMono-Regular.ttf */ = {isa = PBXFileReference; includeInIndex = 1; path = "IBMPlexMono-Regular.ttf"; sourceTree = "<group>"; };
 		085DF302ED385DA3320C4E00 /* WorkspaceManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceManager.swift; sourceTree = "<group>"; };
 		0A3302C81E3683C9C6F70DE2 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		0C5CBA5E962136E2559C5185 /* GlyphCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlyphCache.swift; sourceTree = "<group>"; };
@@ -145,6 +158,7 @@
 		184475D4AC3B8EEBA142F5C1 /* EditorLayoutEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorLayoutEngine.swift; sourceTree = "<group>"; };
 		185E0AD1562C993CFD97F1C1 /* AnsiSequenceTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AnsiSequenceTests.swift; sourceTree = "<group>"; };
 		194C23B007577944F607E3A3 /* CommandCaptureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandCaptureTests.swift; sourceTree = "<group>"; };
+		1953DFB626DF1596EDA9CECC /* IBMPlexMono-SemiBold.ttf */ = {isa = PBXFileReference; includeInIndex = 1; path = "IBMPlexMono-SemiBold.ttf"; sourceTree = "<group>"; };
 		1C6234624E5534716267294D /* FixedPitchFontPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FixedPitchFontPicker.swift; sourceTree = "<group>"; };
 		1EE22681A74E38D510DFCDA3 /* IOSurface.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOSurface.framework; path = System/Library/Frameworks/IOSurface.framework; sourceTree = SDKROOT; };
 		21107043389C2E4E7598644C /* TextStorageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextStorageTests.swift; sourceTree = "<group>"; };
@@ -156,6 +170,7 @@
 		36A1B2C3D4E5F607SUGGEST02 /* SuggestionEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuggestionEngine.swift; sourceTree = "<group>"; };
 		36D96A4177859EA0D14FAFCB /* PaneNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaneNode.swift; sourceTree = "<group>"; };
 		388B787A886EB7129E51A67D /* GhosttyConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhosttyConfigTests.swift; sourceTree = "<group>"; };
+		40660932CAC32FE1AFC89C52 /* IBM-Plex-Mono-LICENSE.txt */ = {isa = PBXFileReference; includeInIndex = 1; path = "IBM-Plex-Mono-LICENSE.txt"; sourceTree = "<group>"; };
 		4074C48037FD5CC3A1A36ED3 /* EditorShaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = EditorShaders.metal; sourceTree = "<group>"; };
 		43468B64F11255855055B63A /* InputBarHistoryControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputBarHistoryControllerTests.swift; sourceTree = "<group>"; };
 		44F9E6038E59B2766F11272E /* KeyBindingDispatcherTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyBindingDispatcherTests.swift; sourceTree = "<group>"; };
@@ -163,9 +178,11 @@
 		47AE7A424F00C8FA129FC9B7 /* Tesara-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Tesara-Bridging-Header.h"; sourceTree = "<group>"; };
 		4BA08886415B515EB410905D /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
 		4C1F323FA7FDDFD3E4A544A8 /* InputBarHistoryController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputBarHistoryController.swift; sourceTree = "<group>"; };
+		51CCFB4CE4ECC236C6F664A4 /* IBMPlexMono-SemiBoldItalic.ttf */ = {isa = PBXFileReference; includeInIndex = 1; path = "IBMPlexMono-SemiBoldItalic.ttf"; sourceTree = "<group>"; };
 		5563A901A8F611AC6D01A419 /* BlockStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockStoreTests.swift; sourceTree = "<group>"; };
 		55C3D9E0E1A4305FC7BC9C6E /* EditorLayoutEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorLayoutEngineTests.swift; sourceTree = "<group>"; };
 		570AAE7A2F968564CCF33133 /* GlyphAtlasTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlyphAtlasTests.swift; sourceTree = "<group>"; };
+		5739B8EABAF71D0D3005E4D3 /* IBMPlexMono-BoldItalic.ttf */ = {isa = PBXFileReference; includeInIndex = 1; path = "IBMPlexMono-BoldItalic.ttf"; sourceTree = "<group>"; };
 		57A5490A849F9317664968E7 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		57E292C9A04F867FABB9662E /* PaneContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaneContainerView.swift; sourceTree = "<group>"; };
 		58B4C6D2A1E3F790843D5B26 /* PaneHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaneHeaderView.swift; sourceTree = "<group>"; };
@@ -175,19 +192,24 @@
 		64F682A08A5ECC9A73792C74 /* PaneNodeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaneNodeTests.swift; sourceTree = "<group>"; };
 		692291F83027B0F2F4CA76BF /* TerminalThemeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalThemeTests.swift; sourceTree = "<group>"; };
 		6C11B2123603104BFA909CD4 /* GhosttyInputTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhosttyInputTests.swift; sourceTree = "<group>"; };
+		6C2A321434AC84B2082182CA /* IBMPlexMono-Light.ttf */ = {isa = PBXFileReference; includeInIndex = 1; path = "IBMPlexMono-Light.ttf"; sourceTree = "<group>"; };
 		6C880ADE2985F2564FE074A9 /* GhosttyInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhosttyInput.swift; sourceTree = "<group>"; };
 		6F327F83FF7CD1A1B4166DD1 /* FixedPitchFontLibraryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FixedPitchFontLibraryTests.swift; sourceTree = "<group>"; };
+		6FF1CB969704653B690C0409 /* IBMPlexMono-Medium.ttf */ = {isa = PBXFileReference; includeInIndex = 1; path = "IBMPlexMono-Medium.ttf"; sourceTree = "<group>"; };
 		701EC8B00AF61720A7DECCDE /* EditorFileIOTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorFileIOTests.swift; sourceTree = "<group>"; };
 		735D7C1606ECD4D9128A5A44 /* TerminalBlockCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalBlockCapture.swift; sourceTree = "<group>"; };
 		7FAE7C81FD9BEE1D30BCF809 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
 		80DFDAB12020672CD9BCD021 /* KeyRecorderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyRecorderView.swift; sourceTree = "<group>"; };
 		82D7963110E1A9AC988CD6C8 /* JSONTokenizerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONTokenizerTests.swift; sourceTree = "<group>"; };
 		8393A786736D6332BB25DC07 /* TesaraAppCommands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TesaraAppCommands.swift; sourceTree = "<group>"; };
+		897161F4E6F9E8FBC42A3433 /* IBMPlexMono-MediumItalic.ttf */ = {isa = PBXFileReference; includeInIndex = 1; path = "IBMPlexMono-MediumItalic.ttf"; sourceTree = "<group>"; };
 		8BEFEA907D720F797090FCEE /* GhosttySurfaceConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhosttySurfaceConfigTests.swift; sourceTree = "<group>"; };
+		90CEF4F81961802BE3C6AA58 /* IBMPlexMono-LightItalic.ttf */ = {isa = PBXFileReference; includeInIndex = 1; path = "IBMPlexMono-LightItalic.ttf"; sourceTree = "<group>"; };
 		924C14E8FC639F5AB09E6153 /* SyntaxHighlighter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyntaxHighlighter.swift; sourceTree = "<group>"; };
 		92F0C126DD5D57B46F0CB0C9 /* ConfigFileTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigFileTests.swift; sourceTree = "<group>"; };
 		99905701CAB7B5AB4F5558C2 /* TerminalSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalSessionTests.swift; sourceTree = "<group>"; };
 		9BB4D282162AFDF0A2DB5D51 /* TerminalTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalTheme.swift; sourceTree = "<group>"; };
+		9FB3059DFA732836CA53E7F8 /* IBMPlexMono-Italic.ttf */ = {isa = PBXFileReference; includeInIndex = 1; path = "IBMPlexMono-Italic.ttf"; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718293A4B5C /* GhosttyThemeLoaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhosttyThemeLoaderTests.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718293A4B5D /* PaneDragStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaneDragStateTests.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718293A4B5E /* BuiltInThemeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuiltInThemeTests.swift; sourceTree = "<group>"; };
@@ -261,6 +283,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0D0C18584D57A323E3D616AB /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				C5C25A90892D3199F0F46C99 /* Fonts */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
 		30D8D5849454AFEF1900DF9A /* Theme */ = {
 			isa = PBXGroup;
 			children = (
@@ -356,9 +386,29 @@
 				B8310EA6C3B0E6E650C8A075 /* Settings */,
 				DAF7F752BD488515A0DA51E4 /* Terminal */,
 				30D8D5849454AFEF1900DF9A /* Theme */,
+				0D0C18584D57A323E3D616AB /* Resources */,
 			);
 			path = Tesara;
 			sourceTree = "<group>";
+		};
+		C5C25A90892D3199F0F46C99 /* Fonts */ = {
+			isa = PBXGroup;
+			children = (
+				0160AEA7D130C2BF58C96F2C /* IBMPlexMono-Bold.ttf */,
+				897161F4E6F9E8FBC42A3433 /* IBMPlexMono-MediumItalic.ttf */,
+				5739B8EABAF71D0D3005E4D3 /* IBMPlexMono-BoldItalic.ttf */,
+				6FF1CB969704653B690C0409 /* IBMPlexMono-Medium.ttf */,
+				05DE6BFEC2527D3D1051A687 /* IBMPlexMono-Regular.ttf */,
+				6C2A321434AC84B2082182CA /* IBMPlexMono-Light.ttf */,
+				9FB3059DFA732836CA53E7F8 /* IBMPlexMono-Italic.ttf */,
+				1953DFB626DF1596EDA9CECC /* IBMPlexMono-SemiBold.ttf */,
+				51CCFB4CE4ECC236C6F664A4 /* IBMPlexMono-SemiBoldItalic.ttf */,
+				90CEF4F81961802BE3C6AA58 /* IBMPlexMono-LightItalic.ttf */,
+				40660932CAC32FE1AFC89C52 /* IBM-Plex-Mono-LICENSE.txt */,
+			);
+			name = Fonts;
+			path = Tesara/Resources/Fonts;
+			sourceTree = SOURCE_ROOT;
 		};
 		D2FD19F036CF21642B166830 = {
 			isa = PBXGroup;
@@ -557,6 +607,17 @@
 				A1C3D4E5F6A7B8C901234601 /* Assets.xcassets in Resources */,
 				AABB001122334455GHOSTTY03 /* GhosttyThemes in Resources */,
 				FA96111B4FCCEF18236CA364 /* TerminalIntegration in Resources */,
+				5D571ED6731E7C649F61992C /* IBMPlexMono-Bold.ttf in Resources */,
+				38729101B039AC3D3BF0595D /* IBMPlexMono-MediumItalic.ttf in Resources */,
+				43FC0EB207211E54A9AA7254 /* IBMPlexMono-BoldItalic.ttf in Resources */,
+				1F4CDE1FE16333AAD9ED0B2A /* IBMPlexMono-Medium.ttf in Resources */,
+				9059B9F6A9EF7BAA4481AB2A /* IBMPlexMono-Regular.ttf in Resources */,
+				70E4B65B6151540CBA83A3A6 /* IBMPlexMono-Light.ttf in Resources */,
+				AB78080F4A3765D2EDADBD16 /* IBMPlexMono-Italic.ttf in Resources */,
+				787FB578D8617B4B2242AA0B /* IBMPlexMono-SemiBold.ttf in Resources */,
+				B3496D228B8DC7E7F6F1536A /* IBMPlexMono-SemiBoldItalic.ttf in Resources */,
+				1BA74F617A15D8119B4AB51E /* IBMPlexMono-LightItalic.ttf in Resources */,
+				086B4883029266FFA0A7071B /* IBM-Plex-Mono-LICENSE.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
