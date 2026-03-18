@@ -473,6 +473,26 @@ private struct TerminalPaneLeafView: View {
                     .allowsHitTesting(false)
             }
         }
+        .overlay {
+            Group {
+                if session.isDragTarget {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.accentColor.opacity(0.15))
+                            .stroke(Color.accentColor.opacity(0.3), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: 4)
+                            .strokeBorder(
+                                Color.accentColor.opacity(0.4),
+                                style: StrokeStyle(lineWidth: 1.5, dash: [6, 4])
+                            )
+                            .padding(4)
+                    }
+                    .allowsHitTesting(false)
+                    .transition(.opacity)
+                }
+            }
+            .animation(.easeInOut(duration: 0.12), value: session.isDragTarget)
+        }
         // No SwiftUI tap gesture — focus transfer is handled by
         // GhosttySurfaceView.onPaneFocusRequest in localEventLeftMouseDown.
         // A tap gesture here would intercept the click before AppKit,

@@ -31,6 +31,7 @@ final class TerminalSession: ObservableObject, Identifiable {
     @Published private(set) var isHistoryPopupActive = false
     @Published private(set) var hoverUrl: String?
     @Published private(set) var pendingNotification: TerminalNotification?
+    @Published private(set) var isDragTarget = false
 
     /// Published so prompt-driven presentation updates can react when the input
     /// bar is created or torn down outside the same render pass.
@@ -285,6 +286,11 @@ final class TerminalSession: ObservableObject, Identifiable {
     }
 
     // MARK: - Action Handlers
+
+    func setDragTarget(_ active: Bool) {
+        guard isDragTarget != active else { return }
+        isDragTarget = active
+    }
 
     func updateWorkingDirectory(_ url: URL) {
         let path = url.path
