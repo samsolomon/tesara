@@ -13,11 +13,26 @@ Tesara exists to become the most beautiful, performant, and usable terminal on m
 - Every change should make the product clearer, faster, calmer, or more delightful.
 - UI labels use sentence case: capitalize only the first word and proper nouns.
 
-## Ghostty Submodule
+## Ghostty Fork
 
-`vendor/ghostty` contains a vendored copy of libghostty with **local patches** that must be preserved:
+`vendor/ghostty` is a submodule pointing at [`samsolomon/ghostty`](https://github.com/samsolomon/ghostty), a fork of `ghostty-org/ghostty`. The fork's `tesara` branch carries a `build.zig` patch that emits `libghostty.a` + headers on macOS.
 
-- **`src/termio/Exec.zig`** — Darwin `login(1)` wrapper removed. `/usr/bin/login` spins at 100% CPU on macOS Tahoe; the patch falls through to POSIX `/bin/sh -c` instead.
-- **`build.zig`** — Modified to emit `libghostty.a` static library + headers on macOS.
+The submodule is pinned to an **immutable tag** (e.g. `tesara/v1`), not the branch. The branch can be force-pushed during rebases; tags never move. This guarantees old Tesara commits always resolve.
 
-If you update the ghostty submodule to a newer upstream commit, re-apply these patches or verify upstream has equivalent fixes. Deleting `vendor/ghostty/zig-out/lib/libghostty.a` forces a full Zig rebuild (~minutes).
+### Updating to a newer upstream Ghostty
+
+```bash
+cd vendor/ghostty
+git fetch upstream                        # (add remote once: git remote add upstream https://github.com/ghostty-org/ghostty.git)
+git checkout tesara
+git rebase upstream/main                  # resolve conflicts if build.zig changed
+zig build -Doptimize=ReleaseFast -Dapp-runtime=none -Demit-xcframework=false  # verify it builds
+git tag tesara/vN                         # increment: v2, v3, ...
+git push origin tesara --force-with-lease # branch — force push is fine
+git push origin tesara/vN                 # tag — immutable, never force pushed
+cd ../..
+git add vendor/ghostty
+git commit -m "vendor: update ghostty to tesara/vN"
+```
+
+Deleting `vendor/ghostty/zig-out/lib/libghostty.a` forces a full Zig rebuild (~minutes).

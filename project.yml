@@ -50,10 +50,6 @@ targets:
             exit 1
           fi
           cd "$SRCROOT/vendor/ghostty"
-          PATCH="$SRCROOT/vendor/patches/ghostty-build.patch"
-          if git apply --check "$PATCH" 2>/dev/null; then
-            git apply "$PATCH"
-          fi
           "$ZIG" build -Doptimize=ReleaseFast -Dapp-runtime=none -Demit-xcframework=false
         outputFiles:
           - $(SRCROOT)/vendor/ghostty/zig-out/lib/libghostty.a
