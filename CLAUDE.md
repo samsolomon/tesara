@@ -17,7 +17,7 @@ Tesara exists to become the most beautiful, performant, and usable terminal on m
 
 `vendor/ghostty` is a submodule pointing at [`samsolomon/ghostty`](https://github.com/samsolomon/ghostty), a fork of `ghostty-org/ghostty`. The fork's `tesara` branch carries a `build.zig` patch that emits `libghostty.a` + headers on macOS.
 
-The submodule is pinned to an **immutable tag** (e.g. `tesara/v1`), not the branch. The branch can be force-pushed during rebases; tags never move. This guarantees old Tesara commits always resolve.
+The submodule is pinned to a **commit SHA** on the `tesara` branch. Do not create tags in the fork — ghostty's build system uses `git describe` on tags and panics if the format is unexpected.
 
 ### Updating to a newer upstream Ghostty
 
@@ -26,13 +26,12 @@ cd vendor/ghostty
 git fetch upstream                        # (add remote once: git remote add upstream https://github.com/ghostty-org/ghostty.git)
 git checkout tesara
 git rebase upstream/main                  # resolve conflicts if build.zig changed
-zig build -Doptimize=ReleaseFast -Dapp-runtime=none -Demit-xcframework=false  # verify it builds
-git tag tesara/vN                         # increment: v2, v3, ...
-git push origin tesara --force-with-lease # branch — force push is fine
-git push origin tesara/vN                 # tag — immutable, never force pushed
+ZON_VERSION=$(grep '^\s*\.version\s*=' build.zig.zon | head -1 | grep -o '"[^"]*"' | tr -d '"')
+zig build -Doptimize=ReleaseFast -Dapp-runtime=none -Demit-xcframework=false -Dversion-string="$ZON_VERSION"
+git push origin tesara --force-with-lease
 cd ../..
 git add vendor/ghostty
-git commit -m "vendor: update ghostty to tesara/vN"
+git commit -m "vendor: update ghostty to $(cd vendor/ghostty && git rev-parse --short HEAD)"
 ```
 
 Deleting `vendor/ghostty/zig-out/lib/libghostty.a` forces a full Zig rebuild (~minutes).

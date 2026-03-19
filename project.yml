@@ -10,6 +10,7 @@ settings:
   base:
     MARKETING_VERSION: 0.1.0
     CURRENT_PROJECT_VERSION: 1
+    DEAD_CODE_STRIPPING: YES
 packages:
   GRDB:
     url: https://github.com/groue/GRDB.swift.git
@@ -25,6 +26,12 @@ targets:
       - path: Tesara
         excludes:
           - Resources
+      - path: Tesara/Resources/Fonts
+        buildPhase: resources
+        type: folder
+      - path: Tesara/Resources/GhosttyThemes
+        buildPhase: resources
+        type: folder
       - path: Tesara/Resources/TerminalIntegration
         buildPhase: resources
         type: folder
@@ -34,7 +41,7 @@ targets:
       - name: Build libghostty
         script: |
           set -euo pipefail
-          EXPECTED_ZIG=$(cat "$SRCROOT/.zig-version" | tr -d '[:space:]')
+          EXPECTED_ZIG=$(tr -d '[:space:]' < "$SRCROOT/.zig-version")
           if [ -z "$EXPECTED_ZIG" ]; then
             echo "error: .zig-version is empty or missing"
             exit 1
@@ -50,11 +57,17 @@ targets:
             exit 1
           fi
           cd "$SRCROOT/vendor/ghostty"
-          "$ZIG" build -Doptimize=ReleaseFast -Dapp-runtime=none -Demit-xcframework=false
+          ZON_VERSION=$(grep '^\s*\.version\s*=' build.zig.zon | head -1 | grep -o '"[^"]*"' | tr -d '"')
+          if [ -z "$ZON_VERSION" ]; then
+            echo "error: could not extract version from build.zig.zon"
+            exit 1
+          fi
+          "$ZIG" build -Doptimize=ReleaseFast -Dapp-runtime=none -Demit-xcframework=false -Dversion-string="$ZON_VERSION"
         outputFiles:
           - $(SRCROOT)/vendor/ghostty/zig-out/lib/libghostty.a
     settings:
       base:
+        EXCLUDED_ARCHS[sdk=macosx*]: x86_64
         PRODUCT_BUNDLE_IDENTIFIER: com.samsolomon.tesara
         PRODUCT_NAME: Tesara
         GENERATE_INFOPLIST_FILE: NO
