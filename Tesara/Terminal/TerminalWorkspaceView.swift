@@ -211,9 +211,9 @@ struct TerminalWorkspaceView: View {
         let s = settingsStore.settings
         let theme = settingsStore.activeTheme
         let config = s.cursorStyle.editorCursorConfig(color: hexToColorU8(theme.cursor))
-        propagateCursorToEditors(in: activeTab.rootPane, config: config, blink: true, smoothBlink: false)
+        propagateCursorToEditors(in: activeTab.rootPane, config: config, blink: s.cursorBlink, smoothBlink: false)
         for (_, session) in activeTab.rootPane.allTerminalSessions() {
-            session.inputBarState?.editorView?.updateCursorConfig(config, blink: true, smoothBlink: false)
+            session.inputBarState?.editorView?.updateCursorConfig(config, blink: s.cursorBlink, smoothBlink: false)
         }
     }
 

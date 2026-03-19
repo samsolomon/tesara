@@ -49,7 +49,7 @@ struct AppSettings: Codable, Equatable {
     init(
         schemaVersion: Int = currentSchemaVersion,
         fontFamily: String = "IBM Plex Mono",
-        fontSize: Double = 13,
+        fontSize: Double = 14,
         colorMode: ColorMode = .system,
         importedThemes: [ImportedTheme] = [],
         shellPath: String = AppSettings.defaultShellPath,
@@ -67,7 +67,7 @@ struct AppSettings: Codable, Equatable {
         inactiveSplitDimAmount: Double = 0.5,
         inputBarEnabled: Bool = true,
         inputBarPromptInfoEnabled: Bool = true,
-        cursorStyle: CursorStyle = .bar,
+        cursorStyle: CursorStyle = .block,
         cursorBlink: Bool = false,
         lightThemeID: String = BuiltInTheme.tesaraLight.id,
         darkThemeID: String = BuiltInTheme.tesaraDark.id,
