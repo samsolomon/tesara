@@ -13,27 +13,10 @@ source "${SCRIPT_DIR}/../lib/helpers.sh"
 
 TARGETS=("${@:-$(detect_terminals)}")
 
-# Sample RSS and CPU for a process tree. Outputs "rss_kb cpu_pct".
+# Sample RSS and CPU for a full process tree. Outputs "rss_kb cpu_pct".
+# Delegates to get_tree_stats in helpers.sh (single ps call).
 sample_process_tree() {
-  local pid="$1"
-  local all_pids
-  all_pids=$(pgrep -P "$pid" 2>/dev/null || true)
-  all_pids="$pid $all_pids"
-
-  local total_rss=0
-  local total_cpu="0.0"
-
-  for p in $all_pids; do
-    local stats
-    stats=$(ps -o rss=,%cpu= -p "$p" 2>/dev/null || echo "0 0.0")
-    local rss cpu
-    rss=$(echo "$stats" | awk '{print $1}')
-    cpu=$(echo "$stats" | awk '{print $2}')
-    total_rss=$((total_rss + rss))
-    total_cpu=$(awk "BEGIN{printf \"%.1f\", ${total_cpu} + ${cpu}}")
-  done
-
-  echo "${total_rss} ${total_cpu}"
+  get_tree_stats "$1"
 }
 
 run_resource_bench() {

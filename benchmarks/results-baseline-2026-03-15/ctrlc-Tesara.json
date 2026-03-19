@@ -1,0 +1,25 @@
+{
+  "terminal": "Tesara",
+  "bundle_id": "com.samsolomon.tesara",
+  "date": "2026-03-15T18:59:55Z",
+  "benchmark": "ctrlc",
+  "unit": "ms",
+  "stats": {
+    "mean": 469.16,
+    "stddev": 21.31,
+    "min": 453.7,
+    "max": 505.6,
+    "median": 460.2,
+    "p50": 460.2,
+    "p95": 505.6,
+    "p99": 505.6,
+    "count": 5
+  },
+  "raw": [
+    505.6,
+    456.2,
+    470.1,
+    460.2,
+    453.7
+  ]
+}

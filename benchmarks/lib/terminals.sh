@@ -22,10 +22,11 @@ quit_terminal() {
     end tell
   " 2>/dev/null || true
 
-  # Wait for process to exit
+  # Wait for process to exit (timeout * 2 iterations at 0.5s each)
   local timeout=10
+  local iterations=$(( timeout * 2 ))
   local elapsed=0
-  while pgrep -f "$bundle_id" &>/dev/null && (( elapsed < timeout )); do
+  while pgrep -f "$bundle_id" &>/dev/null && (( elapsed < iterations )); do
     sleep 0.5
     elapsed=$((elapsed + 1))
   done
@@ -42,7 +43,7 @@ detect_terminals() {
     if [[ -n "$bundle_id" ]] && mdfind "kMDItemCFBundleIdentifier == '${bundle_id}'" 2>/dev/null | head -1 | grep -q .; then
       echo "$name"
     fi
-  done | sort
+  done
 }
 
 # Resolve app name from bundle ID (for AppleScript).

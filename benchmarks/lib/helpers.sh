@@ -14,8 +14,9 @@ wait_for_window() {
   local app_name
   app_name=$(app_name_from_bundle "$bundle_id" 2>/dev/null || basename "$bundle_id")
 
+  local iterations=$(( timeout * 5 ))  # 0.2s per iteration
   local elapsed=0
-  while (( elapsed < timeout )); do
+  while (( elapsed < iterations )); do
     local count
     count=$(osascript -e "
       tell application \"System Events\"
@@ -31,7 +32,7 @@ wait_for_window() {
     elapsed=$((elapsed + 1))
   done
 
-  echo "Warning: timed out waiting for window from ${app_name}" >&2
+  echo "Warning: timed out waiting for window from ${app_name} (${timeout}s)" >&2
   return 1
 }
 
@@ -48,23 +49,41 @@ get_pid() {
   fi
 }
 
-# Get total RSS (in KB) for a process and all its children.
+# Get total RSS (KB) and CPU (%) for a process tree. Outputs "rss_kb cpu_pct".
+# Single ps call with BFS tree walk in awk.
+# Usage: get_tree_stats <pid>
+get_tree_stats() {
+  local root="$1"
+  ps -eo pid=,ppid=,rss=,%cpu= 2>/dev/null | awk -v root="$root" '
+    {
+      rss_of[$1] = $3
+      cpu_of[$1] = $4
+      children[$2] = children[$2] " " $1
+    }
+    END {
+      total_rss = rss_of[root] + 0
+      total_cpu = cpu_of[root] + 0.0
+      queue = children[root]
+      while (queue != "") {
+        split(queue, q, " ")
+        queue = ""
+        for (i in q) {
+          pid = q[i]
+          if (pid == "") continue
+          total_rss += rss_of[pid] + 0
+          total_cpu += cpu_of[pid] + 0.0
+          if (pid in children) queue = queue children[pid]
+        }
+      }
+      printf "%d %.1f\n", total_rss, total_cpu
+    }
+  '
+}
+
+# Get total RSS (in KB) for a process and its entire descendant tree.
 # Usage: get_tree_rss <pid>
 get_tree_rss() {
-  local parent_pid="$1"
-  local total=0
-  local pids
-
-  # Get parent + children
-  pids=$(pgrep -P "$parent_pid" 2>/dev/null || true)
-  pids="$parent_pid $pids"
-
-  for pid in $pids; do
-    local rss
-    rss=$(ps -o rss= -p "$pid" 2>/dev/null | tr -d ' ' || echo 0)
-    total=$((total + rss))
-  done
-  echo "$total"
+  get_tree_stats "$1" | awk '{print $1}'
 }
 
 # Send a keystroke to the frontmost application via System Events.

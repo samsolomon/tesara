@@ -1,0 +1,30 @@
+{
+  "terminal": "Ghostty",
+  "bundle_id": "com.mitchellh.ghostty",
+  "date": "2026-03-13T01:35:15Z",
+  "benchmark": "startup",
+  "unit": "ms",
+  "stats": {
+    "mean": 1111.2,
+    "stddev": 93.25,
+    "min": 1053.0,
+    "max": 1374.0,
+    "median": 1082.0,
+    "p50": 1083.0,
+    "p95": 1374.0,
+    "p99": 1374.0,
+    "count": 10
+  },
+  "raw": [
+    1374,
+    1095,
+    1053,
+    1077,
+    1102,
+    1081,
+    1083,
+    1090,
+    1079,
+    1078
+  ]
+}

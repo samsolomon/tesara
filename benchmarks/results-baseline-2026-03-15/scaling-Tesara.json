@@ -1,0 +1,25 @@
+{
+  "terminal": "Tesara",
+  "bundle_id": "com.samsolomon.tesara",
+  "date": "2026-03-15T19:00:34Z",
+  "benchmark": "scaling",
+  "unit": "rss_kb",
+  "scaling": {
+    "1_tabs": {
+      "tabs": 1,
+      "rss_kb": 130080
+    },
+    "5_tabs": {
+      "tabs": 5,
+      "rss_kb": 199184
+    },
+    "10_tabs": {
+      "tabs": 10,
+      "rss_kb": 262442
+    },
+    "20_tabs": {
+      "tabs": 20,
+      "rss_kb": 330181
+    }
+  }
+}

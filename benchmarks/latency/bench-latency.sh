@@ -3,6 +3,13 @@
 #
 # Uses latency-probe (compiled Swift CLI) to post CGEvents and poll
 # AXUIElement for the character appearing on screen.
+#
+# NOTE: AX-based measurement only works for terminals that expose text
+# content via the Accessibility API (AXValue on text elements).
+# This includes Tesara, Apple Terminal, and iTerm2.
+# GPU-rendered terminals (Ghostty, Alacritty, Kitty) render to Metal/OpenGL
+# surfaces without AX text — these are skipped (see MANUAL_ONLY_LATENCY).
+# For those, use an external tool like Typometer or Is It Snappy.
 
 set -euo pipefail
 

@@ -29,7 +29,7 @@ LATENCY_WARMUP=10
 RESOURCE_IDLE_SAMPLES=10
 RESOURCE_LOAD_DURATION=30
 FPS_DURATION=10
-CTRLC_ITERATIONS=5
+CTRLC_ITERATIONS=10
 SCALING_TAB_COUNTS="1 5 10 20"
 SCROLLBACK_CHECKPOINTS="1000 10000 50000 100000 200000"
 
@@ -40,7 +40,7 @@ PAYLOAD_DIR="${BENCH_DIR}/throughput"
 SENTINEL_PREFIX="/tmp/tesara-bench-sentinel"
 
 # ── Terminals that don't support AppleScript keystroke injection ─────
-MANUAL_ONLY_LATENCY="Alacritty Kitty"
+MANUAL_ONLY_LATENCY="Alacritty Kitty Ghostty"
 
 # Check if a terminal is in the manual-only list
 is_manual_only() {
