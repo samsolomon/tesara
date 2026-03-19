@@ -37,6 +37,8 @@ targets:
         type: folder
     info:
       path: Tesara/Info.plist
+      properties:
+        ATSApplicationFontsPath: "."
     preBuildScripts:
       - name: Build libghostty
         script: |
