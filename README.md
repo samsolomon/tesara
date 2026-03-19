@@ -4,7 +4,7 @@
 
 A modern, minimal terminal emulator for the agentic age.
 
-[MacOS Download](https://github.com/samsolomon/tesara/releases/latest/download/Tesara.zip)
+[MacOS Download](https://github.com/samsolomon/tesara/releases/latest/download/Tesara.dmg)
 
 ## Features
 
@@ -21,11 +21,8 @@ Tesara is a native macOS terminal that prioritizes clarity, speed, and restraint
 
 ## Install
 
-Download the latest release from the [releases page](https://github.com/samsolomon/tesara/releases/latest).
-
-1. Unzip `Tesara.zip`
-2. Move `Tesara.app` to `/Applications`
-3. Right-click the app and choose **Open** (required on first launch since the app is not yet notarized)
+1. Download [Tesara.dmg](https://github.com/samsolomon/tesara/releases/latest/download/Tesara.dmg)
+2. Open the DMG and drag Tesara to Applications
 
 ## Stack
 
