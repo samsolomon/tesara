@@ -603,8 +603,6 @@ class GhosttySurfaceView: NSView, NSTextInputClient {
     }
 
     func insertText(_ string: Any, replacementRange: NSRange) {
-        guard NSApp.currentEvent != nil else { return }
-
         var chars = ""
         switch string {
         case let v as NSAttributedString:
@@ -662,6 +660,12 @@ class GhosttySurfaceView: NSView, NSTextInputClient {
         } else if clearIfNeeded {
             ghostty_surface_preedit(surface, nil, 0)
         }
+    }
+
+    // MARK: - Suppress Character Palette
+
+    @objc func orderFrontCharacterPalette(_ sender: Any?) {
+        // No-op: prevent fn/Globe from opening the emoji picker
     }
 
     // MARK: - Edit Menu Actions
