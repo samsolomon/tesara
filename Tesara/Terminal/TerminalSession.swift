@@ -43,8 +43,6 @@ final class TerminalSession: ObservableObject, Identifiable {
     private var activeSessionID: UUID?
     private var activeCapture: TerminalBlockCapture?
     private var blockOrderIndex = 0
-    private var cachedHasForegroundProcess = false
-    private var lastForegroundProcessCheck: CFAbsoluteTime = 0
     private var altScreenTimer: Timer?
 
     /// Tracks launch parameters for auto-restart on immediate crash.
@@ -169,20 +167,19 @@ final class TerminalSession: ObservableObject, Identifiable {
     func checkAlternateScreen() {
         guard let surface = surfaceView?.surface else { return }
 
-        // Use non-blocking tryLock variants so the main thread never stalls
-        // waiting on renderer_state.mutex (which the renderer thread holds
-        // during frame updates). If the lock is contested we just skip this
-        // tick — the 200ms timer will catch up.
-        let altScreen = ghostty_surface_is_alternate_screen_try(surface)
-        guard altScreen >= 0 else { return } // lock contested
-        let mouseCap = ghostty_surface_mouse_captured_try(surface)
-        guard mouseCap >= 0 else { return } // lock contested
-
-        let isTUI = altScreen == 1
-            || mouseCap == 1
-            || cachedHasForegroundProcess(surface)
-        if isTUI != isAlternateScreen {
-            isAlternateScreen = isTUI
+        // These ghostty calls acquire renderer_state.mutex which the renderer
+        // thread holds during frame updates. Dispatch to a background queue so
+        // the main thread never stalls waiting for the lock.
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            let mouseCap = ghostty_surface_mouse_captured(surface)
+            let confirmQuit = ghostty_surface_needs_confirm_quit(surface)
+            let isTUI = mouseCap || confirmQuit
+            DispatchQueue.main.async {
+                guard let self else { return }
+                if isTUI != self.isAlternateScreen {
+                    self.isAlternateScreen = isTUI
+                }
+            }
         }
     }
 
@@ -190,15 +187,6 @@ final class TerminalSession: ObservableObject, Identifiable {
         altScreenTimer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { [weak self] _ in
             self?.checkAlternateScreen()
         }
-    }
-
-    private func cachedHasForegroundProcess(_ surface: ghostty_surface_t) -> Bool {
-        let now = CFAbsoluteTimeGetCurrent()
-        if now - lastForegroundProcessCheck > 1.0 {
-            lastForegroundProcessCheck = now
-            cachedHasForegroundProcess = ghostty_surface_has_foreground_process(surface)
-        }
-        return cachedHasForegroundProcess
     }
 
     // MARK: - Input Bar
@@ -338,7 +326,6 @@ final class TerminalSession: ObservableObject, Identifiable {
 
         finalizeActiveCaptureIfNeeded(exitCode: code)
         inputBarState?.suggestionEngine.invalidateCache()
-        lastForegroundProcessCheck = 0
         isAtPrompt = true
     }
 

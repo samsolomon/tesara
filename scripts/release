@@ -1,0 +1,148 @@
+#!/usr/bin/env bash
+#
+# Build, sign, notarize, and package Tesara for distribution.
+#
+# Prerequisites:
+#   - Developer ID Application certificate in Keychain
+#   - App-specific password stored:
+#       xcrun notarytool store-credentials "tesara-notary" \
+#         --apple-id "you@example.com" \
+#         --team-id "9ZLX6W79P6" \
+#         --password "<app-specific-password>"
+#
+# Usage:
+#   ./scripts/release            # build + notarize + DMG
+#   ./scripts/release --skip-notarize   # build + DMG only (for testing)
+#
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+SCHEME="Tesara"
+ARCHIVE_PATH="$PROJECT_DIR/build/Tesara.xcarchive"
+EXPORT_DIR="$PROJECT_DIR/build/export"
+DMG_PATH="$PROJECT_DIR/build/Tesara.dmg"
+NOTARY_PROFILE="tesara-notary"
+
+SKIP_NOTARIZE=false
+for arg in "$@"; do
+  case "$arg" in
+    --skip-notarize) SKIP_NOTARIZE=true ;;
+  esac
+done
+
+# ── Helpers ──────────────────────────────────────────────────────────────────
+
+step() { echo ""; echo "▸ $1"; }
+fail() { echo "error: $1" >&2; exit 1; }
+
+# ── Preflight checks ────────────────────────────────────────────────────────
+
+step "Checking prerequisites"
+
+if ! security find-identity -v -p codesigning | grep -q "Developer ID Application"; then
+  fail "No Developer ID Application certificate found. Install one via Xcode > Settings > Accounts > Manage Certificates."
+fi
+
+if [ "$SKIP_NOTARIZE" = false ]; then
+  if ! xcrun notarytool history --keychain-profile "$NOTARY_PROFILE" &>/dev/null; then
+    fail "Notary credentials not found. Run:
+  xcrun notarytool store-credentials \"$NOTARY_PROFILE\" \\
+    --apple-id \"you@example.com\" \\
+    --team-id \"9ZLX6W79P6\" \\
+    --password \"<app-specific-password>\""
+  fi
+fi
+
+# ── Clean ────────────────────────────────────────────────────────────────────
+
+step "Cleaning build directory"
+rm -rf "$PROJECT_DIR/build"
+mkdir -p "$PROJECT_DIR/build"
+
+# ── Archive ──────────────────────────────────────────────────────────────────
+
+step "Archiving $SCHEME (Release)"
+xcodebuild archive \
+  -project "$PROJECT_DIR/Tesara.xcodeproj" \
+  -scheme "$SCHEME" \
+  -configuration Release \
+  -archivePath "$ARCHIVE_PATH" \
+  CODE_SIGN_STYLE=Manual \
+  CODE_SIGN_IDENTITY="Developer ID Application" \
+  DEVELOPMENT_TEAM="9ZLX6W79P6" \
+  -quiet
+
+[ -d "$ARCHIVE_PATH" ] || fail "Archive failed"
+
+# ── Export ───────────────────────────────────────────────────────────────────
+
+step "Exporting with Developer ID signing"
+xcodebuild -exportArchive \
+  -archivePath "$ARCHIVE_PATH" \
+  -exportPath "$EXPORT_DIR" \
+  -exportOptionsPlist "$SCRIPT_DIR/ExportOptions.plist" \
+  -quiet
+
+APP_PATH="$EXPORT_DIR/Tesara.app"
+[ -d "$APP_PATH" ] || fail "Export failed — Tesara.app not found"
+
+# Verify signature
+codesign --verify --deep --strict "$APP_PATH"
+echo "  Signature OK"
+
+# ── Notarize ─────────────────────────────────────────────────────────────────
+
+if [ "$SKIP_NOTARIZE" = false ]; then
+  step "Submitting for notarization"
+
+  # Create a ZIP for notarization submission
+  NOTARIZE_ZIP="$PROJECT_DIR/build/Tesara-notarize.zip"
+  ditto -c -k --keepParent "$APP_PATH" "$NOTARIZE_ZIP"
+
+  xcrun notarytool submit "$NOTARIZE_ZIP" \
+    --keychain-profile "$NOTARY_PROFILE" \
+    --wait
+
+  step "Stapling notarization ticket"
+  xcrun stapler staple "$APP_PATH"
+
+  rm -f "$NOTARIZE_ZIP"
+fi
+
+# ── Package DMG ──────────────────────────────────────────────────────────────
+
+step "Creating DMG"
+
+# Create a temporary directory with the app and an Applications symlink
+DMG_STAGING="$PROJECT_DIR/build/dmg-staging"
+mkdir -p "$DMG_STAGING"
+cp -R "$APP_PATH" "$DMG_STAGING/"
+ln -s /Applications "$DMG_STAGING/Applications"
+
+hdiutil create \
+  -volname "Tesara" \
+  -srcfolder "$DMG_STAGING" \
+  -ov \
+  -format UDZO \
+  "$DMG_PATH"
+
+rm -rf "$DMG_STAGING"
+
+# Notarize the DMG too
+if [ "$SKIP_NOTARIZE" = false ]; then
+  step "Notarizing DMG"
+  xcrun notarytool submit "$DMG_PATH" \
+    --keychain-profile "$NOTARY_PROFILE" \
+    --wait
+
+  xcrun stapler staple "$DMG_PATH"
+fi
+
+# ── Done ─────────────────────────────────────────────────────────────────────
+
+echo ""
+echo "✓ Release built successfully"
+echo "  $DMG_PATH"
+echo "  $(du -h "$DMG_PATH" | cut -f1) compressed"

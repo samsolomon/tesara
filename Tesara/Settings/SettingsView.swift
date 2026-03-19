@@ -192,11 +192,7 @@ private struct SettingsDetailContainer<Content: View>: View {
     var body: some View {
         content
             .contentMargins(.top, Self.topInset, for: .scrollContent)
-            .onScrollGeometryChange(for: Bool.self) { geo in
-                geo.contentOffset.y > 1
-            } action: { _, newValue in
-                isScrolled = newValue
-            }
+            .modifier(ScrollGeometryObserver(isScrolled: $isScrolled))
             .background(Color(nsColor: .windowBackgroundColor))
             .overlay(alignment: .top) {
                 VStack(spacing: 0) {
@@ -782,5 +778,21 @@ private struct ThemeDocument: FileDocument {
 
     func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
         FileWrapper(regularFileWithContents: data)
+    }
+}
+
+private struct ScrollGeometryObserver: ViewModifier {
+    @Binding var isScrolled: Bool
+
+    func body(content: Content) -> some View {
+        if #available(macOS 15.0, *) {
+            content.onScrollGeometryChange(for: Bool.self) { geo in
+                geo.contentOffset.y > 1
+            } action: { _, newValue in
+                isScrolled = newValue
+            }
+        } else {
+            content
+        }
     }
 }

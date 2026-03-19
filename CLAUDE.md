@@ -13,11 +13,25 @@ Tesara exists to become the most beautiful, performant, and usable terminal on m
 - Every change should make the product clearer, faster, calmer, or more delightful.
 - UI labels use sentence case: capitalize only the first word and proper nouns.
 
-## Ghostty Submodule
+## Ghostty Fork
 
-`vendor/ghostty` contains a vendored copy of libghostty with **local patches** that must be preserved:
+`vendor/ghostty` is a submodule pointing at [`samsolomon/ghostty`](https://github.com/samsolomon/ghostty), a fork of `ghostty-org/ghostty`. The fork's `tesara` branch carries a `build.zig` patch that emits `libghostty.a` + headers on macOS.
 
-- **`src/termio/Exec.zig`** — Darwin `login(1)` wrapper removed. `/usr/bin/login` spins at 100% CPU on macOS Tahoe; the patch falls through to POSIX `/bin/sh -c` instead.
-- **`build.zig`** — Modified to emit `libghostty.a` static library + headers on macOS.
+The submodule is pinned to a **commit SHA** on the `tesara` branch. Do not create tags in the fork — ghostty's build system uses `git describe` on tags and panics if the format is unexpected.
 
-If you update the ghostty submodule to a newer upstream commit, re-apply these patches or verify upstream has equivalent fixes. Deleting `vendor/ghostty/zig-out/lib/libghostty.a` forces a full Zig rebuild (~minutes).
+### Updating to a newer upstream Ghostty
+
+```bash
+cd vendor/ghostty
+git fetch upstream                        # (add remote once: git remote add upstream https://github.com/ghostty-org/ghostty.git)
+git checkout tesara
+git rebase upstream/main                  # resolve conflicts if build.zig changed
+ZON_VERSION=$(grep '^\s*\.version\s*=' build.zig.zon | head -1 | grep -o '"[^"]*"' | tr -d '"')
+zig build -Doptimize=ReleaseFast -Dapp-runtime=none -Demit-xcframework=false -Dversion-string="$ZON_VERSION"
+git push origin tesara --force-with-lease
+cd ../..
+git add vendor/ghostty
+git commit -m "vendor: update ghostty to $(cd vendor/ghostty && git rev-parse --short HEAD)"
+```
+
+Deleting `vendor/ghostty/zig-out/lib/libghostty.a` forces a full Zig rebuild (~minutes).

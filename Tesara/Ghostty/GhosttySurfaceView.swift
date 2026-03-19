@@ -224,8 +224,6 @@ class GhosttySurfaceView: NSView, NSTextInputClient {
     func setTerminalCursorHidden(_ hidden: Bool) {
         guard cursorHidden != hidden else { return }
         cursorHidden = hidden
-        guard let surface else { return }
-        ghostty_surface_set_cursor_hidden(surface, hidden)
     }
 
     // MARK: - Tracking Areas
