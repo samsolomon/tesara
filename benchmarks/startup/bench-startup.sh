@@ -12,7 +12,7 @@ source "${SCRIPT_DIR}/../lib/terminals.sh"
 source "${SCRIPT_DIR}/../lib/helpers.sh"
 
 # Which terminals to benchmark (default: all detected)
-TARGETS=("${@:-$(detect_terminals)}")
+init_targets "$@"
 
 run_startup_bench() {
   local name="$1"

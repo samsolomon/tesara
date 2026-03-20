@@ -35,7 +35,7 @@ SCROLLBACK_CHECKPOINTS="1000 10000 50000 100000 200000"
 
 # ── Paths ────────────────────────────────────────────────────────────
 BENCH_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-RESULTS_DIR="${BENCH_DIR}/results"
+RESULTS_DIR="${RESULTS_DIR:-${BENCH_DIR}/results}"
 PAYLOAD_DIR="${BENCH_DIR}/throughput"
 SENTINEL_PREFIX="/tmp/tesara-bench-sentinel"
 

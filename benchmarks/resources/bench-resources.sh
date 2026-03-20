@@ -11,13 +11,7 @@ source "${SCRIPT_DIR}/../config.sh"
 source "${SCRIPT_DIR}/../lib/terminals.sh"
 source "${SCRIPT_DIR}/../lib/helpers.sh"
 
-TARGETS=("${@:-$(detect_terminals)}")
-
-# Sample RSS and CPU for a full process tree. Outputs "rss_kb cpu_pct".
-# Delegates to get_tree_stats in helpers.sh (single ps call).
-sample_process_tree() {
-  get_tree_stats "$1"
-}
+init_targets "$@"
 
 run_resource_bench() {
   local name="$1"
@@ -44,11 +38,8 @@ run_resource_bench() {
 
   echo "    Sampling idle (${RESOURCE_IDLE_SAMPLES} samples)..."
   for i in $(seq 1 "$RESOURCE_IDLE_SAMPLES"); do
-    local sample
-    sample=$(sample_process_tree "$pid")
     local rss cpu
-    rss=$(echo "$sample" | awk '{print $1}')
-    cpu=$(echo "$sample" | awk '{print $2}')
+    read -r rss cpu <<< "$(get_tree_stats "$pid")"
     idle_rss+=("$rss")
     idle_cpu+=("$cpu")
     sleep 1
@@ -71,11 +62,8 @@ run_resource_bench() {
   local samples=0
   local max_samples=$((RESOURCE_LOAD_DURATION * 2))  # sample every 500ms
   while (( samples < max_samples )); do
-    local sample
-    sample=$(sample_process_tree "$pid")
     local rss cpu
-    rss=$(echo "$sample" | awk '{print $1}')
-    cpu=$(echo "$sample" | awk '{print $2}')
+    read -r rss cpu <<< "$(get_tree_stats "$pid")"
     load_rss+=("$rss")
     load_cpu+=("$cpu")
     if (( rss > peak_rss )); then
@@ -100,10 +88,8 @@ run_resource_bench() {
     for round in $(seq 1 10); do
       send_command "cat ${payload} > /dev/null"
       sleep 2
-      local sample
-      sample=$(sample_process_tree "$pid")
       local rss
-      rss=$(echo "$sample" | awk '{print $1}')
+      read -r rss _ <<< "$(get_tree_stats "$pid")"
       growth_rss+=("$rss")
     done
   fi

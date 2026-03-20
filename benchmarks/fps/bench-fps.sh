@@ -11,7 +11,7 @@ source "${SCRIPT_DIR}/../config.sh"
 source "${SCRIPT_DIR}/../lib/terminals.sh"
 source "${SCRIPT_DIR}/../lib/helpers.sh"
 
-TARGETS=("${@:-$(detect_terminals)}")
+init_targets "$@"
 
 DOOM_FIRE="${BENCH_DIR}/vendor/doom-fire-zig/zig-out/bin/doom-fire-zig"
 

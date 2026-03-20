@@ -28,12 +28,14 @@ echo ""
 
 # Save system metadata
 mkdir -p "$RESULTS_DIR"
+LOAD_AVG=$(sysctl -n vm.loadavg 2>/dev/null | sed 's/[{}]//g' | xargs)
 jq -n \
   --arg macos "$MACOS_VERSION" \
   --arg chip "$CHIP" \
   --argjson ram "$RAM_GB" \
   --arg date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-  '{macos: $macos, chip: $chip, ram_gb: $ram, date: $date}' \
+  --arg load_avg "$LOAD_AVG" \
+  '{macos: $macos, chip: $chip, ram_gb: $ram, date: $date, load_avg: $load_avg}' \
   > "${RESULTS_DIR}/system.json"
 
 # ── Detect terminals ────────────────────────────────────────────────

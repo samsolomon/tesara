@@ -36,16 +36,26 @@ wait_for_window() {
   return 1
 }
 
-# Get PID(s) for a bundle ID. Returns all matching PIDs.
+# Get the main PID for a bundle ID via AppleScript (reliable, returns exact PID).
+# Falls back to pgrep if AppleScript fails (e.g., headless environments).
 # Usage: get_pid "com.apple.Terminal"
 get_pid() {
   local bundle_id="$1"
+  local app_name
+  app_name=$(app_name_from_bundle "$bundle_id" 2>/dev/null || true)
+  if [[ -n "$app_name" ]]; then
+    local pid
+    pid=$(osascript -e "tell application \"System Events\" to unix id of process \"${app_name}\"" 2>/dev/null || true)
+    if [[ -n "$pid" ]]; then
+      echo "$pid"
+      return
+    fi
+  fi
+  # Fallback: pgrep
   local app_path
   app_path=$(mdfind "kMDItemCFBundleIdentifier == '${bundle_id}'" 2>/dev/null | head -1)
   if [[ -n "$app_path" ]]; then
-    local app_name
-    app_name=$(basename "$app_path" .app)
-    pgrep -f "$app_name" 2>/dev/null || true
+    pgrep -f "$(basename "$app_path" .app)" 2>/dev/null | head -1 || true
   fi
 }
 
@@ -121,17 +131,38 @@ if not vals:
     sys.exit()
 vals.sort()
 n = len(vals)
+if n >= 2:
+    q = statistics.quantiles(vals, n=100, method='inclusive')
+    p50, p95, p99 = q[49], q[94], q[98]
+else:
+    p50 = p95 = p99 = vals[0]
 result = {
     'mean': round(statistics.mean(vals), 2),
     'stddev': round(statistics.stdev(vals), 2) if n > 1 else 0,
     'min': round(min(vals), 2),
     'max': round(max(vals), 2),
-    'median': round(statistics.median(vals), 2),
-    'p50': round(vals[int(n * 0.50)], 2),
-    'p95': round(vals[int(n * 0.95)], 2),
-    'p99': round(vals[int(n * 0.99)], 2),
+    'p50': round(p50, 2),
+    'p95': round(p95, 2),
+    'p99': round(p99, 2),
     'count': n
 }
 print(json.dumps(result))
 "
+}
+
+# Shuffle targets for randomized terminal ordering per benchmark.
+# Usage: init_targets "$@"
+shuffle_targets() {
+  if (( $# > 0 )); then
+    printf '%s\n' "$@"
+  else
+    detect_terminals
+  fi | awk 'BEGIN{srand()}{print rand()"\t"$0}' | sort -n | cut -f2-
+}
+
+# Populate the global TARGETS array with shuffled terminal names.
+# Usage: init_targets "$@"
+init_targets() {
+  TARGETS=()
+  while IFS= read -r _t; do TARGETS+=("$_t"); done < <(shuffle_targets "$@")
 }

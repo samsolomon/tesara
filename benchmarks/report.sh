@@ -70,7 +70,7 @@ EOF
 
   for f in "${RESULTS_DIR}"/startup-*.json; do
     IFS=$'\t' read -r name mean stddev min max median < <(
-      jq -r '[.terminal, (.stats.mean|tostring), (.stats.stddev|tostring), (.stats.min|tostring), (.stats.max|tostring), ((.stats.median // .stats.p50)|tostring)] | @tsv' "$f"
+      jq -r '[.terminal, (.stats.mean|tostring), (.stats.stddev|tostring), (.stats.min|tostring), (.stats.max|tostring), (.stats.p50|tostring)] | @tsv' "$f"
     )
     rating=$(rate_metric "$mean" 500 1000 2000)
     echo "| ${name} | ${mean} | ${stddev} | ${min} | ${max} | ${median} | ${rating} |" >> "$REPORT"

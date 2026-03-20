@@ -12,7 +12,7 @@ source "${SCRIPT_DIR}/../config.sh"
 source "${SCRIPT_DIR}/../lib/terminals.sh"
 source "${SCRIPT_DIR}/../lib/helpers.sh"
 
-TARGETS=("${@:-$(detect_terminals)}")
+init_targets "$@"
 
 # Open a new tab via Cmd+T (standard macOS shortcut)
 open_new_tab() {

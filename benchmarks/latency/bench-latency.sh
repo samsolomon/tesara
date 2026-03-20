@@ -19,7 +19,7 @@ source "${SCRIPT_DIR}/../lib/terminals.sh"
 source "${SCRIPT_DIR}/../lib/helpers.sh"
 
 PROBE="${SCRIPT_DIR}/latency-probe"
-TARGETS=("${@:-$(detect_terminals)}")
+init_targets "$@"
 
 if [[ ! -x "$PROBE" ]]; then
   echo "Error: latency-probe not compiled. Run setup.sh first." >&2
