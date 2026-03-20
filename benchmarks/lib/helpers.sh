@@ -150,6 +150,32 @@ print(json.dumps(result))
 "
 }
 
+# Set the bounds of a terminal's front window via AppleScript.
+# Usage: set_window_bounds "AppName" left top right bottom
+set_window_bounds() {
+  local app_name="$1"
+  local left="$2" top="$3" right="$4" bottom="$5"
+  osascript -e "
+    tell application \"${app_name}\"
+      set bounds of front window to {${left}, ${top}, ${right}, ${bottom}}
+    end tell
+  " 2>/dev/null || true
+}
+
+# Poll for a sentinel file to appear.
+# Usage: wait_for_sentinel "/path/to/sentinel" [max_polls]
+# Returns 0 if found, 1 if timed out. Default: 100 polls × 0.1s = 10s.
+wait_for_sentinel() {
+  local sentinel="$1"
+  local max_polls="${2:-100}"
+  local elapsed=0
+  while [[ ! -f "$sentinel" ]] && (( elapsed < max_polls )); do
+    sleep 0.1
+    elapsed=$((elapsed + 1))
+  done
+  [[ -f "$sentinel" ]]
+}
+
 # Shuffle targets for randomized terminal ordering per benchmark.
 # Usage: init_targets "$@"
 shuffle_targets() {

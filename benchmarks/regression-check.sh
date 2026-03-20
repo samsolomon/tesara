@@ -116,6 +116,32 @@ for f in "${CURRENT_DIR}"/ctrlc-*.json; do
   check "ctrlc/${name}/mean" "$(jq -r '.stats.mean' "$baseline_f")" "$(jq -r '.stats.mean' "$f")" 1
 done
 
+# ── Wide Throughput ──────────────────────────────────────────────
+for f in "${CURRENT_DIR}"/wide-throughput-*.json; do
+  [[ -f "$f" ]] || continue
+  name=$(jq -r '.terminal' "$f")
+  baseline_f="${BASELINE_DIR}/wide-throughput-${name}.json"
+  [[ -f "$baseline_f" ]] || continue
+  for payload in ascii seq unicode ansi ligature zwj; do
+    b=$(jq -r "if .payloads.${payload} then .payloads.${payload}.stats.mean else \"null\" end" "$baseline_f")
+    c=$(jq -r "if .payloads.${payload} then .payloads.${payload}.stats.mean else \"null\" end" "$f")
+    check "wide-throughput/${name}/${payload}" "$b" "$c" 0
+  done
+done
+
+# ── Resize ───────────────────────────────────────────────────────
+for f in "${CURRENT_DIR}"/resize-*.json; do
+  [[ -f "$f" ]] || continue
+  name=$(jq -r '.terminal' "$f")
+  baseline_f="${BASELINE_DIR}/resize-${name}.json"
+  [[ -f "$baseline_f" ]] || continue
+  for transition in widen narrow; do
+    b=$(jq -r "if .transitions.${transition} then .transitions.${transition}.stats.mean else \"null\" end" "$baseline_f")
+    c=$(jq -r "if .transitions.${transition} then .transitions.${transition}.stats.mean else \"null\" end" "$f")
+    check "resize/${name}/${transition}" "$b" "$c" 1
+  done
+done
+
 # ── FPS ──────────────────────────────────────────────────────────────
 for f in "${CURRENT_DIR}"/fps-*.json; do
   [[ -f "$f" ]] || continue

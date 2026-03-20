@@ -130,6 +130,23 @@ for f in "${CURRENT_DIR}"/throughput-*.json; do
 done
 echo ""
 
+# ── Wide Throughput comparison ─────────────────────────────────────
+echo "--- Wide Throughput (bytes/sec, higher is better) ---"
+for f in "${CURRENT_DIR}"/wide-throughput-*.json; do
+  [[ -f "$f" ]] || continue
+  name=$(jq -r '.terminal' "$f")
+  baseline_f="${BASELINE_DIR}/wide-throughput-${name}.json"
+  [[ -f "$baseline_f" ]] || continue
+
+  echo "  ${name}:"
+  for payload in ascii seq unicode ansi ligature zwj; do
+    b_val=$(jq -r "if .payloads.${payload} then .payloads.${payload}.stats.mean else \"null\" end" "$baseline_f")
+    c_val=$(jq -r "if .payloads.${payload} then .payloads.${payload}.stats.mean else \"null\" end" "$f")
+    compare_metric "    ${payload}" "$b_val" "$c_val" 0
+  done
+done
+echo ""
+
 # ── Resources comparison ────────────────────────────────────────────
 echo "--- Resources (lower is better) ---"
 for f in "${CURRENT_DIR}"/resources-*.json; do
@@ -177,6 +194,23 @@ for f in "${CURRENT_DIR}"/ctrlc-*.json; do
   b_mean=$(jq -r '.stats.mean' "$baseline_f")
   c_mean=$(jq -r '.stats.mean' "$f")
   compare_metric "${name}" "$b_mean" "$c_mean" 1
+done
+echo ""
+
+# ── Resize comparison ──────────────────────────────────────────────
+echo "--- Resize latency (ms, lower is better) ---"
+for f in "${CURRENT_DIR}"/resize-*.json; do
+  [[ -f "$f" ]] || continue
+  name=$(jq -r '.terminal' "$f")
+  baseline_f="${BASELINE_DIR}/resize-${name}.json"
+  [[ -f "$baseline_f" ]] || continue
+
+  echo "  ${name}:"
+  for transition in widen narrow; do
+    b_val=$(jq -r "if .transitions.${transition} then .transitions.${transition}.stats.mean else \"null\" end" "$baseline_f")
+    c_val=$(jq -r "if .transitions.${transition} then .transitions.${transition}.stats.mean else \"null\" end" "$f")
+    compare_metric "    ${transition}" "$b_val" "$c_val" 1
+  done
 done
 echo ""
 

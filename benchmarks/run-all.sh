@@ -63,6 +63,7 @@ fi
 SUITES=(
   "startup/bench-startup.sh"
   "throughput/bench-throughput.sh"
+  "wide-throughput/bench-wide-throughput.sh"
   "resources/bench-resources.sh"
   "latency/bench-latency.sh"
   "fps/bench-fps.sh"
@@ -70,6 +71,7 @@ SUITES=(
   "parser/bench-parser.sh"
   "scaling/bench-scaling.sh"
   "scrollback/bench-scrollback.sh"
+  "resize/bench-resize.sh"
 )
 
 for suite in "${SUITES[@]}"; do

@@ -17,6 +17,9 @@ source "${SCRIPT_DIR}/../lib/helpers.sh"
 
 init_targets "$@"
 
+GRID_COLS="${THROUGHPUT_GRID_COLS:-80}"
+BENCHMARK_NAME="${THROUGHPUT_BENCHMARK_NAME:-throughput}"
+
 PAYLOAD_NAMES="ascii seq unicode ansi ligature zwj"
 
 # Generate payloads if missing
@@ -28,10 +31,11 @@ run_throughput_bench() {
   bundle_id=$(get_bundle_id "$name")
   local all_results="{}"
   local grid_logged=0
+  local actual_grid=""
   local grid_sentinel="${SENTINEL_PREFIX}-grid-$$"
   local bench_script="/tmp/tesara-bench-tp-$$.sh"
 
-  echo "  Benchmarking throughput: ${name}"
+  echo "  Benchmarking ${BENCHMARK_NAME} (${GRID_COLS} cols): ${name}"
 
   # Launch terminal once and normalize window size
   quit_terminal "$bundle_id"
@@ -41,11 +45,8 @@ run_throughput_bench() {
 
   local app_name
   app_name=$(app_name_from_bundle "$bundle_id" 2>/dev/null || echo "$name")
-  osascript -e "
-    tell application \"${app_name}\"
-      set bounds of front window to {100, 100, 740, 580}
-    end tell
-  " 2>/dev/null || true
+  local right_edge=$((GRID_COLS * 8 + 160))
+  set_window_bounds "$app_name" 100 100 "$right_edge" 580
   sleep 0.5
 
   for payload_name in $PAYLOAD_NAMES; do
@@ -71,7 +72,7 @@ run_throughput_bench() {
       # preceding bytes. We read the CPR response (ends with 'R') to sync.
       cat > "$bench_script" << BENCHEOF
 #!/bin/bash
-stty rows 24 cols 80
+stty rows 24 cols ${GRID_COLS}
 [ ! -f ${grid_sentinel} ] && echo "\$(tput cols)x\$(tput lines)" > ${grid_sentinel}
 T0=\$(perl -MTime::HiRes -e 'print Time::HiRes::time()')
 cat ${payload_file}
@@ -85,16 +86,16 @@ BENCHEOF
       send_command "bash ${bench_script}"
 
       # Poll for sentinel
-      local max_polls=$(( 120 * 10 ))
-      local elapsed=0
-      while [[ ! -f "$sentinel" ]] && (( elapsed < max_polls )); do
-        sleep 0.1
-        elapsed=$((elapsed + 1))
-      done
+      wait_for_sentinel "$sentinel" 1200
 
       # Log grid size once per terminal (verify stty normalization worked)
       if (( ! grid_logged )) && [[ -f "$grid_sentinel" ]]; then
-        echo "    Grid: $(tr -d '[:space:]' < "$grid_sentinel")"
+        actual_grid=$(tr -d '[:space:]' < "$grid_sentinel")
+        local actual_cols="${actual_grid%%x*}"
+        echo "    Grid: ${actual_grid} (target: ${GRID_COLS})"
+        if [[ "$actual_cols" != "$GRID_COLS" ]]; then
+          echo "    Warning: requested ${GRID_COLS} cols but terminal reported ${actual_cols}" >&2
+        fi
         grid_logged=1
       fi
 
@@ -132,13 +133,16 @@ BENCHEOF
   # Quit terminal after all payloads complete
   quit_terminal "$bundle_id"
 
-  local outfile="${RESULTS_DIR}/throughput-${name}.json"
+  local outfile="${RESULTS_DIR}/${BENCHMARK_NAME}-${name}.json"
   jq -n \
     --arg terminal "$name" \
     --arg bundle_id "$bundle_id" \
     --arg date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    --arg benchmark "$BENCHMARK_NAME" \
+    --argjson grid "$GRID_COLS" \
+    --arg actual_grid "${actual_grid:-unknown}" \
     --argjson payloads "$all_results" \
-    '{terminal: $terminal, bundle_id: $bundle_id, date: $date, benchmark: "throughput", payloads: $payloads}' \
+    '{terminal: $terminal, bundle_id: $bundle_id, date: $date, benchmark: $benchmark, grid: $grid, actual_grid: $actual_grid, payloads: $payloads}' \
     > "$outfile"
 
   echo "  Results saved to ${outfile}"
@@ -146,7 +150,7 @@ BENCHEOF
 
 mkdir -p "$RESULTS_DIR"
 
-echo "==> Throughput Benchmark"
+echo "==> ${BENCHMARK_NAME} benchmark"
 for target in "${TARGETS[@]}"; do
   target=$(echo "$target" | tr -d '[:space:]')
   if [[ -n "$(get_bundle_id "$target")" ]]; then

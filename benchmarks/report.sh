@@ -78,17 +78,21 @@ EOF
   echo "" >> "$REPORT"
 fi
 
-# ── Throughput Table ─────────────────────────────────────────────────
-throughput_files=("${RESULTS_DIR}"/throughput-*.json)
-if [[ -f "${throughput_files[0]}" ]]; then
-  cat >> "$REPORT" << 'EOF'
-## Throughput (MB/s)
+# ── Throughput table helper ────────────────────────────────────────
+# Usage: emit_throughput_table "prefix" "Title"
+emit_throughput_table() {
+  local prefix="$1" title="$2"
+  local files=("${RESULTS_DIR}"/${prefix}-*.json)
+  [[ -f "${files[0]}" ]] || return 0
+
+  cat >> "$REPORT" << EOF
+## ${title}
 
 | Terminal | ASCII | Seq | Unicode | ANSI | Ligature | ZWJ |
 |----------|-------|-----|---------|------|----------|-----|
 EOF
 
-  for f in "${RESULTS_DIR}"/throughput-*.json; do
+  for f in "${RESULTS_DIR}"/${prefix}-*.json; do
     IFS=$'\t' read -r name ascii seq_val unicode ansi ligature zwj < <(
       jq -r '[
         .terminal,
@@ -103,7 +107,10 @@ EOF
     echo "| ${name} | ${ascii} | ${seq_val} | ${unicode} | ${ansi} | ${ligature} | ${zwj} |" >> "$REPORT"
   done
   echo "" >> "$REPORT"
-fi
+}
+
+emit_throughput_table "throughput" "Throughput (MB/s)"
+emit_throughput_table "wide-throughput" "Wide throughput (MB/s, 200 cols)"
 
 # ── Resource Table ───────────────────────────────────────────────────
 resource_files=("${RESULTS_DIR}"/resources-*.json)
@@ -264,6 +271,38 @@ EOF
   echo "" >> "$REPORT"
 fi
 
+# ── Resize Latency Table ──────────────────────────────────────────
+resize_files=("${RESULTS_DIR}"/resize-*.json)
+if [[ -f "${resize_files[0]}" ]]; then
+  cat >> "$REPORT" << 'EOF'
+## Resize latency (ms)
+
+Thresholds: <50 ms excellent | <100 ms good | <200 ms acceptable | >=200 ms poor
+
+| Terminal | Widen (mean) | Widen (p95) | Narrow (mean) | Narrow (p95) | Rating |
+|----------|--------------|-------------|---------------|--------------|--------|
+EOF
+
+  for f in "${RESULTS_DIR}"/resize-*.json; do
+    IFS=$'\t' read -r name widen_mean widen_p95 narrow_mean narrow_p95 < <(
+      jq -r '[
+        .terminal,
+        (if .transitions.widen then (.transitions.widen.stats.mean|tostring) else "—" end),
+        (if .transitions.widen then (.transitions.widen.stats.p95|tostring) else "—" end),
+        (if .transitions.narrow then (.transitions.narrow.stats.mean|tostring) else "—" end),
+        (if .transitions.narrow then (.transitions.narrow.stats.p95|tostring) else "—" end)
+      ] | @tsv' "$f"
+    )
+    if [[ "$widen_mean" != "—" ]]; then
+      rating=$(rate_metric "$widen_mean" 50 100 200)
+    else
+      rating="—"
+    fi
+    echo "| ${name} | ${widen_mean} | ${widen_p95} | ${narrow_mean} | ${narrow_p95} | ${rating} |" >> "$REPORT"
+  done
+  echo "" >> "$REPORT"
+fi
+
 # ── Verdict Summary ─────────────────────────────────────────────────
 cat >> "$REPORT" << 'EOF'
 ## Verdict
@@ -313,16 +352,20 @@ latency_winner=$(find_winner "latency" ".stats.mean" 1)
 ctrlc_winner=$(find_winner "ctrlc" ".stats.mean" 1)
 
 scrollback_winner=$(find_winner "scrollback" ".buffer_cost_kb" 1)
+wide_throughput_winner=$(find_winner "wide-throughput" ".payloads.ascii.stats.mean" 0)
+resize_winner=$(find_winner "resize" ".transitions.widen.stats.mean" 1)
 
 cat >> "$REPORT" << EOF
 | Category | Winner |
 |----------|--------|
 | Startup | ${startup_winner} |
 | Throughput (ASCII) | ${throughput_winner} |
+| Wide throughput (ASCII) | ${wide_throughput_winner} |
 | Idle memory | ${idle_rss_winner} |
 | Input latency | ${latency_winner} |
 | Ctrl-C responsiveness | ${ctrlc_winner} |
 | Scrollback buffer cost | ${scrollback_winner} |
+| Resize latency | ${resize_winner} |
 
 EOF
 
@@ -390,6 +433,24 @@ for f in "${RESULTS_DIR}"/scrollback-*.json; do
     (.checkpoints | to_entries[] | [$t, "scrollback", .key + "_rss_kb", (.value.rss_kb|tostring)]),
     [$t, "scrollback", "buffer_cost_kb", (.buffer_cost_kb|tostring)]
     | @csv
+  ' "$f" >> "$CSV"
+done
+
+for f in "${RESULTS_DIR}"/wide-throughput-*.json; do
+  [[ -f "$f" ]] || continue
+  jq -r '
+    .terminal as $t |
+    .payloads | to_entries[] |
+    [$t, "wide_throughput_" + .key, "mean_bytes_per_sec", (.value.stats.mean|tostring)] | @csv
+  ' "$f" >> "$CSV"
+done
+
+for f in "${RESULTS_DIR}"/resize-*.json; do
+  [[ -f "$f" ]] || continue
+  jq -r '
+    .terminal as $t |
+    .transitions | to_entries[] |
+    [$t, "resize_" + .key, "mean_ms", (.value.stats.mean|tostring)] | @csv
   ' "$f" >> "$CSV"
 done
 
