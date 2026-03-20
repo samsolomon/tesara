@@ -355,6 +355,8 @@ private struct TerminalPaneLeafView: View {
 
     private func syncInputBarPresentation(session: TerminalSession, surfaceView: GhosttySurfaceView) {
         guard isActive else {
+            session.focusInputBarTask?.cancel()
+            session.focusInputBarTask = nil
             session.inputBarState?.editorView?.focusDidChange(false)
             session.inputBarState?.editorView?.renderOneFrame()
             session.inputBarState?.editorView?.pauseDisplayLink()
@@ -389,10 +391,12 @@ private struct TerminalPaneLeafView: View {
     }
 
     private func focusInputBar(session: TerminalSession, surfaceView: GhosttySurfaceView) {
-        Task { @MainActor in
+        session.focusInputBarTask?.cancel()
+        session.focusInputBarTask = Task { @MainActor in
             var editorView = session.inputBarState?.editorView
 
             for _ in 0..<8 {
+                guard !Task.isCancelled else { return }
                 guard let currentEditorView = editorView else { return }
 
                 if let window = currentEditorView.window {
@@ -410,6 +414,7 @@ private struct TerminalPaneLeafView: View {
                 }
 
                 try? await Task.sleep(for: .milliseconds(50))
+                guard !Task.isCancelled else { return }
                 editorView = session.inputBarState?.editorView
             }
 
@@ -439,13 +444,7 @@ private struct TerminalPaneLeafView: View {
                 }
                 .id(session.id)
                 .onAppear {
-                    surfaceView.onPaneFocusRequest = { [id = id] in
-                        onSelectPane(id)
-                    }
                     syncInputBarPresentation(session: session, surfaceView: surfaceView)
-                }
-                .onDisappear {
-                    surfaceView.onPaneFocusRequest = nil
                 }
                 .onChange(of: isActive) { _, _ in
                     syncInputBarPresentation(session: session, surfaceView: surfaceView)

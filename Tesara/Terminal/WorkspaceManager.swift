@@ -81,6 +81,11 @@ final class WorkspaceManager: ObservableObject {
     func newTab(shellPath: String, workingDirectory: URL, blockStore: BlockStore) {
         let session = sessionFactory()
         session.configure(blockStore: blockStore)
+        session.onFocusRequest = { [weak self, weak session] in
+            guard let self, let session,
+                  let (_, paneID) = self.tabAndPaneID(for: session) else { return }
+            self.selectPane(id: paneID)
+        }
         let paneID = UUID()
         let tab = Tab(rootPane: .leaf(id: paneID, session: session), selectedPaneID: paneID, title: "Shell")
         tabs.append(tab)
@@ -285,6 +290,11 @@ final class WorkspaceManager: ObservableObject {
 
         let newSession = sessionFactory()
         newSession.configure(blockStore: blockStore)
+        newSession.onFocusRequest = { [weak self, weak newSession] in
+            guard let self, let session = newSession,
+                  let (_, paneID) = self.tabAndPaneID(for: session) else { return }
+            self.selectPane(id: paneID)
+        }
         let newPaneID = UUID()
         let newLeaf = PaneNode.leaf(id: newPaneID, session: newSession)
 

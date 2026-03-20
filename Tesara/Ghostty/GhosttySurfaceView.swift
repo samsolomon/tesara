@@ -17,9 +17,6 @@ class GhosttySurfaceView: NSView, NSTextInputClient {
     private(set) var surface: ghostty_surface_t?
     weak var session: TerminalSession?
 
-    /// Called when a mouse click transfers focus to this surface from another pane.
-    var onPaneFocusRequest: (() -> Void)?
-
     // MARK: - Private State
 
     // IME / keyboard
@@ -279,14 +276,14 @@ class GhosttySurfaceView: NSView, NSTextInputClient {
 
         // When input bar owns focus, allow mouse events but don't claim first responder
         if keyboardFocusDisabled {
-            onPaneFocusRequest?()
+            session?.onFocusRequest?()
             return event
         }
 
         // Already first responder — normal click
         guard window.firstResponder !== self else { return event }
 
-        onPaneFocusRequest?()
+        session?.onFocusRequest?()
 
         // Window already focused — this click is only for focus transfer
         if NSApp.isActive && window.isKeyWindow {
@@ -918,7 +915,7 @@ class GhosttySurfaceView: NSView, NSTextInputClient {
             return []
         }
         session?.setDragTarget(true)
-        onPaneFocusRequest?()
+        session?.onFocusRequest?()
 
         // Synchronously set keyboardFocusDisabled so performDragOperation routes
         // correctly even if SwiftUI's syncInputBarPresentation hasn't run yet.

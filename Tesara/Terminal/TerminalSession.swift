@@ -37,6 +37,13 @@ final class TerminalSession: ObservableObject, Identifiable {
     /// bar is created or torn down outside the same render pass.
     @Published private(set) var inputBarState: InputBarState?
 
+    /// The in-flight task that retries making the input bar first responder.
+    /// Stored so it can be cancelled when a different pane becomes active,
+    /// preventing a stale task from stealing focus back.
+    var focusInputBarTask: Task<Void, Never>?
+
+    var onFocusRequest: (() -> Void)?
+
     private var blockStore: BlockStore?
     private var searchStateCancellable: AnyCancellable?
     private var popupStateCancellable: AnyCancellable?
@@ -263,6 +270,8 @@ final class TerminalSession: ObservableObject, Identifiable {
     }
 
     private func teardownInputBar() {
+        focusInputBarTask?.cancel()
+        focusInputBarTask = nil
         inputBarState?.completionController.dismiss()
         inputBarState?.editorView?.focusDidChange(false)
         inputBarState?.editorView?.pauseDisplayLink()
