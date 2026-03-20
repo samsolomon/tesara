@@ -53,7 +53,7 @@ run_scrollback_bench() {
   local checkpoints=($SCROLLBACK_CHECKPOINTS)
   local results="{}"
   local sentinel="${SENTINEL_PREFIX}-scrollback-$$"
-  trap 'rm -f "$sentinel"' EXIT INT TERM
+  trap 'rm -f "${SENTINEL_PREFIX}-scrollback-$$"' EXIT INT TERM
 
   for lines in "${checkpoints[@]}"; do
     local label

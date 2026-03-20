@@ -57,10 +57,11 @@ run_startup_bench() {
     # Inject the sentinel command via keystroke
     send_command "echo READY > ${sentinel}"
 
-    # Poll for sentinel file
+    # Poll for sentinel file (timeout * 20 iterations at 0.05s each)
     local timeout=30
+    local max_polls=$(( timeout * 20 ))
     local elapsed=0
-    while [[ ! -f "$sentinel" ]] && (( elapsed < timeout )); do
+    while [[ ! -f "$sentinel" ]] && (( elapsed < max_polls )); do
       sleep 0.05
       elapsed=$((elapsed + 1))
     done
