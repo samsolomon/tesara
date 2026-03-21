@@ -24,6 +24,7 @@ ARCHIVE_PATH="$PROJECT_DIR/build/Tesara.xcarchive"
 EXPORT_DIR="$PROJECT_DIR/build/export"
 DMG_PATH="$PROJECT_DIR/build/Tesara.dmg"
 NOTARY_PROFILE="tesara-notary"
+GH_REPO="samsolomon/tesara"
 
 SKIP_NOTARIZE=false
 for arg in "$@"; do
@@ -43,6 +44,10 @@ step "Checking prerequisites"
 
 if ! security find-identity -v -p codesigning | grep -q "Developer ID Application"; then
   fail "No Developer ID Application certificate found. Install one via Xcode > Settings > Accounts > Manage Certificates."
+fi
+
+if ! command -v gh &>/dev/null; then
+  fail "gh CLI not found. Install it: brew install gh"
 fi
 
 if [ "$SKIP_NOTARIZE" = false ]; then
@@ -115,20 +120,59 @@ fi
 
 step "Creating DMG"
 
-# Create a temporary directory with the app and an Applications symlink
 DMG_STAGING="$PROJECT_DIR/build/dmg-staging"
+DMG_RW="$PROJECT_DIR/build/Tesara-rw.dmg"
 mkdir -p "$DMG_STAGING"
 cp -R "$APP_PATH" "$DMG_STAGING/"
 ln -s /Applications "$DMG_STAGING/Applications"
 
+# Create a read-write DMG so we can customise the Finder window
 hdiutil create \
   -volname "Tesara" \
   -srcfolder "$DMG_STAGING" \
   -ov \
-  -format UDZO \
-  "$DMG_PATH"
+  -format UDRW \
+  "$DMG_RW"
 
 rm -rf "$DMG_STAGING"
+
+# Mount the writable DMG
+MOUNT_DIR=$(hdiutil attach "$DMG_RW" -readwrite -noverify | awk -F'\t' '/\/Volumes\//{print $NF}')
+[ -d "$MOUNT_DIR" ] || fail "Failed to mount DMG"
+trap 'hdiutil detach "$MOUNT_DIR" -quiet 2>/dev/null || true' EXIT
+
+# Configure Finder: icon view, window size, icon positions
+osascript <<'APPLESCRIPT'
+tell application "Finder"
+  tell disk "Tesara"
+    open
+    set current view of container window to icon view
+    set toolbar visible of container window to false
+    set statusbar visible of container window to false
+    set bounds of container window to {100, 100, 640, 400}
+    set opts to icon view options of container window
+    set icon size of opts to 80
+    set arrangement of opts to not arranged
+    set background color of opts to {65535, 65535, 65535}
+    set position of item "Tesara.app" of container window to {130, 150}
+    set position of item "Applications" of container window to {410, 150}
+    close
+  end tell
+end tell
+APPLESCRIPT
+
+# Flush Finder changes and unmount
+sync
+hdiutil detach "$MOUNT_DIR" -quiet
+trap - EXIT
+
+# Convert to compressed read-only DMG
+hdiutil convert "$DMG_RW" \
+  -format UDZO \
+  -o "$DMG_PATH" \
+  -ov
+
+rm -f "$DMG_RW"
 
 # Notarize the DMG too
 if [ "$SKIP_NOTARIZE" = false ]; then
@@ -140,9 +184,25 @@ if [ "$SKIP_NOTARIZE" = false ]; then
   xcrun stapler staple "$DMG_PATH"
 fi
 
-# ── Done ─────────────────────────────────────────────────────────────────────
+# ── Upload to GitHub ──────────────────────────────────────────────────────
+
+VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP_PATH/Contents/Info.plist")
+TAG="v$VERSION"
+
+step "Uploading DMG to GitHub release $TAG"
+
+# Create the release (no-op if it already exists)
+gh release create "$TAG" \
+  --repo "$GH_REPO" \
+  --title "Tesara $VERSION" \
+  --generate-notes 2>/dev/null || true
+
+gh release upload "$TAG" "$DMG_PATH" \
+  --repo "$GH_REPO" \
+  --clobber
 
 echo ""
 echo "✓ Release built successfully"
 echo "  $DMG_PATH"
 echo "  $(du -h "$DMG_PATH" | cut -f1) compressed"
+echo "  https://github.com/$GH_REPO/releases/tag/$TAG"
