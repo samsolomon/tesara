@@ -401,9 +401,7 @@ class GhosttySurfaceView: NSView, NSTextInputClient {
         case 0x3B, 0x3E: mod = GHOSTTY_MODS_CTRL.rawValue
         case 0x3A, 0x3D: mod = GHOSTTY_MODS_ALT.rawValue
         case 0x37, 0x36: mod = GHOSTTY_MODS_SUPER.rawValue
-        default:
-            super.flagsChanged(with: event)
-            return
+        default: return
         }
 
         if hasMarkedText() { return }
