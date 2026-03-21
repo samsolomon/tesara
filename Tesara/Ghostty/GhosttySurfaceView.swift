@@ -438,13 +438,20 @@ class GhosttySurfaceView: NSView, NSTextInputClient {
 
         // Check if this is a ghostty binding
         var ghosttyEvent = event.ghosttyKeyEvent(GHOSTTY_ACTION_PRESS)
+        var bindingFlags = ghostty_binding_flags_e(0)
         let isBinding: Bool = (event.characters ?? "").withCString { ptr in
             ghosttyEvent.text = ptr
-            var flags: ghostty_binding_flags_e = ghostty_binding_flags_e(0)
-            return ghostty_surface_key_is_binding(surface, ghosttyEvent, &flags)
+            return ghostty_surface_key_is_binding(surface, ghosttyEvent, &bindingFlags)
         }
 
         if isBinding {
+            // Non-performable bindings (e.g. goto_tab on macOS) should be handled
+            // by the menu system rather than the terminal. Return false so the event
+            // propagates to the main menu where SwiftUI Commands can match it.
+            let performable = (bindingFlags.rawValue & GHOSTTY_BINDING_FLAGS_PERFORMABLE.rawValue) != 0
+            if !performable {
+                return false
+            }
             self.keyDown(with: event)
             return true
         }
