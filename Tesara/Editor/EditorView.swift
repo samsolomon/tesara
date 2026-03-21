@@ -42,6 +42,7 @@ class EditorView: NSView, NSTextInputClient {
 
     private var cursorVisible: Bool = true
     private var cursorBlinkTimer: Timer?
+    private var cursorBlinkEnabled: Bool = false
     private var smoothBlinkEnabled: Bool = false
     private var smoothBlinkPhase: Double = 0.0
 
@@ -140,7 +141,8 @@ class EditorView: NSView, NSTextInputClient {
         }
 
         setupDisplayLink()
-        if cursorBlink {
+        cursorBlinkEnabled = cursorBlink
+        if cursorBlinkEnabled {
             startCursorBlink()
         }
     }
@@ -244,7 +246,13 @@ class EditorView: NSView, NSTextInputClient {
 
     private func resetCursorBlink() {
         cursorVisible = true
-        startCursorBlink()
+        if cursorBlinkEnabled {
+            if let timer = cursorBlinkTimer, timer.isValid {
+                timer.fireDate = Date(timeIntervalSinceNow: 0.5)
+            } else {
+                startCursorBlink()
+            }
+        }
     }
 
     // MARK: - Ensure Cursor Visible
@@ -469,6 +477,8 @@ class EditorView: NSView, NSTextInputClient {
         if isFocused {
             resetCursorBlink()
         } else {
+            cursorBlinkTimer?.invalidate()
+            cursorBlinkTimer = nil
             cursorVisible = false
         }
         needsRender = true
@@ -788,6 +798,7 @@ class EditorView: NSView, NSTextInputClient {
 
     func updateCursorConfig(_ config: EditorLayoutEngine.CursorConfig, blink: Bool, smoothBlink: Bool = false) {
         cursorConfig = config
+        cursorBlinkEnabled = blink
         smoothBlinkEnabled = smoothBlink && blink
 
         if smoothBlinkEnabled {
